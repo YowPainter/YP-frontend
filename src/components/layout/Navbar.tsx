@@ -1,0 +1,111 @@
+"use client";
+
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useTheme } from "@/components/providers/ThemeProvider";
+
+function ThemeToggle() {
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Évite le flash SSR
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <div className="w-9 h-9" />;
+
+  const isDark = resolvedTheme === "dark";
+
+  return (
+    <button
+      id="theme-toggle-btn"
+      onClick={toggleTheme}
+      aria-label={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
+      title={isDark ? "Mode clair" : "Mode sombre"}
+      className="relative w-9 h-9 flex items-center justify-center rounded-full border border-foreground/20 hover:border-accent hover:text-accent text-foreground/60 transition-all duration-300 hover:rotate-12 hover:scale-110"
+    >
+      {/* Icône animée : Soleil / Lune */}
+      <span
+        className="absolute inset-0 flex items-center justify-center transition-all duration-500"
+        style={{ opacity: isDark ? 1 : 0, transform: isDark ? "rotate(0deg) scale(1)" : "rotate(90deg) scale(0)" }}
+      >
+        {/* Lune */}
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </span>
+      <span
+        className="absolute inset-0 flex items-center justify-center transition-all duration-500"
+        style={{ opacity: isDark ? 0 : 1, transform: isDark ? "rotate(-90deg) scale(0)" : "rotate(0deg) scale(1)" }}
+      >
+        {/* Soleil */}
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+      </span>
+    </button>
+  );
+}
+
+export default function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <header
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 sm:px-12 pointer-events-none 
+      ${scrolled ? "py-4 glass-elegant backdrop-blur-xl border-b border-foreground/5 shadow-sm" : "py-8"}`}
+    >
+      <div className="max-w-[1400px] mx-auto flex justify-between items-center pointer-events-auto">
+
+        {/* Logo (Gauche) */}
+        <div className="flex-1 flex justify-start">
+          <Link href="/" className="flex items-baseline gap-2 group">
+            <span className="font-serif text-3xl font-bold tracking-tighter text-foreground group-hover:text-accent transition-colors">Y<span className="italic text-accent">P</span></span>
+            <span className={`font-serif text-lg italic font-light text-foreground/60 tracking-tight transition-all duration-500 ${scrolled ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>YowPainter</span>
+          </Link>
+        </div>
+
+        {/* Navigation Centrale (Ergonomie Maximale) */}
+        <nav className="hidden lg:flex items-center gap-10">
+          <div className="flex items-center gap-8 font-serif text-lg italic text-foreground/80 lowercase tracking-wide">
+            <Link href="/search" className="hover:text-accent transition-colors relative group">
+              Collection
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all"></span>
+            </Link>
+            <Link href="/artists" className="hover:text-accent transition-colors relative group">
+              Artistes
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all"></span>
+            </Link>
+            <Link href="/events" className="hover:text-accent transition-colors relative group">
+              Expositions
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all"></span>
+            </Link>
+          </div>
+        </nav>
+
+        {/* Actions (Droite) */}
+        <div className="flex-1 flex justify-end items-center gap-4 md:gap-6">
+          <ThemeToggle />
+          <Link href="/login" className="text-xs uppercase tracking-[0.4em] font-bold text-foreground/70 border border-foreground/20 px-6 py-2.5 hover:border-accent hover:text-accent transition-all duration-300">Login</Link>
+          <Link href="/register" className={`bg-accent text-white px-8 py-3 text-xs uppercase tracking-[0.4em] font-bold hover:bg-foreground hover:shadow-xl transition-all shadow-md ${scrolled ? 'scale-90 opacity-90' : 'scale-100'}`}>S'inscrire</Link>
+        </div>
+
+      </div>
+
+    </header>
+  );
+}
