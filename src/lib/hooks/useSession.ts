@@ -69,6 +69,14 @@ export function useSession(): Session {
                 localStorage.removeItem('refreshToken');
                 setUser(null);
             }
+        } else {
+            // MOCK MODE : Pour tester sans page login implémentée
+            setUser({
+                id: 'mock-user-123',
+                email: 'test@yowpainter.com',
+                name: 'Visiteur Test',
+                role: 'ROLE_BUYER'
+            });
         }
 
         setLoading(false);

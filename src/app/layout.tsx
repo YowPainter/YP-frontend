@@ -33,12 +33,10 @@ export default function RootLayout({
     >
       <body className={`${inter.variable} ${playfair.variable} font-sans canvas-grain antialiased bg-background text-foreground overflow-x-hidden`}>
         <ThemeProvider>
-          <Navbar />
           <RevealProvider>
             <main className="min-h-screen relative z-10">
               {children}
             </main>
-            <Footer />
           </RevealProvider>
         </ThemeProvider>
       </body>

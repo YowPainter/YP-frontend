@@ -12,7 +12,7 @@ const MOCK_EVENTS: Event[] = [
         endDate: new Date(Date.now() + 86400000 * 7).toISOString(),
         location: 'Galerie d\'Art Moderne, Douala',
         locationType: 'PHYSICAL',
-        posterUrl: 'https://images.unsplash.com/photo-1577720580479-7d839d829c73?q=80&w=2000&auto=format&fit=crop',
+        posterUrl: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&q=80',
         eventType: 'FREE',
         status: 'PUBLISHED',
         maxAttendees: 200,
@@ -33,7 +33,7 @@ const MOCK_EVENTS: Event[] = [
         endDate: new Date(Date.now() + 86400000 * 2 + 10800000).toISOString(), // +3h
         location: 'Parc Central, Yaoundé',
         locationType: 'PHYSICAL',
-        posterUrl: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?q=80&w=2000&auto=format&fit=crop',
+        posterUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
         eventType: 'PAID',
         status: 'PUBLISHED',
         maxAttendees: 50,
@@ -54,7 +54,7 @@ const MOCK_EVENTS: Event[] = [
         endDate: new Date(Date.now() + 86400000 * 15 + 18000000).toISOString(),
         location: 'Studio privé, Kribi',
         locationType: 'PHYSICAL',
-        posterUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=2000&auto=format&fit=crop',
+        posterUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80',
         eventType: 'PRIVATE',
         status: 'PUBLISHED',
         maxAttendees: 30,
@@ -75,7 +75,7 @@ const MOCK_EVENTS: Event[] = [
         endDate: new Date(Date.now() + 86400000 * 10 + 7200000).toISOString(),
         location: 'En ligne (Zoom)',
         locationType: 'VIRTUAL',
-        posterUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=2000&auto=format&fit=crop',
+        posterUrl: 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=800&q=80',
         eventType: 'PAID',
         status: 'PUBLISHED',
         maxAttendees: null,
@@ -96,7 +96,7 @@ const MOCK_EVENTS: Event[] = [
         endDate: new Date(Date.now() - 86400000 * 1).toISOString(),
         location: 'Grande Place, Douala',
         locationType: 'PHYSICAL',
-        posterUrl: 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?q=80&w=2000&auto=format&fit=crop',
+        posterUrl: 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=800&q=80',
         eventType: 'FREE',
         status: 'COMPLETED',
         maxAttendees: 1000,
@@ -156,6 +156,18 @@ export async function getEventById(id: string): Promise<Event> {
     return event;
 }
 
+// Helper pour gérer la persistance locale en mode démo
+const getPersistedTickets = (): TicketReservation[] => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('yp_mock_tickets');
+    return saved ? JSON.parse(saved) : [];
+};
+
+const saveTickets = (tickets: TicketReservation[]) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('yp_mock_tickets', JSON.stringify(tickets));
+};
+
 let MOCK_TICKETS: TicketReservation[] = [
     {
         id: 'tkt-12345',
@@ -169,6 +181,16 @@ let MOCK_TICKETS: TicketReservation[] = [
         price: 0
     }
 ];
+
+// Initialiser avec les données du localStorage si on est dans le navigateur
+if (typeof window !== 'undefined') {
+    const persisted = getPersistedTickets();
+    if (persisted.length > 0) {
+        MOCK_TICKETS = persisted;
+    } else {
+        saveTickets(MOCK_TICKETS);
+    }
+}
 
 // PROTÉGÉ : Réserver un billet (gratuit) (Mocké)
 export async function reserveTicket(eventId: string, data: {
@@ -193,6 +215,7 @@ export async function reserveTicket(eventId: string, data: {
     };
     
     MOCK_TICKETS.push(newTicket);
+    saveTickets(MOCK_TICKETS); // Sauvegarder !
     
     // Mettre à jour l'événement pour la démo
     event.currentAttendees += 1;
@@ -205,10 +228,13 @@ export async function reserveTicket(eventId: string, data: {
 export async function getMyTickets(eventId?: string): Promise<TicketReservation[]> {
     await new Promise(resolve => setTimeout(resolve, 400));
     
+    // S'assurer de charger les dernières données du localStorage
+    const currentTickets = typeof window !== 'undefined' ? getPersistedTickets() : MOCK_TICKETS;
+    
     if (eventId) {
-        return MOCK_TICKETS.filter(t => t.eventId === eventId);
+        return currentTickets.filter(t => t.eventId === eventId);
     }
-    return MOCK_TICKETS;
+    return currentTickets;
 }
 
 // PROTÉGÉ (ARTISTE) : Scanner un billet (validation entrée) (Mocké)
