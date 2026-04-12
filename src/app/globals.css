@@ -8,6 +8,8 @@
   /* Couleur d'accentuation élégante (Terracotta / Or brossé) */
   --accent: #C26D5C;
   --accent-light: #E8B4A8;
+
+  --muted: #9A8880;
 }
 
 @theme inline {
@@ -15,6 +17,10 @@
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
+  --color-cream:  var(--background);
+  --color-ink:    var(--foreground);
+  --color-light:  var(--accent-light);
+  --color-muted:  var(--muted);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
 }
@@ -153,4 +159,20 @@ body {
   opacity: 0.03;
   /* Réduit l'opacité pour plus de finesse */
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Cadre bois — pseudo-éléments impossibles en Tailwind pur */
+.wood-outer {
+  background: linear-gradient(155deg,#d4a06a 0%,#a06838 18%,#c49050 35%,#7d4e2d 52%,#b88040 68%,#8a5830 84%,#c49060 100%);
+  box-shadow: 0 1px 3px rgba(0,0,0,.12), inset 0 1px 2px rgba(255,210,140,.15), inset 0 -1px 2px rgba(0,0,0,.12);
+}
+.wood-outer::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(94deg,transparent,transparent 4px,rgba(0,0,0,.022) 4px,rgba(0,0,0,.022) 8px);
+}
+.wood-outer:hover { box-shadow: 0 2px 8px rgba(0,0,0,.18), inset 0 1px 2px rgba(255,210,140,.15); }
+.wood-inner {
+  background: linear-gradient(135deg,#4a2810,#7a4c28,#6a3e20);
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,.3);
 }
