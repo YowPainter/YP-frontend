@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -65,6 +64,7 @@ export default function Footer() {
               <ul className="flex flex-col gap-4 text-sm font-bold uppercase tracking-widest">
                 <li><Link href="/artists" className="text-foreground/80 hover:text-accent transition-colors">Village des Artistes</Link></li>
                 <li><Link href="/events" className="text-foreground/80 hover:text-accent transition-colors">Vernissages</Link></li>
+                <li><Link href="/shop" className="text-foreground/80 hover:text-accent transition-colors">Boutique</Link></li>
                 <li><Link href="/about" className="text-foreground/80 hover:text-accent transition-colors">Manifesto</Link></li>
                 <li><Link href="/register" className="text-accent hover:text-foreground transition-colors">Devenir Artiste</Link></li>
               </ul>
