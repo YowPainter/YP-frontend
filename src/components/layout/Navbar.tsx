@@ -94,6 +94,10 @@ export default function Navbar() {
               Expositions
               <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all"></span>
             </Link>
+            <Link href="/shop" className="hover:text-accent transition-colors relative group">
+              Boutique
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all"></span>
+            </Link>
           </div>
         </nav>
 
