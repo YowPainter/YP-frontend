@@ -75,7 +75,7 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
     if (variant === 'featured') {
         return (
             <Link href={`/events/${event.id}`}>
-                <div className="group flex flex-col h-full bg-transparent hover:-translate-y-2 transition-all duration-500 will-change-transform drop-shadow-[0_15px_40px_rgba(0,0,0,0.12)] hover:drop-shadow-[0_25px_50px_rgba(0,0,0,0.2)]">
+                <div className="group flex flex-col h-full bg-transparent hover:-translate-y-2 transition-all duration-500 will-change-transform drop-shadow-[0_15px_40px_rgba(0,0,0,0.12)] dark:drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:drop-shadow-[0_25px_50px_rgba(0,0,0,0.2)] dark:hover:drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
                     
                     {/* TOP: Image & Title Layer */}
                     <div style={topMask} className="relative w-full min-h-[500px] overflow-visible bg-background border border-foreground/5">
@@ -147,7 +147,7 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
     // Grid Variant
     return (
         <Link href={`/events/${event.id}`}>
-            <div className="group flex flex-col h-full bg-transparent hover:-translate-y-2 transition-all duration-500 will-change-transform drop-shadow-[0_10px_25px_rgba(0,0,0,0.08)] hover:drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)]">
+            <div className="group flex flex-col h-full bg-transparent hover:-translate-y-2 transition-all duration-500 will-change-transform drop-shadow-[0_10px_25px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_15px_35px_rgba(0,0,0,0.3)] hover:drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)] dark:hover:drop-shadow-[0_25px_45px_rgba(0,0,0,0.4)]">
                 
                 {/* TOP: Image */}
                 <div style={topMask} className="relative w-full aspect-square overflow-hidden bg-background border border-foreground/5">

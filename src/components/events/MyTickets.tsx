@@ -59,7 +59,7 @@ export function MyTickets({ eventId }: MyTicketsProps) {
                     id={`ticket-${ticket.id}`}
                 >
                     {/* TICKET BODY */}
-                    <div className="flex bg-white rounded-3xl overflow-hidden border border-foreground/5 shadow-xl shadow-accent/5">
+                    <div className="flex bg-white dark:bg-white/10 backdrop-blur-md rounded-3xl overflow-hidden border border-foreground/5 dark:border-white/10 shadow-xl shadow-accent/5">
                         
                         {/* Left Side: Info */}
                         <div className="flex-1 p-6 md:p-8 space-y-4">
@@ -99,7 +99,7 @@ export function MyTickets({ eventId }: MyTicketsProps) {
                         </div>
 
                         {/* Divider */}
-                        <div className="relative w-8 bg-white flex flex-col items-center justify-between py-2">
+                        <div className="relative w-8 bg-white dark:bg-transparent flex flex-col items-center justify-between py-2">
                              {/* Small notches */}
                             <div className="absolute top-[-8px] left-1/2 -translate-x-1/2 w-4 h-4 bg-background rounded-full border border-foreground/5 shadow-inner underline-offset-4"></div>
                             <div className="h-full border-r-2 border-dotted border-foreground/10"></div>
@@ -107,9 +107,9 @@ export function MyTickets({ eventId }: MyTicketsProps) {
                         </div>
 
                         {/* Right Side: QR Code */}
-                        <div className="p-6 md:p-8 bg-slate-50 flex items-center justify-center shrink-0 border-l border-foreground/5">
+                        <div className="p-6 md:p-8 bg-slate-50 dark:bg-black/40 flex items-center justify-center shrink-0 border-l border-foreground/5 dark:border-white/10">
                             <div className="w-20 h-20 bg-white p-2 rounded-2xl shadow-sm border border-foreground/[0.03] group-hover:scale-105 transition-transform duration-500">
-                                <QRCode value={ticket.qrCodeData} size={64} />
+                                <QRCode value={ticket.qrCodeData} size={64} fgColor="#1E1C1A" />
                             </div>
                         </div>
                     </div>

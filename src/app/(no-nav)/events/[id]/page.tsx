@@ -62,10 +62,10 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                 <AnimatedBlob className="bottom-[-10%] left-[-10%] w-[50vw] h-[50vw]" color="amber" delay opacity={0.03} />
                 
                 {/* Splashes */}
-                <svg className="absolute top-[20%] left-[-5%] w-[30vw] h-[30vw] text-accent/5 opacity-40 animate-pulse" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <svg className="absolute top-[20%] left-[-5%] w-[30vw] h-[30vw] text-accent/5 dark:text-accent/10 opacity-40 animate-pulse" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                     <path fill="currentColor" d="M44.7,-76.4C58.3,-69.2,70,-57.9,78.7,-44.5C87.4,-31.1,93.1,-15.5,91.3,-0.9C89.5,13.6,80.3,27.2,71.2,40.1C62.1,53,53.2,65.3,41.4,73.1C29.6,80.9,14.8,84.1,-0.7,85.2C-16.1,86.4,-32.3,85.5,-46.1,78.9C-59.9,72.3,-71.4,60,-79,45.8C-86.6,31.7,-90.4,15.8,-89.4,0.6C-88.3,-14.7,-82.5,-29.3,-74.1,-42.2C-65.7,-55.1,-54.7,-66.2,-41.7,-73.7C-28.7,-81.3,-14.4,-85.2,0.4,-85.9C15.2,-86.6,31.1,-83.7,44.7,-76.4Z" transform="translate(100 100)" />
                 </svg>
-                <svg className="absolute bottom-[10%] right-[5%] w-[25vw] h-[25vw] text-amber-500/5 opacity-30" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <svg className="absolute bottom-[10%] right-[5%] w-[25vw] h-[25vw] text-amber-500/5 dark:text-amber-500/10 opacity-30" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                     <path fill="currentColor" d="M38.1,-65.4C49.9,-58.4,60.5,-48.5,68.1,-36.4C75.7,-24.3,80.3,-10.1,79.1,3.4C77.9,16.9,70.9,29.8,61.8,40.4C52.7,51.1,41.5,59.5,29.4,64.8C17.3,70.1,4.3,72.3,-8.9,70.8C-22.1,69.3,-35.6,64.2,-47.1,56.1C-58.6,48,-68.1,36.9,-73.6,24C-79.1,11.2,-80.6,-3.4,-77.2,-17.1C-73.8,-30.8,-65.5,-43.6,-54.3,-51.1C-43.1,-58.6,-29,-60.8,-15.8,-64.5C-2.6,-68.2,10.3,-73.4,23.3,-72.1C36.3,-70.8,49.4,-63,38.1,-65.4Z" transform="translate(100 100)" />
                 </svg>
             </div>
@@ -74,7 +74,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
             <nav className="sticky top-0 z-50 px-6 py-6 md:px-12 pointer-events-none">
                 <Link 
                     href="/events" 
-                    className="pointer-events-auto inline-flex items-center gap-3 px-6 py-3 bg-white/20 backdrop-blur-xl border border-white/30 text-foreground group hover:bg-accent hover:text-white transition-all duration-500 rounded-full shadow-2xl"
+                    className="pointer-events-auto inline-flex items-center gap-3 px-6 py-3 bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-foreground group hover:bg-accent hover:text-white transition-all duration-500 rounded-full shadow-2xl"
                 >
                     <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                     <span className="text-sm font-bold tracking-[0.2em] uppercase">Galerie</span>
@@ -108,7 +108,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                         </div>
 
                         {/* Description */}
-                        <div className="space-y-8 bg-white/40 backdrop-blur-sm p-8 md:p-12 rounded-[2rem] border border-white/50 shadow-sm">
+                        <div className="space-y-8 bg-white/40 dark:bg-white/5 backdrop-blur-sm p-8 md:p-12 rounded-[2rem] border border-white/50 dark:border-white/10 shadow-sm">
                             <div className="flex items-center gap-4 text-accent">
                                 <span className="w-12 h-[1px] bg-accent"></span>
                                 <span className="text-xs font-bold uppercase tracking-[0.4em]">Manifeste de l'Événement</span>
@@ -144,7 +144,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                         <div className="sticky top-28 space-y-8">
                             
                             {/* Practical Infos Card */}
-                            <div className="bg-white/90 backdrop-blur-md rounded-[2.5rem] p-10 shadow-2xl border border-white shadow-accent/5">
+                            <div className="bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-[2.5rem] p-10 shadow-2xl border border-white dark:border-white/10 shadow-accent/5">
                                 <div className="space-y-10">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-serif text-3xl font-light">Informations</h3>

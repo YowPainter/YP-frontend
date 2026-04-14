@@ -87,7 +87,7 @@ export function TicketReservation({ event, onSuccess }: TicketReservationProps) 
 
     if (isSoldOut) {
         return (
-            <div className="bg-red-50/50 border border-red-100 rounded-[2rem] p-8 text-center backdrop-blur-sm">
+            <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-[2rem] p-8 text-center backdrop-blur-sm">
                 <p className="text-red-600 font-serif text-xl italic mb-1">Épuisé</p>
                 <p className="text-red-500/60 text-xs uppercase tracking-widest font-bold">Toutes les places ont été réservées</p>
             </div>
@@ -111,7 +111,7 @@ export function TicketReservation({ event, onSuccess }: TicketReservationProps) 
     }
 
     return (
-        <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 border border-white shadow-inner">
+        <div className="bg-white/40 dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 border border-white dark:border-white/10 shadow-inner">
             <h3 className="font-serif text-2xl font-light mb-8 uppercase tracking-tight text-foreground/80">
                 {event.eventType === 'FREE' ? 'Réservation' : 'Billetterie'}
             </h3>
@@ -133,7 +133,7 @@ export function TicketReservation({ event, onSuccess }: TicketReservationProps) 
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         disabled={loading || paymentProcessing}
-                        className="w-full px-6 py-4 bg-white/50 border border-foreground/5 rounded-2xl focus:outline-none focus:border-accent/40 focus:bg-white transition-all text-sm font-medium disabled:opacity-50"
+                        className="w-full px-6 py-4 bg-white/50 dark:bg-white/5 border border-foreground/5 dark:border-white/10 rounded-2xl focus:outline-none focus:border-accent/40 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-medium disabled:opacity-50"
                         placeholder="Ex: Jean Dupont"
                     />
                 </div>
@@ -145,7 +145,7 @@ export function TicketReservation({ event, onSuccess }: TicketReservationProps) 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={loading || paymentProcessing}
-                        className="w-full px-6 py-4 bg-white/50 border border-foreground/5 rounded-2xl focus:outline-none focus:border-accent/40 focus:bg-white transition-all text-sm font-medium disabled:opacity-50"
+                        className="w-full px-6 py-4 bg-white/50 dark:bg-white/5 border border-foreground/5 dark:border-white/10 rounded-2xl focus:outline-none focus:border-accent/40 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-medium disabled:opacity-50"
                         placeholder="jean@exemple.com"
                     />
                 </div>
@@ -179,7 +179,7 @@ export function TicketReservation({ event, onSuccess }: TicketReservationProps) 
 
             {/* PAYMENT PROCESSING OVERLAY */}
             {paymentProcessing && (
-                <div className="absolute inset-0 z-50 bg-white/60 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500 rounded-[2.5rem]">
+                <div className="absolute inset-0 z-50 bg-white/60 dark:bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500 rounded-[2.5rem]">
                     <div className="relative w-20 h-20 mb-6">
                         <div className="absolute inset-0 border-4 border-accent/10 rounded-full"></div>
                         <div className="absolute inset-0 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
