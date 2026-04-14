@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import RevealProvider from "@/components/providers/RevealProvider";
 import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,6 +39,15 @@ export default function RootLayout({
               {children}
             </main>
           </RevealProvider>
+          <QueryProvider>
+            <Navbar />
+            <RevealProvider>
+              <main className="min-h-screen relative z-10">
+                {children}
+              </main>
+              <Footer />
+            </RevealProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
