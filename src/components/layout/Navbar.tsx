@@ -82,7 +82,7 @@ export default function Navbar() {
         {/* Navigation Centrale (Ergonomie Maximale) */}
         <nav className="hidden lg:flex items-center gap-10">
           <div className="flex items-center gap-8 font-serif text-lg italic text-foreground/80 lowercase tracking-wide">
-            <Link href="/search" className="hover:text-accent transition-colors relative group">
+            <Link href="/galerie" className="hover:text-accent transition-colors relative group">
               Collection
               <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all"></span>
             </Link>

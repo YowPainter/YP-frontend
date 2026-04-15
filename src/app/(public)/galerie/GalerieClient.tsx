@@ -59,10 +59,23 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
     };
 
     return (
-        <div className="w-full pt-32 pb-24 px-6 sm:px-12 max-w-[1400px] mx-auto min-h-screen">
+        <div className="w-full pt-32 pb-24 px-6 sm:px-12 max-w-[1400px] mx-auto min-h-screen canvas-texture canvas-grain relative">
+            
+            {/* Éléments de Décoration SVGs (Style Kandinsky/Miro) */}
+            <div className="absolute inset-0 z-[-5] pointer-events-none overflow-hidden">
+                <svg className="absolute top-[5%] left-[-5%] w-[30vw] h-[30vw] text-accent/10 opacity-60 transform -rotate-12" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="none" stroke="currentColor" strokeWidth="1" d="M10,190 Q90,10 190,190" strokeDasharray="10,15" strokeLinecap="round" />
+                </svg>
+                <div className="absolute top-[40%] right-[-5%] w-32 h-32 rounded-full border border-accent/20 opacity-40"></div>
+                <svg className="absolute bottom-[10%] left-[5%] w-[15vw] h-[15vw] text-foreground/5 opacity-80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="0" y1="20" x2="100" y2="20" stroke="currentColor" strokeWidth="2" />
+                    <line x1="0" y1="40" x2="100" y2="40" stroke="currentColor" strokeWidth="2" />
+                    <line x1="0" y1="60" x2="100" y2="60" stroke="currentColor" strokeWidth="2" />
+                </svg>
+            </div>
 
             {/* Fil d'Ariane & Titre */}
-            <div className="flex flex-col gap-6 mb-16 reveal">
+            <div className="flex flex-col gap-6 mb-16 reveal relative z-10">
                 <nav className="flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] font-bold text-foreground/30">
                     <Link href="/" className="hover:text-accent transition-colors">YowPainter</Link>
                     <ChevronRight className="w-3 h-3" />

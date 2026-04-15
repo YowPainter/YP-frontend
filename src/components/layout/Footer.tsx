@@ -52,10 +52,10 @@ export default function Footer() {
             <div className="flex flex-col gap-6">
               <h4 className="font-medium text-xs uppercase tracking-[0.3em] mb-4 text-foreground/30">Collections</h4>
               <ul className="flex flex-col gap-4 font-serif text-lg italic">
-                <li><Link href="/search?category=peinture" className="text-foreground/70 hover:text-accent transition-colors">Peinture Classique</Link></li>
-                <li><Link href="/search?category=sculpture" className="text-foreground/70 hover:text-accent transition-colors">Sculpture d'Art</Link></li>
-                <li><Link href="/search?category=photographie" className="text-foreground/70 hover:text-accent transition-colors">Photographie</Link></li>
-                <li><Link href="/search?category=digital" className="text-foreground/70 hover:text-accent transition-colors">Digital Art</Link></li>
+                <li><Link href="/galerie?category=peinture" className="text-foreground/70 hover:text-accent transition-colors">Peinture Classique</Link></li>
+                <li><Link href="/galerie?category=sculpture" className="text-foreground/70 hover:text-accent transition-colors">Sculpture d'Art</Link></li>
+                <li><Link href="/galerie?category=photographie" className="text-foreground/70 hover:text-accent transition-colors">Photographie</Link></li>
+                <li><Link href="/galerie?category=digital" className="text-foreground/70 hover:text-accent transition-colors">Digital Art</Link></li>
               </ul>
             </div>
 

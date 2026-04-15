@@ -83,7 +83,7 @@ export default function Home() {
             </p>
             
             <div className="flex items-center gap-10">
-              <Link href="/search" className="group flex items-center gap-6 border-b border-foreground pb-3 hover:border-accent hover:text-accent transition-all duration-500">
+              <Link href="/galerie" className="group flex items-center gap-6 border-b border-foreground pb-3 hover:border-accent hover:text-accent transition-all duration-500">
                 <span className="font-serif text-2xl tracking-tight transition-colors">Explorer la Collection</span>
                 <div className="w-12 h-[1px] bg-foreground group-hover:bg-accent group-hover:w-20 transition-all duration-500"></div>
               </Link>
@@ -136,7 +136,7 @@ export default function Home() {
             <h2 className="font-serif text-6xl md:text-7xl font-light mb-6 text-foreground tracking-tighter">Nouvelles <span className="italic font-normal">Acquisitions</span></h2>
             <p className="text-foreground/40 font-light text-2xl max-w-md leading-tight">Une sélection millimétrée des créations qui définissent aujourd'hui.</p>
           </div>
-          <Link href="/search" className="group flex items-center gap-4 text-xs font-bold uppercase tracking-[0.3em] text-accent hover:text-foreground transition-all mt-10 md:mt-0">
+          <Link href="/galerie" className="group flex items-center gap-4 text-xs font-bold uppercase tracking-[0.3em] text-accent hover:text-foreground transition-all mt-10 md:mt-0">
             <span className="border-b border-accent/30 group-hover:border-foreground pb-2">Parcourir toute la galerie</span>
             <span className="text-2xl transition-transform group-hover:translate-x-3">&rarr;</span>
           </Link>

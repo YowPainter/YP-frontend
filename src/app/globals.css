@@ -29,7 +29,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* Thème sombre : Noir profond Musée (par défaut système) */
-    --background: #0D0D0C;
+    --background: #121211;
     --foreground: #F5F4F0;
     --accent: #D48878;
     --accent-light: #8A4B3D;
@@ -38,7 +38,7 @@
 
 /* Overrides manuels — priorité sur la media query grâce à la specificité */
 html.dark {
-  --background: #0D0D0C;
+  --background: #121211;
   --foreground: #F5F4F0;
   --accent: #D48878;
   --accent-light: #8A4B3D;
@@ -112,11 +112,10 @@ body {
     animation: float 20s infinite alternate ease-in-out;
   }
 
-  /* REVEAL ANIMATIONS (Perfection Muséale) */
+  /* REVEAL ANIMATIONS (Désactivées pour simplicité) */
   .reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    transform: none;
   }
 
   .reveal-active {
