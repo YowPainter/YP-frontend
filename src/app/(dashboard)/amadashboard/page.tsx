@@ -1,5 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
+import { useAuthStore } from '@/store/authStore'
 
 /* ─────────────────────────────────────────────
    TYPES
@@ -491,6 +493,10 @@ type ModalState = { index: number } | null
 export default function AmateurDashboardPage() {
   const [tab, setTab]     = useState<Tab>('likes')
   const [modal, setModal] = useState<ModalState>(null)
+  const user = useAuthStore((s) => s.user)
+  
+  const displayName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Amateur'
+  const initials = (user?.firstName?.[0] || 'A').toUpperCase()
 
   const TABS: { id: Tab; label: string; count: number; icon: React.ReactNode }[] = [
     {
@@ -537,8 +543,12 @@ export default function AmateurDashboardPage() {
         <div className="h-[120px]" style={{ background: 'linear-gradient(135deg,#2a2420 0%,#3a3028 60%,rgba(194,109,92,.1) 100%)' }}/>
         <div className="max-w-[900px] mx-auto px-4 md:px-8 pb-5">
           <div className="flex items-end justify-between -mt-[36px] mb-3">
-            <div className="w-[72px] h-[72px] rounded-full bg-light border-[3px] border-cream flex items-center justify-center font-display text-3xl font-semibold text-accent shadow-sm">
-              J
+            <div className="w-[72px] h-[72px] rounded-full bg-light border-[3px] border-cream flex items-center justify-center font-display text-3xl font-semibold text-accent shadow-sm overflow-hidden">
+              {user?.profilePictureUrl ? (
+                <Image src={user.profilePictureUrl} alt="Avatar" width={72} height={72} className="object-cover w-full h-full" />
+              ) : (
+                initials
+              )}
             </div>
             <button className="flex items-center gap-1.5 px-3.5 py-1.5 border border-black/[0.09] rounded-full text-xs hover:border-accent hover:text-accent transition-colors">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -548,8 +558,8 @@ export default function AmateurDashboardPage() {
               Modifier
             </button>
           </div>
-          <div className="font-display text-2xl font-semibold leading-tight">Julien Bernard</div>
-          <div className="text-[13px] text-muted mt-0.5 mb-2">@julienbernard · Lyon</div>
+          <div className="font-display text-2xl font-semibold leading-tight">{displayName}</div>
+          <div className="text-[13px] text-muted mt-0.5 mb-2">@{user?.email?.split('@')[0] || 'amateur'}</div>
           <p className="text-[13px] leading-relaxed text-[#4a4340] mb-3.5 max-w-md">
             Amateur d&apos;art et de peinture contemporaine. Collectionneur débutant.
           </p>

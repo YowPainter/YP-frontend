@@ -1,11 +1,11 @@
 "use client";
 
-import { Artwork } from "@/types/artwork";
+import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
 import ArtworkCard from "./ArtworkCard";
 import GallerySkeleton from "./GallerySkeleton";
 
 interface ArtworkGridProps {
-    artworks: Artwork[];
+    artworks: ArtworkResponse[];
     isLoading: boolean;
     isLoggedIn?: boolean;
 }

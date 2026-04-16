@@ -1,10 +1,7 @@
 import { Metadata } from "next";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import GalerieClient from "./GalerieClient";
-import { Artwork, FilterParams, PaginatedResponse } from "@/types/artwork";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+import { ArtworksService } from "@/lib/services/ArtworksService";
 
 export const generateMetadata = async (): Promise<Metadata> => {
     return {
@@ -26,32 +23,19 @@ export default async function GaleriePage(
     const searchParams = await props.searchParams;
     const queryClient = new QueryClient();
 
-    const filters: FilterParams = {
-        page: searchParams.page ? Number(searchParams.page) : 0,
-        size: searchParams.size ? Number(searchParams.size) : 12,
-        sort: (searchParams.sort as string) || "createdAt,desc",
+    const filters = {
         technique: (searchParams.technique as string) || undefined,
         style: (searchParams.style as string) || undefined,
-        minPrice: searchParams.minPrice ? Number(searchParams.minPrice) : undefined,
-        maxPrice: searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined,
         search: (searchParams.search as string) || undefined,
-        forSale: searchParams.forSale === "true",
     };
 
     // Prefetch data for SSR/ISR
     await queryClient.prefetchQuery({
         queryKey: ["artworks", filters],
         queryFn: async () => {
-            try {
-                const { data } = await axios.get<PaginatedResponse<Artwork>>(`${API_BASE_URL}/public/artworks`, {
-                    params: filters,
-                });
-                return data;
-            } catch (error) {
-                console.warn("Prefetch error, using mock data");
-                const { MOCK_PAGINATED_RESPONSE } = await import("@/mocks/artworks");
-                return MOCK_PAGINATED_RESPONSE;
-            }
+            // For the global gallery, we use getFeatured or search suggestions for now
+            // until a paginated public endpoint is clearly defined in the client
+            return await ArtworksService.getFeatured();
         },
     });
 

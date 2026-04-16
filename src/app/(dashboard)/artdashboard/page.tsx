@@ -1,9 +1,11 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
 import FrameCard from '@/components/artdashboard/FrameCard'
 import BagCard from '@/components/artdashboard/BagCard'
 import TicketCard from '@/components/artdashboard/TicketCard'
 import PostModal from '@/components/artdashboard/PostModal'
+import { useAuthStore } from '@/store/authStore'
 
 /* ── Types ── */
 export type Work = {
@@ -65,6 +67,10 @@ export default function ArtistDashboardPage() {
   const [tab, setTab]       = useState<Tab>('oeuvres')
   const [filter, setFilter] = useState<'tous' | 'vente' | 'vendus'>('tous')
   const [modal, setModal]   = useState<ModalState>(null)
+  const user = useAuthStore((s) => s.user)
+  
+  const displayName = user?.artistName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Artiste'
+  const initials = (user?.firstName?.[0] || 'A').toUpperCase()
 
   const filtered = filter === 'vente' ? ARTICLES.filter(a => !a.sold)
                  : filter === 'vendus' ? ARTICLES.filter(a => a.sold)
@@ -103,11 +109,17 @@ export default function ArtistDashboardPage() {
         <div className="h-[150px]" style={{ background: 'linear-gradient(135deg,#1E1C1A 0%,#3a2e28 60%,rgba(194,109,92,.15) 100%)' }}/>
         <div className="max-w-[900px] mx-auto px-4 md:px-8 pb-5">
           <div className="w-[76px] h-[76px] rounded-full bg-light border-[3px] border-cream flex items-center justify-center
-                          font-display text-[30px] font-semibold text-accent -mt-[38px] mb-2.5 shadow-sm">M</div>
+                          font-display text-[30px] font-semibold text-accent -mt-[38px] mb-2.5 shadow-sm overflow-hidden">
+            {user?.profilePictureUrl ? (
+              <Image src={user.profilePictureUrl} alt="Avatar" width={76} height={76} className="object-cover w-full h-full" />
+            ) : (
+              initials
+            )}
+          </div>
           <div className="flex items-start justify-between gap-4 mb-2">
             <div>
-              <div className="font-display text-[25px] font-semibold leading-tight">Marie Lecomte</div>
-              <div className="text-[13px] text-muted mt-0.5">@marielecomte · Paris</div>
+              <div className="font-display text-[25px] font-semibold leading-tight">{displayName}</div>
+              <div className="text-[13px] text-muted mt-0.5">@{user?.email?.split('@')[0] || 'artiste'}</div>
             </div>
             <button className="flex items-center gap-1.5 px-3.5 py-1.5 border border-black/[0.09] rounded-full text-xs hover:border-accent hover:text-accent transition-colors shrink-0">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

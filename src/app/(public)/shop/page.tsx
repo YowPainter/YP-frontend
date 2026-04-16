@@ -1,10 +1,27 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import ShopModuleNav from "@/components/shop/ShopModuleNav";
-import { boutiqueKpis, catalog, currency } from "@/lib/shop-mocks";
 import { AnimatedBlob } from "@/components/ui/AnimatedBlob";
+import { useQuery } from "@tanstack/react-query";
+import { ArtworksService } from "@/lib/services/ArtworksService";
+import { formatPrice } from "@/lib/utils";
+
+// Static placeholders as requested for missing API equivalents
+const boutiqueKpis = [
+  { label: "Oeuvres en vente", value: "24" },
+  { label: "Panier moyen", value: "186 500 XAF" },
+  { label: "Commandes ce mois", value: "42" },
+  { label: "Taux de conversion", value: "3,7%" },
+];
 
 export default function ShopIndexPage() {
+  const { data: artworks, isLoading } = useQuery({
+    queryKey: ["shop-featured"],
+    queryFn: () => ArtworksService.getFeatured(),
+  });
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-6 sm:px-12 pt-32 pb-24 canvas-texture canvas-grain relative overflow-hidden">
       
@@ -57,63 +74,76 @@ export default function ShopIndexPage() {
         <ShopModuleNav />
       </div>
 
-      <section className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {catalog.map((art) => (
-          <article key={art.id} className="group transition-all duration-700">
-            <div className="relative aspect-[3/4] overflow-hidden bg-white p-3 shadow-sm group-hover:shadow-2xl transition-all duration-700 border border-foreground/5 mb-6">
-              <div className="relative w-full h-full overflow-hidden">
-                <Image src={art.image} alt={art.title} fill className="object-cover transition-transform duration-[2s] group-hover:scale-110" />
-              </div>
-              
-              <div className="absolute left-6 top-6 transition-all duration-500 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0">
-                <span className="rounded-full bg-background/90 backdrop-blur px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
-                  {art.style}
-                </span>
-              </div>
+      {isLoading ? (
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse aspect-[3/4] bg-foreground/5 rounded-2xl"></div>
+          ))}
+        </div>
+      ) : (
+        <section className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {(artworks || []).map((art) => (
+            <article key={art.id} className="group transition-all duration-700">
+              <Link href={`/artworks/${art.id}`} className="block">
+                <div className="relative aspect-[3/4] overflow-hidden bg-white p-3 shadow-sm group-hover:shadow-2xl transition-all duration-700 border border-foreground/5 mb-6">
+                  <div className="relative w-full h-full overflow-hidden">
+                    <Image src={art.imageUrls?.[0] || "/images/placeholder.png"} alt={art.title || ""} fill className="object-cover transition-transform duration-[2s] group-hover:scale-110" />
+                  </div>
+                  
+                  <div className="absolute left-6 top-6 transition-all duration-500 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0">
+                    <span className="rounded-full bg-background/90 backdrop-blur px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+                      {art.style}
+                    </span>
+                  </div>
 
-              {!art.available && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                  <span className="rounded-full bg-foreground px-6 py-2 text-[10px] uppercase tracking-[0.3em] font-black text-background">
-                    Déjà Vendu
-                  </span>
+                  {art.status !== 'ON_SALE' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                      <span className="rounded-full bg-foreground px-6 py-2 text-[10px] uppercase tracking-[0.3em] font-black text-background">
+                        Indisponible
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </Link>
 
-            <div className="space-y-4 px-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="font-serif text-2xl tracking-tight group-hover:text-accent transition-colors">{art.title}</h2>
-                  <p className="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-1">
-                    {art.artist}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="h-[1px] w-12 bg-accent/20 transition-all duration-500 group-hover:w-full"></div>
-
-              <div className="flex items-end justify-between">
-                <div className="flex flex-col">
-                   <span className="text-xl font-medium tracking-tight">{currency(art.priceCents)}</span>
-                   <span className="text-[10px] text-foreground/30 uppercase font-bold tracking-tighter">+ livraison {currency(art.shippingCents)}</span>
+              <div className="space-y-4 px-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="font-serif text-2xl tracking-tight group-hover:text-accent transition-colors">{art.title}</h2>
+                    <p className="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-1">
+                      {art.artistName || "Artiste Inconnu"}
+                    </p>
+                  </div>
                 </div>
                 
-                <button
-                  type="button"
-                  disabled={!art.available}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-all duration-500 ${
-                    art.available
-                      ? "bg-foreground text-background hover:bg-accent hover:shadow-lg"
-                      : "cursor-not-allowed opacity-20 bg-foreground/15"
-                  }`}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                </button>
+                <div className="h-[1px] w-12 bg-accent/20 transition-all duration-500 group-hover:w-full"></div>
+
+                <div className="flex items-end justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xl font-medium tracking-tight">
+                        {/* ArtworkResponse doesn't have price, usually it's in the linked product. Placeholder if missing. */}
+                        {formatPrice(0)}
+                    </span>
+                    <span className="text-[10px] text-foreground/30 uppercase font-bold tracking-tighter">+ livraison {formatPrice(0)}</span>
+                  </div>
+                  
+                  <button
+                    type="button"
+                    disabled={art.status !== 'ON_SALE'}
+                    className={`flex h-12 w-12 items-center justify-center rounded-full transition-all duration-500 ${
+                      art.status === 'ON_SALE'
+                        ? "bg-foreground text-background hover:bg-accent hover:shadow-lg"
+                        : "cursor-not-allowed opacity-20 bg-foreground/15"
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                  </button>
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
-      </section>
+            </article>
+          ))}
+        </section>
+      )}
     </div>
   );
 }

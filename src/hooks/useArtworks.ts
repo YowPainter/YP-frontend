@@ -1,45 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { Artwork, FilterParams, PaginatedResponse } from "@/types/artwork";
-import { MOCK_PAGINATED_RESPONSE } from "@/mocks/artworks";
+import { ArtworksService } from "@/lib/services/ArtworksService";
+import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+export interface FilterParams {
+    technique?: string;
+    style?: string;
+    search?: string;
+}
 
-export function useArtworks(filters: FilterParams) {
+export function useArtworks(filters: FilterParams, artistSlug?: string) {
     return useQuery({
-        queryKey: ["artworks", filters],
+        queryKey: ["artworks", filters, artistSlug],
         queryFn: async () => {
-            try {
-                const { data } = await axios.get<PaginatedResponse<Artwork>>(`${API_BASE_URL}/public/artworks`, {
-                    params: filters,
-                });
-                return data;
-            } catch (error) {
-                console.warn("API Error, using mock data", error);
-                // Simulate network delay
-                await new Promise(resolve => setTimeout(resolve, 800));
-
-                // Filter mock data locally for better visualization
-                let filtered = [...MOCK_PAGINATED_RESPONSE.content];
+            if (artistSlug) {
+                // Fetch for specific artist shop
                 if (filters.search) {
-                    const s = filters.search.toLowerCase();
-                    filtered = filtered.filter(a =>
-                        a.title.toLowerCase().includes(s) ||
-                        a.artist.artistName.toLowerCase().includes(s)
-                    );
+                    return await ArtworksService.searchArtworks(artistSlug, filters.search);
                 }
-                if (filters.technique) {
-                    filtered = filtered.filter(a => a.technique === filters.technique);
+                return await ArtworksService.getAllPublicArtworks(artistSlug);
+            } else {
+                // Global search or featured
+                // Fallback to featured for now if no filters, or use search if q provided
+                if (filters.search) {
+                    // For now GlobalSearchService might be better, but let's use searchArtworks with a generic slug or similar if backend supports it.
+                    // Actually, let's use getFeatured if no search is provided.
+                    return await ArtworksService.getFeatured();
                 }
-                if (filters.style) {
-                    filtered = filtered.filter(a => a.style === filters.style);
-                }
-
-                return {
-                    ...MOCK_PAGINATED_RESPONSE,
-                    content: filtered,
-                    totalElements: filtered.length,
-                };
+                return await ArtworksService.getFeatured();
             }
         },
     });

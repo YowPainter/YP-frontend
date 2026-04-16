@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import { useAuthStore, getDashboardRoute } from "@/store/authStore";
+import { useRouter } from "next/navigation";
+import { User, LogOut } from "lucide-react";
 
 function ThemeToggle() {
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -55,6 +59,7 @@ function ThemeToggle() {
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const { user, isAuthenticated, logout } = useAuthStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,8 +109,48 @@ export default function Navbar() {
         {/* Actions (Droite) */}
         <div className="flex-1 flex justify-end items-center gap-4 md:gap-6">
           <ThemeToggle />
-          <Link href="/login" className="text-xs uppercase tracking-[0.4em] font-bold text-foreground/70 border border-foreground/20 px-6 py-2.5 hover:border-accent hover:text-accent transition-all duration-300">Login</Link>
-          <Link href="/register" className={`bg-accent text-white px-8 py-3 text-xs uppercase tracking-[0.4em] font-bold hover:bg-foreground hover:shadow-xl transition-all shadow-md ${scrolled ? 'scale-90 opacity-90' : 'scale-100'}`}>S'inscrire</Link>
+          
+          {isAuthenticated ? (
+            <div className="flex items-center gap-4">
+              <Link 
+                href={getDashboardRoute(user?.role)} 
+                className="flex items-center gap-3 group"
+              >
+                <div className="w-10 h-10 rounded-full border border-foreground/10 overflow-hidden transition-all group-hover:border-accent">
+                  {user?.profilePictureUrl ? (
+                    <Image 
+                      src={user.profilePictureUrl} 
+                      alt="Profile" 
+                      width={40} 
+                      height={40} 
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-foreground/5 text-foreground/40">
+                      <User size={18} />
+                    </div>
+                  )}
+                </div>
+                {!scrolled && (
+                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-foreground/60 group-hover:text-accent">
+                    {user?.firstName || 'Profil'}
+                  </span>
+                )}
+              </Link>
+              <button 
+                onClick={() => logout()}
+                className="p-2 text-foreground/40 hover:text-rose-500 transition-colors"
+                title="Déconnexion"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link href="/login" className="text-xs uppercase tracking-[0.4em] font-bold text-foreground/70 border border-foreground/20 px-6 py-2.5 hover:border-accent hover:text-accent transition-all duration-300">Login</Link>
+              <Link href="/register" className={`bg-accent text-white px-8 py-3 text-xs uppercase tracking-[0.4em] font-bold hover:bg-foreground hover:shadow-xl transition-all shadow-md ${scrolled ? 'scale-90 opacity-90' : 'scale-100'}`}>S&apos;inscrire</Link>
+            </>
+          )}
         </div>
 
       </div>

@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FilterParams } from "@/types/artwork";
-import { useArtworks } from "@/hooks/useArtworks";
+import { useRouter } from "next/navigation";
+import { FilterParams, useArtworks } from "@/hooks/useArtworks";
 import ArtworkGrid from "./components/ArtworkGrid";
 import FilterSidebar from "./components/FilterSidebar";
 import SearchBar from "./components/SearchBar";
-import Pagination from "./components/Pagination";
 import { ChevronRight, Filter } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -18,7 +16,6 @@ interface GalerieClientProps {
 
 export default function GalerieClient({ initialFilters }: GalerieClientProps) {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [filters, setFilters] = useState<FilterParams>(initialFilters);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
@@ -29,7 +26,7 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
     useEffect(() => {
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
-            if (value !== undefined && value !== "" && value !== false && value !== 0) {
+            if (value !== undefined && value !== "" && value !== false) {
                 params.set(key, value.toString());
             }
         });
@@ -38,24 +35,15 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
     }, [filterString, router, filters]);
 
     const handleFilterChange = (newFilters: Partial<FilterParams>) => {
-        setFilters(prev => ({ ...prev, ...newFilters, page: 0 })); // Reset to first page
+        setFilters(prev => ({ ...prev, ...newFilters }));
     };
 
     const handleSearch = (search: string) => {
-        setFilters(prev => ({ ...prev, search, page: 0 }));
-    };
-
-    const handlePageChange = (page: number) => {
-        setFilters(prev => ({ ...prev, page }));
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        setFilters(prev => ({ ...prev, search }));
     };
 
     const handleReset = () => {
-        setFilters({
-            page: 0,
-            size: 12,
-            sort: "createdAt,desc",
-        });
+        setFilters({});
     };
 
     return (
@@ -90,7 +78,7 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
                         <div className="absolute -bottom-2 left-0 w-32 h-[1px] bg-accent"></div>
                     </div>
                     <p className="text-foreground/40 max-w-sm font-light italic text-lg leading-tight">
-                        Explorez notre collection de {data?.totalElements || "..."} œuvres uniques provenant d&apos;artistes du monde entier.
+                        Explorez notre collection d&apos;œuvres uniques provenant d&apos;artistes du monde entier.
                     </p>
                 </div>
             </div>
@@ -144,15 +132,9 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
                     ) : (
                         <>
                             <ArtworkGrid
-                                artworks={data?.content || []}
+                                artworks={data || []}
                                 isLoading={isLoading}
                                 isLoggedIn={false} // Would be dynamic based on auth
-                            />
-
-                            <Pagination
-                                currentPage={filters.page || 0}
-                                totalPages={data?.totalPages || 0}
-                                onPageChange={handlePageChange}
                             />
                         </>
                     )}

@@ -1,16 +1,44 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { AnimatedBlob } from "@/components/ui/AnimatedBlob";
+import { useAuthStore, getDashboardRoute } from "@/store/authStore";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const login = useAuthStore((state) => state.login);
+  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const user = await login({ email, password });
+      router.push(getDashboardRoute(user.role));
+    } catch (err: any) {
+      setError(err.message || "Une erreur est survenue lors de la connexion.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-full canvas-texture canvas-grain overflow-hidden">
       
       {/* Côté Gauche: Visuel Artistique */}
       <div className="hidden lg:flex relative w-1/2 flex-col justify-between p-12 overflow-hidden bg-black">
-        {/* L'Image d'Art en arrière-plan avec un overlay subtil */}
+        {/* L'Image d'Art en arrière-plan with a subtle overlay */}
         <div className="absolute inset-0 z-0">
           <Image 
             src="/images/login-art.png" 
@@ -49,7 +77,7 @@ export default function LoginPage() {
 
       {/* Côté Droit: Formulaire */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 sm:px-12 lg:px-20 relative">
-        {/* Éléments artistiques sur le côté formulaire */}
+        {/* Éléments artistiques on the form side */}
         <div className="absolute top-10 right-10 w-32 h-32 text-accent/10 pointer-events-none">
            <svg viewBox="0 0 100 100" fill="currentColor"><path d="M0 100 L100 0 L100 100 Z" /></svg>
         </div>
@@ -65,32 +93,62 @@ export default function LoginPage() {
             <p className="text-foreground/50 font-light italic">Heureux de vous revoir parmi nous.</p>
           </div>
 
-          <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-8" onSubmit={handleSubmit}>
+            {error && (
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs uppercase tracking-widest font-bold">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-2 group">
-              <label className="text-[10px] uppercase tracking-[0.3em] font-bold text-foreground/40 group-focus-within:text-accent transition-colors">Adresse Email</label>
+              <label className="text-[10px] uppercase tracking-[0.3em] font-bold text-foreground/40 group-focus-within:text-accent transition-colors px-4">Adresse Email</label>
               <input 
                 type="email" 
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="nom@exemple.com"
                 className="w-full bg-transparent border-b border-foreground/10 py-4 px-4 outline-none focus:border-accent transition-all text-xl font-light tracking-tight placeholder:text-foreground/10"
               />
             </div>
 
-            <div className="space-y-2 group">
+            <div className="space-y-2 group relative">
               <div className="flex justify-between items-center px-4">
                 <label className="text-[10px] uppercase tracking-[0.3em] font-bold text-foreground/40 group-focus-within:text-accent transition-colors">Mot de passe</label>
                 <Link href="#" className="text-[10px] uppercase tracking-[0.3em] font-bold text-accent hover:text-foreground transition-colors">Oublié ?</Link>
               </div>
-              <input 
-                type="password" 
-                placeholder="••••••••"
-                className="w-full bg-transparent border-b border-foreground/10 py-4 px-4 outline-none focus:border-accent transition-all text-xl font-light tracking-tight placeholder:text-foreground/10"
-              />
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-transparent border-b border-foreground/10 py-4 px-4 pr-12 outline-none focus:border-accent transition-all text-xl font-light tracking-tight placeholder:text-foreground/10"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/20 hover:text-accent transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
             <div className="pt-8">
-              <button className="w-full bg-foreground text-background py-5 px-8 text-xs uppercase tracking-[0.4em] font-bold hover:bg-accent hover:shadow-[0_20px_50px_rgba(var(--accent-rgb),0.3)] transition-all duration-500 shadow-xl group flex items-center justify-center gap-4">
-                Se Connecter
-                <span className="text-xl transition-transform group-hover:translate-x-2">&rarr;</span>
+              <button 
+                disabled={loading}
+                className="w-full bg-foreground text-background py-5 px-8 text-xs uppercase tracking-[0.4em] font-bold hover:bg-accent hover:shadow-[0_20px_50px_rgba(var(--accent-rgb),0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 shadow-xl group flex items-center justify-center gap-4"
+              >
+                {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <>
+                    Se Connecter
+                    <span className="text-xl transition-transform group-hover:translate-x-2">&rarr;</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
