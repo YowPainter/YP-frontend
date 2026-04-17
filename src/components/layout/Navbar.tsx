@@ -58,6 +58,7 @@ function ThemeToggle() {
 }
 
 export default function Navbar() {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
 
@@ -137,7 +138,10 @@ export default function Navbar() {
                 )}
               </Link>
               <button 
-                onClick={() => logout()}
+                onClick={() => {
+                  logout();
+                  router.push("/");
+                }}
                 className="p-2 text-foreground/40 hover:text-rose-500 transition-colors"
                 title="Déconnexion"
               >

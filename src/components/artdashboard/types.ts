@@ -1,5 +1,5 @@
 export type Work = {
-  id: number;
+  id: string;
   title: string;
   type: 'image' | 'video';
   bg: string;
@@ -13,7 +13,7 @@ export type Work = {
 };
 
 export type Article = {
-  id: number;
+  id: string;
   title: string;
   type: string;
   price: string;
