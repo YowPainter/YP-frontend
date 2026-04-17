@@ -90,9 +90,9 @@ export function EventGrid({ initialEvents, artistId }: EventGridProps) {
                         </h2>
                         <div className="w-12 h-[1px] bg-accent/40"></div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {regularEvents.map((event) => (
-                            <EventCard key={event.id} event={event} />
+                            <EventCard key={event.id} event={event} variant="featured" />
                         ))}
                     </div>
                 </div>

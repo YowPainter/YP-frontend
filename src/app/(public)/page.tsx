@@ -213,6 +213,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 2.5 AGENDA CULTUREL: Événements & Vernissages */}
+      <section className="w-full max-w-[1400px] mx-auto px-6 sm:px-12 mt-32 relative z-10">
+        <div className="bg-accent/5 dark:bg-accent/10 rounded-[3rem] p-12 md:p-20 relative overflow-hidden border border-accent/10">
+          {/* Animated background element for this section */}
+          <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-accent/20 blur-[100px] z-0 animate-pulse"></div>
+          
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
+            <div className="max-w-2xl">
+              <p className="text-accent uppercase tracking-[0.4em] text-xs font-bold mb-6 flex items-center gap-4">
+                <span className="w-8 h-[1px] bg-accent"></span> Événements à venir
+              </p>
+              <h2 className="font-serif text-5xl md:text-7xl font-light mb-8 leading-tight tracking-tighter">
+                Vivez l'art en <br />
+                <span className="italic font-normal">direct.</span>
+              </h2>
+              <p className="text-xl text-foreground/60 font-light leading-relaxed mb-10">
+                Vernissages exclusifs, ateliers de peinture et masterclasses en ligne. 
+                Ne manquez aucune opportunité de rencontrer vos artistes préférés.
+              </p>
+              <Link 
+                href="/events" 
+                className="inline-flex items-center gap-6 px-10 py-5 bg-foreground text-background rounded-full font-bold text-xs uppercase tracking-[0.3em] hover:bg-accent hover:text-white transition-all duration-500 shadow-xl group"
+              >
+                Découvrir l'agenda
+                <span className="text-xl transition-transform group-hover:translate-x-3">&rarr;</span>
+              </Link>
+            </div>
+
+            {/* Visual element: Abstract ticket/card stack */}
+            <div className="relative w-full lg:w-1/3 aspect-square flex items-center justify-center">
+              <div className="absolute w-[280px] h-[400px] bg-white dark:bg-white/10 border border-foreground/5 dark:border-white/10 rounded-2xl rotate-[-6deg] shadow-2xl transition-transform hover:rotate-[-2deg] duration-700"></div>
+              <div className="absolute w-[280px] h-[400px] bg-accent dark:bg-accent/80 border border-white/20 rounded-2xl rotate-[6deg] translate-x-4 shadow-xl transition-transform hover:rotate-[2deg] duration-700 flex flex-col justify-end p-8 text-white">
+                <p className="text-[10px] uppercase tracking-widest font-black mb-2 opacity-60">Vernissage VIP</p>
+                <p className="font-serif text-3xl font-light mb-4 leading-none">Ombres et Lumières 2024</p>
+                <div className="w-12 h-[1px] bg-white opacity-40"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 3. LE HUB DES ARTISTES: Présentation solennelle & Annuaire */}
       <section className="relative z-10 w-full bg-foreground text-background mt-24 py-20 px-6 sm:px-12 overflow-hidden">
         {/* Tâche de peinture abstraite très foncée pour casser le bloc solide */}

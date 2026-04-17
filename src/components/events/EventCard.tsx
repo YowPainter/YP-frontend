@@ -90,7 +90,7 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
                         </div>
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-85 group-hover:opacity-95 transition-opacity duration-500" />
                         
-                        <div className="absolute inset-x-0 bottom-0 px-10 pb-16 pt-20 flex flex-col text-white z-10 transition-transform duration-500 group-hover:-translate-y-2">
+                        <div className="absolute inset-x-0 bottom-0 px-10 pb-16 pt-20 flex flex-col items-center text-center text-white z-10 transition-transform duration-500 group-hover:-translate-y-2">
                             {/* Status Badge */}
                             <div className="absolute top-8 right-8">
                                 <span className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] font-bold bg-accent text-white border border-accent/20 shadow-lg">
@@ -101,17 +101,18 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
                             </div>
 
                             {isSoldOut && (
-                                <div className="mb-6 inline-block bg-red-600 text-white px-4 py-1.5 text-[11px] uppercase tracking-[0.25em] font-bold w-max shadow-lg">
+                                <div className="mb-6 inline-block bg-red-600 text-white px-4 py-1.5 text-[11px] uppercase tracking-[0.25em] font-bold w-max shadow-lg self-center">
                                     COMPLET
                                 </div>
                             )}
 
-                            <h3 className="font-serif text-3xl md:text-5xl lg:text-6xl font-light mb-6 uppercase leading-[1.1] group-hover:text-accent transition-colors drop-shadow-md">
+                            <h3 className="font-serif text-xl md:text-2xl lg:text-4xl font-light mb-6 uppercase leading-[1.1] group-hover:text-accent transition-colors drop-shadow-md max-w-[90%] mx-auto">
                                 {event.title}
                             </h3>
-                            <p className="text-[11px] uppercase tracking-[0.4em] text-white/80 flex items-center gap-3">
+                            <p className="text-[11px] uppercase tracking-[0.4em] text-white/80 flex items-center justify-center gap-3">
                                 <span className="w-8 h-[1px] bg-accent"></span>
                                 ARTISTE • <span className="font-bold text-white">{event.artistName}</span>
+                                <span className="w-8 h-[1px] bg-accent"></span>
                             </p>
                         </div>
                     </div>
@@ -186,14 +187,15 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
                 </div>
 
                 {/* BOTTOM: Text */}
-                <div style={bottomMask} className="px-8 pb-10 pt-12 flex flex-col flex-grow bg-background relative z-10 border border-foreground/5">
+                <div style={bottomMask} className="px-8 pb-10 pt-12 flex flex-col items-center text-center flex-grow bg-background relative z-10 border border-foreground/5">
                     <div className="mb-6 flex-grow">
                         <h3 className="font-serif text-xl font-medium leading-[1.3] group-hover:text-accent transition-colors uppercase tracking-tight">
                             {event.title}
                         </h3>
-                        <p className="text-[9px] uppercase tracking-[0.3em] text-foreground/40 mt-5 flex items-center gap-2">
+                        <p className="text-[9px] uppercase tracking-[0.3em] text-foreground/40 mt-5 flex items-center justify-center gap-2">
                             <span className="w-4 h-[1px] bg-accent"></span>
                             <span className="font-bold text-foreground/70">{event.artistName}</span>
+                            <span className="w-4 h-[1px] bg-accent"></span>
                         </p>
                     </div>
 
