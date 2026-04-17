@@ -44,15 +44,17 @@ export default function ArtworkCard({ artwork, isLoggedIn = false }: ArtworkCard
         ? description
         : description.slice(0, descriptionLimit) + (isLongDescription ? "..." : "");
 
-    // Placeholder slug if not available from API
-    const artistSlug = "artist-placeholder";
+    // Smart Linking: Priorité à l'ID de l'artiste, l'architecture multi-tenant utilisera cet ID comme slug de base.
+    const tenantSlug = artwork.artistId || 'gallery';
+    const artistPath = `/${tenantSlug}`;
+    const detailPath = `${artistPath}/gallery/${artwork.id}`;
 
     return (
         <div className="group relative flex flex-col reveal h-full">
             {/* Container Image */}
             <div className="relative aspect-square md:aspect-[3/4] overflow-hidden bg-foreground/5 art-frame cursor-pointer mb-6">
                 <Link
-                    href={`/artworks/${artwork.id}`}
+                    href={detailPath}
                     className="absolute inset-0"
                 >
                     <Image
@@ -66,8 +68,8 @@ export default function ArtworkCard({ artwork, isLoggedIn = false }: ArtworkCard
 
                 {/* Artist Info Top Left */}
                 <Link
-                    href={`/artists/${artwork.artistId || artistSlug}`}
-                    className="absolute top-4 left-4 z-20 flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-full py-1.5 pl-1.5 pr-4 border border-white/20 hover:bg-white/20 transition-all"
+                    href={artistPath}
+                    className="absolute top-4 left-4 z-20 flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-full py-1.5 pl-1.5 pr-4 border border-white/20 hover:bg-white/20 transition-all shadow-lg"
                 >
                     <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/40">
                         <Image
@@ -90,15 +92,12 @@ export default function ArtworkCard({ artwork, isLoggedIn = false }: ArtworkCard
                         </span>
                     </div>
                 )}
-
-                {/* Overlay au survol */}
-                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             </div>
 
             {/* Détails */}
             <div className="flex flex-col gap-3 flex-1">
                 <div className="flex justify-between items-start">
-                    <Link href={`/artworks/${artwork.id}`} className="flex-1 mr-4">
+                    <Link href={detailPath} className="flex-1 mr-4">
                         <h3 className="font-serif text-2xl font-medium tracking-tight group-hover:text-accent transition-colors">
                             {artwork.title}
                         </h3>
@@ -114,29 +113,10 @@ export default function ArtworkCard({ artwork, isLoggedIn = false }: ArtworkCard
                             <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
                             <span className="text-xs font-bold">{localLikes}</span>
                         </button>
-                        <div className="flex items-center gap-1.5 text-foreground/40">
-                            <MessageSquare className="w-4 h-4" />
-                            <span className="text-xs font-bold">0</span> {/* Placeholder for comments */}
-                        </div>
                     </div>
                 </div>
 
-                {/* Description */}
-                <div className="flex flex-col gap-1">
-                    <p className="text-sm text-foreground/60 font-light leading-relaxed">
-                        {displayDescription}
-                    </p>
-                    {isLongDescription && (
-                        <button
-                            onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                            className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-foreground transition-colors text-left"
-                        >
-                            {isDescriptionExpanded ? "Voir moins" : "Voir plus"}
-                        </button>
-                    )}
-                </div>
-
-                {/* Bottom Row (Technique/Style) */}
+                {/* Technique/Style Row */}
                 <div className="mt-auto pt-4 flex items-center justify-between border-t border-foreground/5 text-[10px] uppercase tracking-[0.2em] font-bold text-foreground/30">
                     <span>{artwork.technique}</span>
                     <span className="text-accent/30">•</span>

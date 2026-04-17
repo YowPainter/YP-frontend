@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { LogOut, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Skeleton, SkeletonCircle } from '@/components/ui/Skeleton'
+import { formatPrice } from '@/lib/utils'
 
 /* ─────────────────────────────────────────────
    TYPES
@@ -555,7 +556,7 @@ export default function AmateurDashboardPage() {
     id: ord.id!,
     title: ord.items?.[0]?.productName || 'Commande Art',
     articleType: 'Article',
-    price: `${ord.totalAmount} €`,
+    price: formatPrice(ord.totalAmount || 0),
     bg: GRADIENTS[idx % GRADIENTS.length],
     handleColor: '#6a6058',
     artist: 'Artiste Yow',

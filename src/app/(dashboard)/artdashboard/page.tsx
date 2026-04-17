@@ -85,9 +85,9 @@ export default function ArtistDashboardPage() {
 
   // 2. Œuvres
   const { data: worksData, isLoading: isArtworksLoading } = useQuery({
-    queryKey: ['artist-works', (user as any)?.slug],
-    queryFn: () => ArtworksService.getAllPublicArtworks((user as any).slug),
-    enabled: !!(user as any)?.slug,
+    queryKey: ['artist-works', user?.id],
+    queryFn: () => ArtworksService.getMyArtworks(),
+    enabled: !!user,
   })
 
   // 3. Articles (Inventory)
@@ -99,9 +99,9 @@ export default function ArtistDashboardPage() {
 
   // 4. Événements
   const { data: eventsData, isLoading: isEventsLoading } = useQuery({
-    queryKey: ['artist-events', (user as any)?.id],
-    queryFn: () => EventsService.getEventsByArtist((user as any).id),
-    enabled: !!(user as any)?.id,
+    queryKey: ['artist-events', user?.id],
+    queryFn: () => EventsService.getMyEvents(),
+    enabled: !!user,
   })
 
   const WORKS: Work[] = (worksData || []).map((w, index) => ({
