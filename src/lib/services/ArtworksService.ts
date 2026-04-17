@@ -236,6 +236,17 @@ export class ArtworksService {
         });
     }
     /**
+     * Recuperer les oeuvres récentes (tous artistes confondus)
+     * @returns ArtworkResponse OK
+     * @throws ApiError
+     */
+    public static getLatestArtworks(): CancelablePromise<Array<ArtworkResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/public/artworks/latest',
+        });
+    }
+    /**
      * Recuperer les oeuvres mises en avant
      * @returns ArtworkResponse OK
      * @throws ApiError
@@ -244,6 +255,17 @@ export class ArtworksService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/public/artworks/featured',
+        });
+    }
+    /**
+     * Lister mes oeuvres (Artiste - Dashboard)
+     * @returns ArtworkResponse OK
+     * @throws ApiError
+     */
+    public static getMyArtworks(): CancelablePromise<Array<ArtworkResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/artworks/me',
         });
     }
     /**

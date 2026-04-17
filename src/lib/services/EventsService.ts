@@ -121,6 +121,23 @@ export class EventsService {
         });
     }
     /**
+     * Lister les événements d'un artiste spécifique par slug
+     * @param artistSlug
+     * @returns EventResponse OK
+     * @throws ApiError
+     */
+    public static getEventsByArtistSlug(
+        artistSlug: string,
+    ): CancelablePromise<Array<EventResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/public/{artistSlug}/events',
+            path: {
+                'artistSlug': artistSlug,
+            },
+        });
+    }
+    /**
      * Lister les evenements a venir
      * @returns EventResponse OK
      * @throws ApiError
@@ -177,7 +194,7 @@ export class EventsService {
         });
     }
     /**
-     * Lister les événements d'un artiste spécifique
+     * Lister les événements d'un artiste spécifique par ID
      * @param artistId
      * @returns EventResponse OK
      * @throws ApiError
@@ -208,6 +225,17 @@ export class EventsService {
             path: {
                 'id': id,
             },
+        });
+    }
+    /**
+     * Lister mes événements (Artiste - Dashboard)
+     * @returns EventResponse OK
+     * @throws ApiError
+     */
+    public static getMyEvents(): CancelablePromise<Array<EventResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/events/me',
         });
     }
 }

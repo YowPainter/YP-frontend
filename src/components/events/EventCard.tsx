@@ -1,13 +1,12 @@
-// components/events/EventCard.tsx
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Event } from '@/lib/types/event';
+import type { EventResponse } from '@/lib/models/EventResponse';
 
 interface EventCardProps {
-    event: Event;
+    event: EventResponse;
     variant?: 'grid' | 'featured';
 }
 
@@ -43,9 +42,10 @@ const DottedLine = ({ className }: { className?: string }) => (
 );
 
 export function EventCard({ event, variant = 'grid' }: EventCardProps) {
-    const [imgSrc, setImgSrc] = useState(event.posterUrl);
+    const [imgSrc, setImgSrc] = useState(event.posterUrl || '/images/placeholder.png');
 
-    const formatDateShort = (dateStr: string) => {
+    const formatDateShort = (dateStr?: string) => {
+        if (!dateStr) return 'N/A';
         const date = new Date(dateStr);
         return new Intl.DateTimeFormat('fr-FR', {
             day: '2-digit',
@@ -53,11 +53,15 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
         }).format(date).toUpperCase();
     };
 
-    const isSoldOut = event.maxAttendees
-        ? event.currentAttendees >= event.maxAttendees
+    const isSoldOut = event.maxCapacity && event.reservedCount
+        ? event.reservedCount >= event.maxCapacity
         : false;
 
-    // Masques CSS pour les trous "Billet" (plus larges)
+    // Smart Linking: Si l'ID est manquant, on utilise 'gallery', sinon on utilise l'ID (qui sert de slug par défaut)
+    const tenantSlug = event.artistId || 'gallery';
+    const detailLink = `/${tenantSlug}/events/${event.id}`;
+
+    // Masques CSS pour les trous "Billet"
     const topMask = {
         WebkitMaskImage: "radial-gradient(circle at bottom left, transparent 20px, black 21px), radial-gradient(circle at bottom right, transparent 20px, black 21px)",
         WebkitMaskSize: "51% 100%",
@@ -74,17 +78,17 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
 
     if (variant === 'featured') {
         return (
-            <Link href={`/events/${event.id}`}>
-                <div className="group flex flex-col h-full bg-transparent hover:-translate-y-2 transition-all duration-500 will-change-transform drop-shadow-[0_15px_40px_rgba(0,0,0,0.12)] dark:drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:drop-shadow-[0_25px_50px_rgba(0,0,0,0.2)] dark:hover:drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
+            <Link href={detailLink}>
+                <div className="group flex flex-col h-full bg-transparent hover:-translate-y-2 transition-all duration-500 will-change-transform drop-shadow-[0_15px_40px_rgba(0,0,0,0.12)]">
                     
                     {/* TOP: Image & Title Layer */}
                     <div style={topMask} className="relative w-full min-h-[500px] overflow-visible bg-background border border-foreground/5">
                         <div className="absolute inset-0 overflow-hidden">
                             <Image
                                 src={imgSrc}
-                                alt={event.title}
+                                alt={event.name || ''}
                                 fill
-                                className="object-cover group-hover:scale-110 transition-transform duration-[2s] ease-[cubic-bezier(0.25,1,0.5,1)]"
+                                className="object-cover group-hover:scale-110 transition-transform duration-[2s]"
                                 onError={() => setImgSrc('https://images.unsplash.com/photo-1579710838505-4cfa69f0bd2c?w=800&q=80')}
                             />
                         </div>
@@ -94,9 +98,7 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
                             {/* Status Badge */}
                             <div className="absolute top-8 right-8">
                                 <span className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] font-bold bg-accent text-white border border-accent/20 shadow-lg">
-                                    {event.eventType === 'FREE' ? 'GRATUIT' :
-                                        event.eventType === 'PAID' ? `${event.price?.toLocaleString()} CFA` :
-                                            'PRIVÉ'}
+                                    {event.ticketPrice && event.ticketPrice > 0 ? `${event.ticketPrice.toLocaleString()} CFA` : 'GRATUIT'}
                                 </span>
                             </div>
 
@@ -106,13 +108,12 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
                                 </div>
                             )}
 
-                            <h3 className="font-serif text-xl md:text-2xl lg:text-4xl font-light mb-6 uppercase leading-[1.1] group-hover:text-accent transition-colors drop-shadow-md max-w-[90%] mx-auto">
-                                {event.title}
+                            <h3 className="font-serif text-3xl md:text-5xl lg:text-6xl font-light mb-6 uppercase leading-[1.1] group-hover:text-accent transition-colors">
+                                {event.name}
                             </h3>
                             <p className="text-[11px] uppercase tracking-[0.4em] text-white/80 flex items-center justify-center gap-3">
                                 <span className="w-8 h-[1px] bg-accent"></span>
-                                ARTISTE • <span className="font-bold text-white">{event.artistName}</span>
-                                <span className="w-8 h-[1px] bg-accent"></span>
+                                ÉVÉNEMENT • <span className="font-bold text-white uppercase italic">{tenantSlug.replace('/', '')}</span>
                             </p>
                         </div>
                     </div>
@@ -132,11 +133,11 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
                         <div className="grid grid-cols-2 gap-8 font-mono text-sm text-foreground/80">
                             <div className="flex flex-col border-l-2 border-accent/20 pl-4">
                                 <span className="text-[10px] text-foreground/40 mb-2 tracking-[0.3em] uppercase">DATE DE L'ÉVÉNEMENT</span>
-                                <span className="font-medium text-lg text-foreground tracking-tight">{formatDateShort(event.startDate)}</span>
+                                <span className="font-medium text-lg text-foreground tracking-tight">{formatDateShort(event.startDateTime)}</span>
                             </div>
                             <div className="flex flex-col text-right border-r-2 border-foreground/5 pr-4">
                                 <span className="text-[10px] text-foreground/40 mb-2 tracking-[0.3em] uppercase">LIEU / VILLE</span>
-                                <span className="font-medium text-lg text-foreground tracking-tight">{event.location.split(',')[0]}</span>
+                                <span className="font-medium text-lg text-foreground tracking-tight">{event.location?.split(',')[0]}</span>
                             </div>
                         </div>
                     </div>
@@ -147,25 +148,23 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
 
     // Grid Variant
     return (
-        <Link href={`/events/${event.id}`}>
-            <div className="group flex flex-col h-full bg-transparent hover:-translate-y-2 transition-all duration-500 will-change-transform drop-shadow-[0_10px_25px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_15px_35px_rgba(0,0,0,0.3)] hover:drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)] dark:hover:drop-shadow-[0_25px_45px_rgba(0,0,0,0.4)]">
+        <Link href={detailLink}>
+            <div className="group flex flex-col h-full bg-transparent hover:-translate-y-2 transition-all duration-500 will-change-transform drop-shadow-[0_10px_25px_rgba(0,0,0,0.08)]">
                 
                 {/* TOP: Image */}
                 <div style={topMask} className="relative w-full aspect-square overflow-hidden bg-background border border-foreground/5">
                     <Image
                         src={imgSrc}
-                        alt={event.title}
+                        alt={event.name || ''}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-[cubic-bezier(0.25,1,0.5,1)] grayscale-[20%] group-hover:grayscale-0"
+                        className="object-cover group-hover:scale-105 transition-transform duration-[1.5s] grayscale-[20%] group-hover:grayscale-0"
                         onError={() => setImgSrc('https://images.unsplash.com/photo-1579710838505-4cfa69f0bd2c?w=800&q=80')}
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
                     
                     <div className="absolute top-4 right-4">
                         <span className="px-3 py-1.5 text-[9px] uppercase tracking-widest font-bold bg-accent text-white border border-white/10 backdrop-blur-md shadow-md">
-                            {event.eventType === 'FREE' ? 'GRATUIT' :
-                                event.eventType === 'PAID' ? `${event.price?.toLocaleString()} CFA` :
-                                    'PRIVÉ'}
+                            {event.ticketPrice && event.ticketPrice > 0 ? `${event.ticketPrice.toLocaleString()} CFA` : 'GRATUIT'}
                         </span>
                     </div>
 
@@ -190,23 +189,22 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
                 <div style={bottomMask} className="px-8 pb-10 pt-12 flex flex-col items-center text-center flex-grow bg-background relative z-10 border border-foreground/5">
                     <div className="mb-6 flex-grow">
                         <h3 className="font-serif text-xl font-medium leading-[1.3] group-hover:text-accent transition-colors uppercase tracking-tight">
-                            {event.title}
+                            {event.name}
                         </h3>
                         <p className="text-[9px] uppercase tracking-[0.3em] text-foreground/40 mt-5 flex items-center justify-center gap-2">
                             <span className="w-4 h-[1px] bg-accent"></span>
-                            <span className="font-bold text-foreground/70">{event.artistName}</span>
-                            <span className="w-4 h-[1px] bg-accent"></span>
+                            <span className="font-bold text-foreground/70 uppercase">{tenantSlug.replace('/', '')}</span>
                         </p>
                     </div>
 
                     <div className="mt-auto grid grid-cols-2 gap-4 pb-2">
                         <div className="flex flex-col border-l border-foreground/10 pl-3">
                             <span className="text-[8px] uppercase tracking-widest text-foreground/30 mb-1">DATE</span>
-                            <span className="text-[12px] font-medium font-mono text-foreground">{formatDateShort(event.startDate)}</span>
+                            <span className="text-[12px] font-medium font-mono text-foreground">{formatDateShort(event.startDateTime)}</span>
                         </div>
                         <div className="flex flex-col text-right border-r border-foreground/10 pr-3">
                             <span className="text-[8px] uppercase tracking-widest text-foreground/30 mb-1">LIEU</span>
-                            <span className="text-[12px] font-medium font-mono text-foreground truncate">{event.location.split(',')[0]}</span>
+                            <span className="text-[12px] font-medium font-mono text-foreground truncate">{event.location?.split(',')[0]}</span>
                         </div>
                     </div>
                 </div>

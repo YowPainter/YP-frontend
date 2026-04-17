@@ -11,40 +11,40 @@ import { AnimatedBlob } from '@/components/ui/AnimatedBlob'
 import { AbstractShapes } from '@/components/ui/AbstractShapes'
 import Link from 'next/link'
 import { LogOut, User } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Skeleton, SkeletonCircle } from '@/components/ui/Skeleton'
+import { Work, Article } from '@/components/artdashboard/types'
 
-/* ── Types ── */
-export type Work = {
-  id: number; title: string; type: 'image' | 'video'; bg: string
-  duration?: string; likes: number; comments: number; shares: number
-  date: string; desc: string; tags: string[]
+import { useQuery } from '@tanstack/react-query'
+import { ArtistsService } from '@/lib/services/ArtistsService'
+import { ArtworksService } from '@/lib/services/ArtworksService'
+import { ShopOrdersService } from '@/lib/services/ShopOrdersService'
+import { EventsService } from '@/lib/services/EventsService'
+
+
+/* ─────────────────────────────────────────────
+   STATUS BADGE
+ ───────────────────────────────────────────── */
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    'livré':    'bg-emerald-50 text-emerald-700',
+    'expédié':  'bg-sky-50 text-sky-700',
+    'en cours': 'bg-amber-50 text-amber-700',
+    'en attente': 'bg-rose-50 text-rose-700',
+  }
+  return (
+    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${map[status] || 'bg-gray-50 text-gray-700'}`}>
+      {status}
+    </span>
+  )
 }
-export type Article = {
-  id: number; title: string; type: string; price: string; sold: boolean
-  bg: string; handleColor: string; likes: number; comments: number
-  shares: number; date: string; desc: string; tags: string[]
-}
 
-/* ── Données ── */
-const WORKS: Work[] = [
-  { id:1, title:'Série Rouge #3',  type:'image', bg:'linear-gradient(135deg,#e8c4a0,#c8804a)', likes:342, comments:28, shares:14, date:'18 mars 2025', desc:'Troisième volet de ma série Rouge, explorant les contrastes chauds et la tension entre la matière et le vide. Huile sur toile, 80×80 cm.', tags:['#expressionnisme','#huile','#rouge','#serie'] },
-  { id:2, title:'Silence bleu',    type:'image', bg:'linear-gradient(135deg,#a8c4d0,#5888a8)', likes:218, comments:19, shares:9,  date:'2 mars 2025',  desc:"Une méditation sur le silence. Les bleus se superposent en fines couches, créant une profondeur qui invite à l\u2019introspection. Acrylique, 60×90 cm.", tags:['#acrylique','#bleu','#silence','#meditation'] },
-  { id:3, title:"L\u2019aube",     type:'video', bg:'linear-gradient(135deg,#d4c4b8,#9a7060)', duration:'2:14', likes:197, comments:34, shares:21, date:'15 fév. 2025', desc:"Timelapse de la création de cette toile, du premier geste au dernier trait. Peinture disponible à l\u2019acquisition.", tags:['#timelapse','#process','#aube'] },
-  { id:4, title:'Printemps #1',    type:'image', bg:'linear-gradient(135deg,#c8d4a0,#7a9850)', likes:154, comments:12, shares:7,  date:'1 fév. 2025',  desc:'Premier tableau de la série Printemps. Légèreté des verts nouveaux. Huile sur toile de lin, 50×70 cm.', tags:['#printemps','#vert','#nature','#huile'] },
-  { id:5, title:'Nocturne',        type:'image', bg:'linear-gradient(135deg,#dcc8e0,#9870a8)', likes:143, comments:22, shares:11, date:'12 jan. 2025', desc:'La nuit comme espace mental. Les violets et les gris se fondent dans une atmosphère de veille. Technique mixte, 70×100 cm.', tags:['#nuit','#violet','#nocturne'] },
-  { id:6, title:'Étude #7',        type:'video', bg:'linear-gradient(135deg,#f0deb8,#c89850)', duration:'1:45', likes:128, comments:9, shares:5, date:'3 jan. 2025', desc:"Étude préparatoire filmée. J\u2019explore les textures à la spatule sur fond ocre.", tags:['#etude','#spatule','#ocre'] },
-  { id:7, title:'Reflet #2',       type:'image', bg:'linear-gradient(135deg,#b8d8e0,#4878a0)', likes:112, comments:17, shares:8,  date:'20 déc. 2024', desc:"Deuxième étude sur le motif du reflet. L\u2019eau comme miroir déformant, glacis à l\u2019acrylique.", tags:['#eau','#reflet','#acrylique'] },
-  { id:8, title:'Lumière #4',      type:'image', bg:'linear-gradient(135deg,#e8d0b0,#b87840)', likes:98,  comments:8,  shares:4,  date:'10 déc. 2024', desc:"La lumière de fin d\u2019après-midi dans une palette chaude. Quatrième variation sur la lumière naturelle.", tags:['#lumiere','#chaud','#atelier'] },
-]
-
-const ARTICLES: Article[] = [
-  { id:1, title:'Série Rouge #3',  type:'Impression',      price:'85 €',    sold:false, bg:'linear-gradient(135deg,#e8c4a0,#c8804a)', handleColor:'#7a5030', likes:45, comments:6,  shares:3, date:'20 mars 2025', desc:'Reproduction fine art sur papier Hahnemühle 310g. Format 40×40 cm. Signée et numérotée à 30 ex.', tags:['#fineart','#impression','#limitee'] },
-  { id:2, title:'Silence bleu',    type:'Toile originale', price:'1 200 €', sold:true,  bg:'linear-gradient(135deg,#a8c4d0,#5888a8)', handleColor:'#6a6058', likes:38, comments:12, shares:8, date:'5 mars 2025',  desc:"La toile originale, acrylique sur toile de lin. 60×90 cm. Certificat d\u2019authenticité inclus.", tags:['#original','#acrylique','#vendu'] },
-  { id:3, title:"L\u2019aube",     type:'Carnet',          price:'22 €',    sold:false, bg:'linear-gradient(135deg,#d4c4b8,#9a7060)', handleColor:'#8a6840', likes:29, comments:4,  shares:2, date:'18 fév. 2025', desc:'Carnet couverture rigide. 120 pages blanc crème, 14×20 cm.', tags:['#carnet','#papeterie','#cadeau'] },
-  { id:4, title:'Printemps #1',    type:'Toile originale', price:'900 €',   sold:true,  bg:'linear-gradient(135deg,#c8d4a0,#7a9850)', handleColor:'#587030', likes:52, comments:9,  shares:6, date:'3 fév. 2025',  desc:"Huile sur toile de lin, 50×70 cm. Certificat d\u2019authenticité. Collection privée.", tags:['#original','#huile','#vendu'] },
-  { id:5, title:'Nocturne',        type:'Tote bag',        price:'35 €',    sold:false, bg:'linear-gradient(135deg,#dcc8e0,#9870a8)', handleColor:'#7a5888', likes:33, comments:5,  shares:3, date:'15 jan. 2025', desc:'Tote bag en coton bio 340g, impression recto. Format 38×42 cm, anses longues. Produit en France.', tags:['#totebag','#bio','#mode'] },
-  { id:6, title:'Étude #7',        type:'Affiche A3',      price:'45 €',    sold:false, bg:'linear-gradient(135deg,#f0deb8,#c89850)', handleColor:'#906820', likes:27, comments:3,  shares:2, date:'8 jan. 2025',  desc:'Affiche A3 sur papier mat 200g. Impression numérique haute qualité.', tags:['#affiche','#A3','#decoration'] },
-  { id:7, title:'Reflet #2',       type:'Impression',      price:'65 €',    sold:false, bg:'linear-gradient(135deg,#b8d8e0,#4878a0)', handleColor:'#306880', likes:21, comments:2,  shares:1, date:'22 déc. 2024', desc:'Tirage fine art 30×45 cm, papier brillant 300g. Numéroté à 20 ex. Signé.', tags:['#fineart','#tirage','#numerote'] },
-  { id:8, title:'Lumière #4',      type:'Toile originale', price:'750 €',   sold:true,  bg:'linear-gradient(135deg,#e8d0b0,#b87840)', handleColor:'#906030', likes:44, comments:7,  shares:5, date:'12 déc. 2024', desc:"Huile sur toile, 50×50 cm. Certificat d\u2019authenticité inclus.", tags:['#original','#huile','#vendu'] },
+const GRADIENTS = [
+  'linear-gradient(135deg,#e8c4a0,#c8804a)',
+  'linear-gradient(135deg,#a8c4d0,#5888a8)',
+  'linear-gradient(135deg,#d4c4b8,#9a7060)',
+  'linear-gradient(135deg,#c8d4a0,#7a9850)',
+  'linear-gradient(135deg,#dcc8e0,#9870a8)',
 ]
 
 /* ── Petits composants inline ── */
@@ -67,16 +67,71 @@ function CreateBtn({ label }: { label: string }) {
   )
 }
 
-/* ── Page ── */
 export default function ArtistDashboardPage() {
+  const router = useRouter()
+  const { user, logout } = useAuthStore()
+  const displayName = user?.artistName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Artiste'
   const [tab, setTab]       = useState<Tab>('oeuvres')
   const [filter, setFilter] = useState<'tous' | 'vente' | 'vendus'>('tous')
   const [modal, setModal]   = useState<ModalState>(null)
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
-  const { user, logout } = useAuthStore()
-  
-  const displayName = user?.artistName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Artiste'
-  const initials = (user?.firstName?.[0] || 'A').toUpperCase()
+
+  // 1. Stats / Analytics
+  const { data: analyticsData, isLoading: isAnalyticsLoading } = useQuery({
+    queryKey: ['artist-analytics'],
+    queryFn: () => ArtistsService.getMyAnalytics(),
+    enabled: !!user,
+  })
+
+  // 2. Œuvres
+  const { data: worksData, isLoading: isArtworksLoading } = useQuery({
+    queryKey: ['artist-works', user?.id],
+    queryFn: () => ArtworksService.getMyArtworks(),
+    enabled: !!user,
+  })
+
+  // 3. Articles (Inventory)
+  const { data: articlesData, isLoading: isInventoryLoading } = useQuery({
+    queryKey: ['artist-inventory'],
+    queryFn: () => ShopOrdersService.getInventory(),
+    enabled: !!user,
+  })
+
+  // 4. Événements
+  const { data: eventsData, isLoading: isEventsLoading } = useQuery({
+    queryKey: ['artist-events', user?.id],
+    queryFn: () => EventsService.getMyEvents(),
+    enabled: !!user,
+  })
+
+  const WORKS: Work[] = (worksData || []).map((w, index) => ({
+    id: w.id!,
+    title: w.title!,
+    type: w.imageUrls && w.imageUrls.length > 0 ? 'image' : 'video',
+    bg: GRADIENTS[index % GRADIENTS.length],
+    likes: w.likeCount || 0,
+    comments: 0,
+    shares: 0,
+    date: new Date(w.publishedAt || w.createdAt!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
+    desc: w.description || '',
+    tags: w.tags || [],
+  }))
+
+  const ARTICLES: Article[] = (articlesData || []).map((p, index) => ({
+    id: p.id!,
+    title: p.name!,
+    type: 'Article',
+    price: `${p.price} €`,
+    sold: !p.active || p.stockQuantity === 0,
+    bg: GRADIENTS[(index + 2) % GRADIENTS.length],
+    handleColor: '#7a5030',
+    likes: 0,
+    comments: 0,
+    shares: 0,
+    date: '',
+    desc: p.description || '',
+    tags: [],
+  }))
 
   const filtered = filter === 'vente' ? ARTICLES.filter(a => !a.sold)
                  : filter === 'vendus' ? ARTICLES.filter(a => a.sold)
@@ -117,7 +172,10 @@ export default function ArtistDashboardPage() {
             </Link>
             <div className="flex items-center gap-3 pl-4 border-l border-foreground/10">
               <button 
-                onClick={() => logout()}
+                onClick={() => {
+                  logout()
+                  router.push('/')
+                }}
                 className="w-9 h-9 flex items-center justify-center rounded-full bg-foreground/5 text-foreground/60 hover:text-rose-500 hover:bg-rose-500/10 transition-all hover:scale-105"
                 title="Déconnexion"
               >
@@ -135,17 +193,15 @@ export default function ArtistDashboardPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
         </div>
         <div className="max-w-[900px] mx-auto px-4 md:px-8 pb-5 relative">
-          <div className="w-[96px] h-[96px] rounded-full bg-background border-[4px] border-background flex items-center justify-center font-serif text-[36px] font-semibold text-accent -mt-[48px] mb-3 shadow-lg overflow-hidden relative z-10">
-            {user?.profilePictureUrl ? (
-              <Image src={user.profilePictureUrl} alt="Avatar" width={76} height={76} className="object-cover w-full h-full" />
-            ) : (
-              <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40 text-xl font-sans"><User /></span>
-            )}
-          </div>
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <div>
-              <div className="font-serif text-[25px] font-semibold leading-tight">{displayName}</div>
-              <div className="text-[13px] text-foreground/50 mt-0.5">@{user?.email?.split('@')[0] || 'artiste'}</div>
+          <div className="flex items-end justify-between -mt-[46px] mb-3">
+            <div className="w-[84px] h-[84px] rounded-full bg-background border-[4px] border-background flex items-center justify-center font-serif text-3xl font-semibold text-accent shadow-lg overflow-hidden relative z-10">
+              {status === 'loading' ? (
+                <SkeletonCircle className="w-full h-full" />
+              ) : user?.profilePictureUrl ? (
+                <Image src={user.profilePictureUrl} alt="Avatar" width={72} height={72} className="object-cover w-full h-full" />
+              ) : (
+                <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40 text-xl font-sans"><User /></span>
+              )}
             </div>
             <button 
               onClick={() => setIsEditProfileOpen(true)}
@@ -158,16 +214,38 @@ export default function ArtistDashboardPage() {
               Modifier
             </button>
           </div>
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <div>
+              <div className="font-serif text-[25px] font-semibold leading-tight">{displayName}</div>
+              <div className="text-[13px] text-foreground/50 mt-0.5">@{user?.email?.split('@')[0] || 'artiste'}</div>
+            </div>
+          </div>
           <p className="text-[13px] leading-relaxed text-foreground/70 mb-3.5 max-w-md">
             Peintre expressionniste. Huile &amp; acrylique. Je peins ce que les mots ne peuvent pas dire.
           </p>
-          <div className="flex gap-7 pt-3 border-t border-foreground/10">
-            {[['1 284','Abonnés'],['47','Œuvres'],['12','Vendues'],['8','Évènements']].map(([n,l]) => (
-              <div key={l}>
-                <div className="font-serif text-xl font-semibold leading-none">{n}</div>
-                <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">{l}</div>
-              </div>
-            ))}
+          <div className="flex gap-6 pt-3 border-t border-foreground/10">
+            {isAnalyticsLoading ? (
+              <>
+                <div className="w-16"><Skeleton className="h-4 w-full mb-1"/><Skeleton className="h-3 w-3/4"/></div>
+                <div className="w-16"><Skeleton className="h-4 w-full mb-1"/><Skeleton className="h-3 w-3/4"/></div>
+                <div className="w-16"><Skeleton className="h-4 w-full mb-1"/><Skeleton className="h-3 w-3/4"/></div>
+              </>
+            ) : analyticsData ? (
+              <>
+                <div>
+                  <div className="font-serif text-xl font-semibold leading-none">{analyticsData.totalLikes || 0}</div>
+                  <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Likes</div>
+                </div>
+                <div>
+                  <div className="font-serif text-xl font-semibold leading-none">{analyticsData.totalSales || 0}</div>
+                  <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Ventes</div>
+                </div>
+                <div>
+                  <div className="font-serif text-xl font-semibold leading-none">{analyticsData.totalArtworks || 0}</div>
+                  <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Œuvres</div>
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       </div>
@@ -185,74 +263,53 @@ export default function ArtistDashboardPage() {
         </div>
       </nav>
 
-      {/* ── Œuvres ── */}
-      {tab === 'oeuvres' && (
-        <div className="pb-12 relative z-10">
-          <div className="max-w-[900px] mx-auto px-4 md:px-8 flex items-center justify-between py-6 gap-3">
-            <div>
-              <div className="font-serif text-[26px] italic">Œuvres</div>
-              <div className="text-xs text-foreground/50 mt-0.5">47 publications</div>
-            </div>
-            <CreateBtn label="Publier une œuvre"/>
-          </div>
-          <div className="max-w-[900px] mx-auto px-4 md:px-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
-            {WORKS.map((w, i) => (
-              <FrameCard key={w.id} work={w} onClick={() => setModal({ dataset: WORKS, index: i })}/>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Articles ── */}
-      {tab === 'articles' && (
-        <div className="pb-12 relative z-10">
-          <div className="max-w-[900px] mx-auto px-4 md:px-8 flex items-center justify-between py-6 gap-3">
-            <div>
-              <div className="font-serif text-[26px] italic">Articles</div>
-              <div className="text-xs text-foreground/50 mt-0.5">18 articles</div>
-            </div>
-            <CreateBtn label="Mettre en vente"/>
-          </div>
-          <div className="max-w-[900px] mx-auto px-4 md:px-8 flex gap-2 mb-5">
-            {(['tous','vente','vendus'] as const).map((v) => (
-              <button key={v} onClick={() => setFilter(v)}
-                      className={`px-3.5 py-1 rounded-full text-xs border transition-all capitalize ${filter === v ? 'bg-foreground text-background border-foreground' : 'border-foreground/10 text-foreground/50 hover:border-foreground/30'}`}>
-                {v === 'tous' ? 'Tous' : v === 'vente' ? 'En vente' : 'Vendus'}
-              </button>
-            ))}
-          </div>
-          <div className="max-w-[900px] mx-auto px-4 md:px-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
-            {filtered.map((a, i) => (
-              <BagCard key={a.id} article={a} onClick={() => setModal({ dataset: filtered, index: i })}/>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Évènements ── */}
-      {tab === 'evenements' && (
-        <div className="pb-12 relative z-10">
-          <div className="max-w-[900px] mx-auto px-4 md:px-8 flex items-center justify-between py-6 gap-3">
-            <div>
-              <div className="font-serif text-[26px] italic">Évènements</div>
-              <div className="text-xs text-foreground/50 mt-0.5">8 évènements</div>
-            </div>
-            <CreateBtn label="Créer un évènement"/>
-          </div>
-          <div className="max-w-[900px] mx-auto px-4 md:px-8">
-            <div className="text-[11px] uppercase tracking-[0.08em] text-muted mb-3">À venir</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-8">
-              <TicketCard title="Atelier ouvert" subtitle="Atelier ouvert · Lyon" date="28 avril 2025 · 14h–18h · Lyon" tickets="🎟 48 / 60 billets" extra="12 restants" status="upcoming"/>
-              <TicketCard title="Expo collective — Galerie Lumière" subtitle="Expo collective · Paris" date="10 mai 2025 · Paris 11e" tickets="🎟 21 / 80 billets" extra="59 restants" status="upcoming"/>
-            </div>
-            <div className="text-[11px] uppercase tracking-[0.08em] text-muted mb-3">Passés</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <TicketCard title="Vernissage — Série Rouge" subtitle="Vernissage · Paris" date="12 mars 2025 · Paris" tickets="🎟 124 billets vendus" extra="Complet" status="past"/>
-              <TicketCard title="Workshop aquarelle" subtitle="Workshop aquarelle" date="5 fév. 2025 · En ligne" tickets="🎟 67 billets vendus" extra="Complet" status="past"/>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Contenu ── */}
+      <div className="pb-12 relative z-10 max-w-[900px] mx-auto px-4 md:px-8">
+            {tab === 'oeuvres' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+                {isArtworksLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="aspect-square wood-outer p-2.5 opacity-40"><Skeleton className="w-full h-full" /></div>
+                  ))
+                ) : WORKS.map((work, i) => (
+                  <FrameCard key={work.id} work={work} onClick={() => setModal({ dataset: WORKS, index: i })} />
+                ))}
+              </div>
+            )}
+            {tab === 'articles' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+                {isInventoryLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex flex-col gap-2 opacity-40"><Skeleton className="aspect-square rounded-xl" /><Skeleton className="h-8 w-full rounded-md" /></div>
+                  ))
+                ) : ARTICLES.map((art, i) => (
+                  <BagCard key={art.id} article={art} onClick={() => setModal({ dataset: ARTICLES, index: i })} />
+                ))}
+              </div>
+            )}
+            {tab === 'evenements' && (
+              <div className="flex flex-col gap-3">
+                {isEventsLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full rounded-xl opacity-40" />
+                  ))
+                ) : (eventsData || []).map(evt => (
+                  <TicketCard 
+                    key={evt.id}
+                    title={evt.name!}
+                    subtitle={evt.location!}
+                    date={evt.startDateTime ? new Date(evt.startDateTime).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Date à préciser'}
+                    tickets={`🎟 ${evt.reservedCount || 0} / ${evt.maxCapacity || '∞'} billets`}
+                    extra=""
+                    status={evt.startDateTime && new Date(evt.startDateTime) > new Date() ? 'upcoming' : 'past'}
+                  />
+                ))}
+                {(!isEventsLoading && (!eventsData || eventsData.length === 0)) && (
+                  <p className="text-center py-12 text-muted text-sm">Aucun événement prévu.</p>
+                )}
+              </div>
+            )}
+      </div>
 
       {/* ── Modal ── */}
       {modal && (

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { LandingArtists } from "@/components/layout/LandingArtists";
 
 export default function Home() {
   return (
@@ -259,62 +260,7 @@ export default function Home() {
         {/* Tâche de peinture abstraite très foncée pour casser le bloc solide */}
         <div className="absolute top-[10%] left-[-10%] w-[30vw] h-[30vw] bg-accent/20 blur-[80px] rounded-full mix-blend-screen pointer-events-none" style={{ borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%" }}></div>
 
-        <div className="max-w-[1400px] mx-auto flex flex-col relative z-10">
-          
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-background/20 pb-8">
-            <div className="w-full md:w-1/2">
-              <span className="w-12 h-[1px] bg-accent block mb-6"></span>
-              <h2 className="font-serif text-4xl md:text-6xl font-medium mb-4">Le Village des Créateurs.</h2>
-              <p className="text-background/60 font-light text-lg">
-                Des centaines de talents internationaux possèdent leur propre galerie sur YowPainter. Explorez leurs univers.
-              </p>
-            </div>
-            
-            {/* Barre de Recherche Élégante */}
-            <div className="w-full md:w-1/3 mt-8 md:mt-0 relative group">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                <svg className="w-4 h-4 text-background/40 group-focus-within:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-              </div>
-              <input 
-                type="text" 
-                placeholder="Rechercher un artiste..." 
-                className="w-full bg-background/5 border border-background/20 rounded-full py-3 pl-12 pr-6 text-background placeholder:text-background/40 focus:outline-none focus:border-accent focus:bg-background/10 transition-all font-light"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 w-full mb-24">
-            {[
-               { nom: "Elena Rostova", type: "Expressionnisme", country: "Paris, FR", shape: "rounded-[60%_40%_30%_70%/60%_30%_70%_40%]" },
-               { nom: "Marc Legrand", type: "Minimalisme", country: "Montréal, CA", shape: "rounded-[30%_70%_70%_30%/30%_30%_70%_70%]" },
-               { nom: "Studio Lumière", type: "Nouveau Média", country: "Berlin, DE", shape: "rounded-[75%_25%_67%_33%/45%_74%_26%_55%]" },
-               { nom: "Aisha Diallo", type: "Art Contemporain", country: "Dakar, SN", shape: "rounded-[46%_54%_21%_79%/51%_26%_74%_49%]" }
-            ].map((artist, idx) => (
-              <Link href={`/${artist.nom.toLowerCase().replace(' ', '-')}`} key={idx} className="flex flex-col group cursor-pointer transition-all duration-700">
-                 <div className={`w-full aspect-[4/5] mb-8 overflow-hidden relative ${artist.shape} border border-background/20 group-hover:scale-105 transition-all duration-700`}>
-                   <Image src="/images/placeholder.png" alt={artist.nom} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
-                   
-                   {/* Badge Pays de Luxe */}
-                   <div className="absolute top-6 left-6 mix-blend-difference">
-                     <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-background/80">{artist.country}</span>
-                   </div>
-                 </div>
-                 
-                 <div className="flex flex-col items-center text-center">
-                   <h3 className="font-serif text-3xl font-medium mb-2 group-hover:text-accent transition-colors">{artist.nom}</h3>
-                   <div className="w-8 h-[1px] bg-accent/40 mb-3 group-hover:w-20 transition-all duration-700"></div>
-                   <p className="text-background/40 uppercase tracking-[0.4em] text-[10px] font-bold">{artist.type}</p>
-                 </div>
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex justify-center">
-            <Link href="/artists" className="px-8 py-3 border border-background/30 hover:border-accent hover:bg-accent hover:text-white transition-all text-sm uppercase tracking-widest font-medium">
-              Parcourir l'Annuaire (250+ Artistes)
-            </Link>
-          </div>
-        </div>
+        <LandingArtists />
       </section>
       
     </div>

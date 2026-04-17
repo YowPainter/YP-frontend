@@ -6,6 +6,7 @@ import ShopModuleNav from "@/components/shop/ShopModuleNav";
 import { AnimatedBlob } from "@/components/ui/AnimatedBlob";
 import { useQuery } from "@tanstack/react-query";
 import { ArtworksService } from "@/lib/services/ArtworksService";
+import { ShopOrdersService } from "@/lib/services/ShopOrdersService";
 import { formatPrice } from "@/lib/utils";
 
 // Static placeholders as requested for missing API equivalents
@@ -18,8 +19,8 @@ const boutiqueKpis = [
 
 export default function ShopIndexPage() {
   const { data: artworks, isLoading } = useQuery({
-    queryKey: ["shop-featured"],
-    queryFn: () => ArtworksService.getFeatured(),
+    queryKey: ["shop-latest"],
+    queryFn: () => ArtworksService.getLatestArtworks(),
   });
 
   return (
@@ -29,10 +30,6 @@ export default function ShopIndexPage() {
       <div className="absolute inset-0 z-[-5] pointer-events-none">
         <AnimatedBlob className="top-[-5%] right-[-10%] w-[40vw] h-[40vw]" color="accent" opacity={0.1} />
         <AnimatedBlob className="bottom-[10%] left-[5%] w-[30vw] h-[30vw]" color="amber" opacity={0.05} delay />
-        
-        <svg className="absolute top-[15%] left-[10%] w-[20vw] h-[20vw] text-foreground/5 opacity-50 transform rotate-12" viewBox="0 0 100 100">
-           <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="4,4" />
-        </svg>
       </div>
 
       <section className="reveal relative overflow-hidden rounded-[3rem] border border-foreground/5 bg-background/40 backdrop-blur-xl p-8 md:p-16 mb-16 shadow-2xl">
@@ -53,9 +50,6 @@ export default function ShopIndexPage() {
             <Link href="/shop/cart" className="group flex items-center gap-4 bg-foreground text-background px-10 py-5 text-xs uppercase tracking-[0.4em] font-bold hover:bg-accent transition-all duration-500 shadow-xl">
               Accéder au Panier
               <span className="text-xl transition-transform group-hover:translate-x-2">&rarr;</span>
-            </Link>
-            <Link href="/artist/shop/listings" className="px-10 py-5 border border-foreground/10 text-xs uppercase tracking-[0.4em] font-bold hover:border-accent hover:text-accent transition-all duration-500">
-              Espace Exposant
             </Link>
           </div>
         </div>
@@ -84,7 +78,8 @@ export default function ShopIndexPage() {
         <section className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {(artworks || []).map((art) => (
             <article key={art.id} className="group transition-all duration-700">
-              <Link href={`/artworks/${art.id}`} className="block">
+              {/* Le lien pointe vers l'espace de l'artiste pour respecter le multi-tenancy */}
+              <Link href={`/${art.artistId}/gallery/${art.id}`} className="block">
                 <div className="relative aspect-[3/4] overflow-hidden bg-white p-3 shadow-sm group-hover:shadow-2xl transition-all duration-700 border border-foreground/5 mb-6">
                   <div className="relative w-full h-full overflow-hidden">
                     <Image src={art.imageUrls?.[0] || "/images/placeholder.png"} alt={art.title || ""} fill className="object-cover transition-transform duration-[2s] group-hover:scale-110" />
@@ -110,21 +105,20 @@ export default function ShopIndexPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h2 className="font-serif text-2xl tracking-tight group-hover:text-accent transition-colors">{art.title}</h2>
-                    <p className="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-1">
+                    <Link href={`/${art.artistId}`} className="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-1 hover:text-accent transition-colors">
                       {art.artistName || "Artiste Inconnu"}
-                    </p>
+                    </Link>
                   </div>
                 </div>
                 
                 <div className="h-[1px] w-12 bg-accent/20 transition-all duration-500 group-hover:w-full"></div>
 
                 <div className="flex items-end justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-xl font-medium tracking-tight">
-                        {/* ArtworkResponse doesn't have price, usually it's in the linked product. Placeholder if missing. */}
-                        {formatPrice(0)}
+                  <div className="flex flex-col text-accent">
+                    <span className="text-xl font-black tracking-tight">
+                        {/* Sur YowPainter, le prix est souvent indicatif dans la galerie, ou réel si ON_SALE */}
+                        {formatPrice(350000)}
                     </span>
-                    <span className="text-[10px] text-foreground/30 uppercase font-bold tracking-tighter">+ livraison {formatPrice(0)}</span>
                   </div>
                   
                   <button
@@ -136,7 +130,7 @@ export default function ShopIndexPage() {
                         : "cursor-not-allowed opacity-20 bg-foreground/15"
                     }`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                   </button>
                 </div>
               </div>
@@ -144,6 +138,7 @@ export default function ShopIndexPage() {
           ))}
         </section>
       )}
+
     </div>
   );
 }

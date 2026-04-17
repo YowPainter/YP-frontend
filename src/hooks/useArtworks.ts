@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArtworksService } from "@/lib/services/ArtworksService";
+import { GlobalSearchService } from "@/lib/services/GlobalSearchService";
 import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
 
 export interface FilterParams {
@@ -11,7 +12,7 @@ export interface FilterParams {
 export function useArtworks(filters: FilterParams, artistSlug?: string) {
     return useQuery({
         queryKey: ["artworks", filters, artistSlug],
-        queryFn: async () => {
+        queryFn: async (): Promise<Array<ArtworkResponse>> => {
             if (artistSlug) {
                 // Fetch for specific artist shop
                 if (filters.search) {
@@ -20,13 +21,11 @@ export function useArtworks(filters: FilterParams, artistSlug?: string) {
                 return await ArtworksService.getAllPublicArtworks(artistSlug);
             } else {
                 // Global search or featured
-                // Fallback to featured for now if no filters, or use search if q provided
                 if (filters.search) {
-                    // For now GlobalSearchService might be better, but let's use searchArtworks with a generic slug or similar if backend supports it.
-                    // Actually, let's use getFeatured if no search is provided.
-                    return await ArtworksService.getFeatured();
+                    const results = await GlobalSearchService.globalSearch(filters.search);
+                    return results.artworks || [];
                 }
-                return await ArtworksService.getFeatured();
+                return await ArtworksService.getLatestArtworks();
             }
         },
     });

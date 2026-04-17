@@ -14,8 +14,13 @@ export function getDashboardRoute(role?: string): string {
     return '/amadashboard';
 }
 
+export interface ExtendedAuthResponse extends AuthResponse {
+    id?: string;
+    slug?: string;
+}
+
 interface AuthState {
-    user: AuthResponse | null;
+    user: ExtendedAuthResponse | null;
     token: string | null;
     isAuthenticated: boolean;
     login: (credentials: LoginRequest) => Promise<AuthResponse>;
@@ -72,10 +77,12 @@ export const useAuthStore = create<AuthState>()(
                         set((state) => ({
                             user: {
                                 ...state.user,
+                                id: profile.id ?? state.user?.id,
                                 firstName: profile.firstName ?? state.user?.firstName,
                                 lastName: profile.lastName ?? state.user?.lastName,
                                 profilePictureUrl: profile.profilePictureUrl ?? state.user?.profilePictureUrl,
                                 artistName: profile.artistName ?? state.user?.artistName,
+                                slug: profile.slug ?? (state.user as any)?.slug,
                             },
                         }));
                     } else {
@@ -83,6 +90,7 @@ export const useAuthStore = create<AuthState>()(
                         set((state) => ({
                             user: {
                                 ...state.user,
+                                id: profile.id ?? state.user?.id,
                                 firstName: profile.firstName ?? state.user?.firstName,
                                 lastName: profile.lastName ?? state.user?.lastName,
                                 profilePictureUrl: profile.profilePictureUrl ?? state.user?.profilePictureUrl,
@@ -103,6 +111,7 @@ export const useAuthStore = create<AuthState>()(
             },
 
             logout: () => {
+                OpenAPI.TOKEN = undefined;
                 set({
                     user: null,
                     token: null,
