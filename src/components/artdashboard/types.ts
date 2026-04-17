@@ -1,0 +1,29 @@
+export type Work = {
+  id: number;
+  title: string;
+  type: 'image' | 'video';
+  bg: string;
+  duration?: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  date: string;
+  desc: string;
+  tags: string[];
+};
+
+export type Article = {
+  id: number;
+  title: string;
+  type: string;
+  price: string;
+  sold: boolean;
+  bg: string;
+  handleColor: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  date: string;
+  desc: string;
+  tags: string[];
+};

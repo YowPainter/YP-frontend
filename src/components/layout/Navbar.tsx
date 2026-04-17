@@ -118,11 +118,10 @@ export default function Navbar() {
               >
                 <div className="w-10 h-10 rounded-full border border-foreground/10 overflow-hidden transition-all group-hover:border-accent">
                   {user?.profilePictureUrl ? (
-                    <Image 
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img 
                       src={user.profilePictureUrl} 
                       alt="Profile" 
-                      width={40} 
-                      height={40} 
                       className="object-cover w-full h-full"
                     />
                   ) : (

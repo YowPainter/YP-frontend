@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import type { Work, Article } from './page'
+import type { Work, Article } from './types'
 
 type Item = Work | Article
 type Comment = { name: string; initials: string; text: string; time: string }

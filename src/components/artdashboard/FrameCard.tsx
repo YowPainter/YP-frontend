@@ -1,5 +1,5 @@
 'use client'
-import type { Work } from './page'
+import type { Work } from './types'
 
 export default function FrameCard({ work, onClick }: { work: Work; onClick: () => void }) {
   return (

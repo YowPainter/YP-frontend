@@ -113,49 +113,33 @@ export default function RegisterPage() {
         OpenAPI.TOKEN = token;
       }
 
-      // If avatar was uploaded, update profile picture using direct fetch
-      // (bypassing OpenAPI client to guarantee the Authorization header is sent)
-      if (avatarUrl && token) {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yowpainter-backend.onrender.com';
+      // Save avatar to the backend if uploaded
+      if (avatarUrl) {
         try {
-          let profileUpdateUrl: string;
-          let profileUpdateBody: object;
-          
           if (role === "ARTIST") {
-            profileUpdateUrl = `${baseUrl}/api/artist/me`;
-            profileUpdateBody = {
+            await ArtistsService.updateMyProfile({
               artistName: formData.artistName || `${formData.firstName} ${formData.lastName}`,
               profilePictureUrl: avatarUrl,
-            };
+            });
           } else {
-            profileUpdateUrl = `${baseUrl}/api/buyer/me/profile-picture`;
-            profileUpdateBody = { profilePictureUrl: avatarUrl };
-          }
-
-          console.log("Updating profile picture at:", profileUpdateUrl, "with token:", token.substring(0, 20) + "...");
-          
-          const profileRes = await fetch(profileUpdateUrl, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(profileUpdateBody),
-          });
-
-          if (!profileRes.ok) {
-            const errBody = await profileRes.text();
-            console.error("Profile update failed:", profileRes.status, errBody);
-            throw new Error(`Statut ${profileRes.status}`);
+            await BuyerProfileService.updateProfilePicture({
+              profilePictureUrl: avatarUrl,
+            });
           }
           
-          console.log("Profile picture updated successfully!");
-        } catch (profileErr: any) {
-          console.error("Profile Picture Update Error:", profileErr);
-          const dashRoute = getDashboardRoute(authResponse.role);
-          setError("Compte créé, mais l'avatar n'a pas pu être mis à jour.");
-          setTimeout(() => router.push(dashRoute), 2000);
-          return;
+          // Refresh user state correctly from backend
+          await useAuthStore.getState().refreshProfile();
+          console.log("Avatar uploaded to Cloudinary and backend successfully updated.");
+        } catch (updateErr) {
+          console.error("Failed to update profile picture on backend:", updateErr);
+          // Fallback just in case backend still fails: update local state so user isn't stuck
+          const currentUser = useAuthStore.getState().user;
+          if (currentUser) {
+            useAuthStore.getState().setAuth({
+              ...currentUser,
+              profilePictureUrl: avatarUrl,
+            });
+          }
         }
       }
 

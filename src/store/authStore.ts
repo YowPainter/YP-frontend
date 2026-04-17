@@ -112,6 +112,12 @@ export const useAuthStore = create<AuthState>()(
         }),
         {
             name: 'yowpainter-auth',
+            onRehydrateStorage: () => (state) => {
+                // Restore OpenAPI.TOKEN when Zustand rehydrates from localStorage
+                if (state?.token) {
+                    OpenAPI.TOKEN = state.token;
+                }
+            },
         }
     )
 );

@@ -1,5 +1,5 @@
 'use client'
-import type { Article } from './page'
+import type { Article } from './types'
 
 export default function BagCard({ article, onClick }: { article: Article; onClick: () => void }) {
   return (

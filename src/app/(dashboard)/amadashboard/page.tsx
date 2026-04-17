@@ -2,6 +2,11 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { useAuthStore } from '@/store/authStore'
+import { EditProfileModal } from '@/components/dashboard/EditProfileModal'
+import { AnimatedBlob } from '@/components/ui/AnimatedBlob'
+import { AbstractShapes } from '@/components/ui/AbstractShapes'
+import Link from 'next/link'
+import { LogOut, User } from 'lucide-react'
 
 /* ─────────────────────────────────────────────
    TYPES
@@ -493,7 +498,8 @@ type ModalState = { index: number } | null
 export default function AmateurDashboardPage() {
   const [tab, setTab]     = useState<Tab>('likes')
   const [modal, setModal] = useState<ModalState>(null)
-  const user = useAuthStore((s) => s.user)
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const { user, logout } = useAuthStore()
   
   const displayName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Amateur'
   const initials = (user?.firstName?.[0] || 'A').toUpperCase()
@@ -514,96 +520,117 @@ export default function AmateurDashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-cream text-ink font-body antialiased">
+    <div className="min-h-screen bg-background text-foreground antialiased font-sans canvas-texture canvas-grain relative selection:bg-accent/30">
+      {/* ── Ambient Backgrounds artistiques ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden mix-blend-multiply dark:mix-blend-screen opacity-70">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(194,109,92,0.15),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top_right,rgba(212,136,120,0.2),transparent_60%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(30,28,26,0.08),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,244,240,0.05),transparent_50%)]"></div>
+        
+        {/* Formes Abstraites (Art) */}
+        <AnimatedBlob className="top-[-5%] right-[-10%] w-[50vw] h-[50vw] blur-3xl opacity-30" color="slate" />
+        <AnimatedBlob className="bottom-[20%] left-[-20%] w-[60vw] h-[60vw] blur-3xl opacity-20" color="accent" />
+        <AnimatedBlob className="top-[40%] right-[10%] w-[30vw] h-[30vw] blur-2xl opacity-10" color="slate" />
+        <AnimatedBlob className="top-[60%] left-[5%] w-[25vw] h-[25vw] blur-2xl opacity-15" color="accent" />
+        <AbstractShapes />
+      </div>
 
-      {/* Topbar */}
-      <header className="sticky top-0 z-50 bg-cream border-b border-black/[0.09] px-4 md:px-8">
-        <div className="max-w-[900px] mx-auto h-[52px] flex items-center justify-between">
-          <span className="font-display text-[21px] font-semibold tracking-wide">
-            Yow<span className="text-accent">Painter</span>
-          </span>
-          <div className="flex gap-2">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent/10 transition-colors">
-              <svg className="w-[17px] h-[17px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <path d="M15 17H5l2-2V9a5 5 0 0 1 10 0v6l2 2h-4zm0 0a3 3 0 0 1-6 0"/>
-              </svg>
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent/10 transition-colors">
-              <svg className="w-[17px] h-[17px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
-            </button>
+      {/* Topbar Harmonisée */}
+      <header className="sticky top-0 z-50 bg-background border-b border-foreground/10 px-4 md:px-8 shadow-sm relative">
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-accent via-accent-light to-accent"></div>
+        <div className="max-w-[900px] mx-auto h-[64px] flex items-center justify-between">
+          <Link href="/" className="font-serif text-[24px] font-bold tracking-wide hover:opacity-80 transition-opacity">
+            Yow<span className="italic text-accent">Painter</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-[13px] font-medium text-foreground/70 hover:text-accent transition-colors hidden sm:flex items-center gap-1.5 border border-foreground/10 px-4 py-1.5 rounded-full hover:border-accent">
+              <LogOut size={14} className="rotate-180" />
+              Retour galerie
+            </Link>
+            <div className="flex items-center gap-3 pl-4 border-l border-foreground/10">
+              <button 
+                onClick={() => logout()}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-foreground/5 text-foreground/60 hover:text-rose-500 hover:bg-rose-500/10 transition-all hover:scale-105"
+                title="Déconnexion"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Profil */}
-      <div className="bg-cream border-b border-black/[0.09]">
-        <div className="h-[120px]" style={{ background: 'linear-gradient(135deg,#2a2420 0%,#3a3028 60%,rgba(194,109,92,.1) 100%)' }}/>
-        <div className="max-w-[900px] mx-auto px-4 md:px-8 pb-5">
-          <div className="flex items-end justify-between -mt-[36px] mb-3">
-            <div className="w-[72px] h-[72px] rounded-full bg-light border-[3px] border-cream flex items-center justify-center font-display text-3xl font-semibold text-accent shadow-sm overflow-hidden">
+      {/* Profil Harmonisé */}
+      <div className="bg-background/60 backdrop-blur-md border-b border-foreground/10 relative z-10">
+        <div className="h-[200px] w-full relative border-b border-foreground/10 shadow-inner">
+          <Image src="/images/register-art.png" alt="Cover art" fill className="object-cover opacity-90 dark:opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+        </div>
+        <div className="max-w-[900px] mx-auto px-4 md:px-8 pb-5 relative">
+          <div className="flex items-end justify-between -mt-[46px] mb-3">
+            <div className="w-[84px] h-[84px] rounded-full bg-background border-[4px] border-background flex items-center justify-center font-serif text-3xl font-semibold text-accent shadow-lg overflow-hidden relative z-10">
               {user?.profilePictureUrl ? (
                 <Image src={user.profilePictureUrl} alt="Avatar" width={72} height={72} className="object-cover w-full h-full" />
               ) : (
-                initials
+                <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40 text-xl font-sans"><User /></span>
               )}
             </div>
-            <button className="flex items-center gap-1.5 px-3.5 py-1.5 border border-black/[0.09] rounded-full text-xs hover:border-accent hover:text-accent transition-colors">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <button 
+              onClick={() => setIsEditProfileOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 border border-foreground/20 rounded-full text-xs font-medium hover:border-accent hover:text-accent hover:bg-accent/5 transition-all relative z-10 bg-background"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
               Modifier
             </button>
           </div>
-          <div className="font-display text-2xl font-semibold leading-tight">{displayName}</div>
-          <div className="text-[13px] text-muted mt-0.5 mb-2">@{user?.email?.split('@')[0] || 'amateur'}</div>
-          <p className="text-[13px] leading-relaxed text-[#4a4340] mb-3.5 max-w-md">
-            Amateur d&apos;art et de peinture contemporaine. Collectionneur débutant.
+          <div className="font-serif text-2xl font-semibold leading-tight">{displayName}</div>
+          <div className="text-[13px] text-foreground/50 mt-0.5 mb-2">@{user?.email?.split('@')[0] || 'amateur'}</div>
+          <p className="text-[13px] leading-relaxed text-foreground/70 mb-3.5 max-w-md">
+            Amateur d'art et de peinture contemporaine. Collectionneur débutant.
           </p>
           {/* stats */}
-          <div className="flex gap-6 pt-3 border-t border-black/[0.09]">
+          <div className="flex gap-6 pt-3 border-t border-foreground/10">
             <div>
-              <div className="font-display text-xl font-semibold leading-none">{LIKED.length}</div>
-              <div className="text-[11px] text-muted mt-0.5 uppercase tracking-wider">Likes</div>
+              <div className="font-serif text-xl font-semibold leading-none">{LIKED.length}</div>
+              <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Likes</div>
             </div>
             <div>
-              <div className="font-display text-xl font-semibold leading-none">{PURCHASES.length}</div>
-              <div className="text-[11px] text-muted mt-0.5 uppercase tracking-wider">Achats</div>
+              <div className="font-serif text-xl font-semibold leading-none">{PURCHASES.length}</div>
+              <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Achats</div>
             </div>
             <div>
-              <div className="font-display text-xl font-semibold leading-none">{MY_TICKETS.length}</div>
-              <div className="text-[11px] text-muted mt-0.5 uppercase tracking-wider">Billets</div>
+              <div className="font-serif text-xl font-semibold leading-none">{MY_TICKETS.length}</div>
+              <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Billets</div>
             </div>
             <div>
-              <div className="font-display text-xl font-semibold leading-none">3</div>
-              <div className="text-[11px] text-muted mt-0.5 uppercase tracking-wider">Artistes suivis</div>
+              <div className="font-serif text-xl font-semibold leading-none">3</div>
+              <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Artistes suivis</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabnav */}
-      <nav className="sticky top-[52px] z-40 bg-cream border-b border-black/[0.09]">
-        <div className="max-w-[900px] mx-auto px-4 md:px-8 flex">
+      {/* Tabnav Harmonisé */}
+      <nav className="sticky top-[60px] z-40 glass-elegant shadow-sm">
+        <div className="max-w-[900px] mx-auto px-4 md:px-8 flex overflow-x-auto no-scrollbar">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-                    className={`relative flex items-center gap-1.5 px-5 py-3 text-xs uppercase tracking-[0.06em] transition-colors ${tab === t.id ? 'text-ink' : 'text-muted hover:text-ink'}`}>
+                    className={`relative flex items-center gap-2 px-5 py-3.5 text-xs uppercase tracking-[0.06em] transition-colors whitespace-nowrap ${tab === t.id ? 'text-foreground font-semibold' : 'text-foreground/50 hover:text-foreground'}`}>
               {t.icon}
               {t.label}
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${tab === t.id ? 'bg-ink text-cream' : 'bg-black/[0.06] text-muted'}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${tab === t.id ? 'bg-foreground text-background' : 'bg-foreground/5 text-foreground/60'}`}>
                 {t.count}
               </span>
-              {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-ink rounded-t"/>}
+              {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent rounded-t"/>}
             </button>
           ))}
         </div>
       </nav>
 
       {/* Contenu */}
-      <div className="max-w-[900px] mx-auto px-4 md:px-8 py-6 pb-16">
+      <div className="max-w-[900px] mx-auto px-4 md:px-8 py-6 pb-16 relative z-10">
 
         {tab === 'likes' && (
           <LikedGrid items={LIKED} onOpen={i => setModal({ index: i })}/>
@@ -615,11 +642,15 @@ export default function AmateurDashboardPage() {
 
       </div>
 
-      {/* Modal */}
+      {/* Modal Lecture */}
       {modal && (
         <LikeModal dataset={LIKED} initialIndex={modal.index} onClose={() => setModal(null)}/>
       )}
 
+      {/* Modal Edition Profil */}
+      {isEditProfileOpen && (
+        <EditProfileModal onClose={() => setIsEditProfileOpen(false)} />
+      )}
     </div>
   )
 }
