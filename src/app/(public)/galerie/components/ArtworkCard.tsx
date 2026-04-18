@@ -33,7 +33,10 @@ export default function ArtworkCard({ artwork, isLoggedIn = false }: ArtworkCard
         setLocalLikes(prev => newLikedState ? prev + 1 : prev - 1);
 
         if (artwork.id) {
-            toggleLike({ artworkId: artwork.id, liked: newLikedState });
+            toggleLike({ 
+                artistSlug: artwork.artistId || 'gallery', 
+                artworkId: artwork.id 
+            });
         }
     };
 

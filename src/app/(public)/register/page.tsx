@@ -14,6 +14,7 @@ import { RegisterRequest } from "@/lib/models/RegisterRequest";
 import { slugify } from "@/lib/utils";
 import { Eye, EyeOff, Loader2, Camera, X } from "lucide-react";
 import { getApiErrorMessage } from "@/lib/api-error-handler";
+import { toast } from "@/lib/toast";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function RegisterPage() {
         try {
           avatarUrl = await uploadToCloudinary(avatar);
         } catch (uploadErr) {
-          console.error("Cloudinary Upload Error:", uploadErr);
+          toast.error(uploadErr, "Upload de la photo");
           throw new Error("Échec de l'envoi de l'image. Veuillez réessayer.");
         }
       }
@@ -98,9 +99,12 @@ export default function RegisterPage() {
       // Final refresh to ensure dashboard has the latest data
       await useAuthStore.getState().refreshProfile();
 
+      toast.success('Bienvenue sur YowPainter !', `Votre compte ${role === 'ARTIST' ? 'd\'artiste' : 'de collectionneur'} a été créé.`);
       router.push(getDashboardRoute(authResponse.role));
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue.");
+      const message = err.message || "Une erreur est survenue.";
+      setError(message);
+      toast.error(err, 'Inscription');
     } finally {
       setLoading(false);
     }

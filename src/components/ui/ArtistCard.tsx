@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArtistResponse } from '@/lib/models/ArtistResponse'
+import { Skeleton } from './Skeleton'
 
 interface ArtistCardProps {
   artist: ArtistResponse
@@ -54,14 +55,15 @@ export function ArtistCard({ artist, index }: ArtistCardProps) {
   )
 }
 
-export function ArtistCardSkeleton() {
+export function ArtistCardSkeleton({ index = 0 }: { index?: number }) {
+  const shapeClass = SHAPES[index % SHAPES.length]
   return (
-    <div className="flex flex-col animate-pulse">
-      <div className="w-full aspect-[4/5] mb-8 bg-foreground/5 rounded-2xl"></div>
+    <div className="flex flex-col">
+      <div className={`w-full aspect-[4/5] mb-8 shimmer bg-foreground/5 ${shapeClass} border border-foreground/5`}></div>
       <div className="flex flex-col items-center">
-        <div className="h-8 w-3/4 bg-foreground/5 mb-3 rounded"></div>
+        <Skeleton className="h-8 w-3/4 mb-3" />
         <div className="h-[1px] w-8 bg-accent/20 mb-3"></div>
-        <div className="h-3 w-1/2 bg-foreground/5 rounded font-bold uppercase tracking-[0.4em]"></div>
+        <Skeleton className="h-3 w-1/2" />
       </div>
     </div>
   )

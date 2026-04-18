@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { AnimatedBlob } from "@/components/ui/AnimatedBlob";
 import { useAuthStore, getDashboardRoute } from "@/store/authStore";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "@/lib/toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,9 +26,12 @@ export default function LoginPage() {
 
     try {
       const user = await login({ email, password });
+      toast.success('Connexion réussie !', `Bienvenue, ${user.firstName || user.artistName || ''} !`);
       router.push(getDashboardRoute(user.role));
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de la connexion.");
+      const message = err.body?.message || err.message || "Une erreur est survenue lors de la connexion.";
+      setError(message);
+      toast.error(err, 'Connexion');
     } finally {
       setLoading(false);
     }
