@@ -665,7 +665,7 @@ export default function AmateurDashboardPage() {
           <div className="font-serif text-2xl font-semibold leading-tight">{displayName}</div>
           <div className="text-[13px] text-foreground/50 mt-0.5 mb-2">@{user?.email?.split('@')[0] || 'amateur'}</div>
           <p className="text-[13px] leading-relaxed text-foreground/70 mb-3.5 max-w-md">
-            Amateur d'art et de peinture contemporaine. Collectionneur débutant.
+            {user?.bio || "Amateur d'art et de peinture contemporaine. Collectionneur débutant."}
           </p>
           {/* stats */}
           <div className="flex gap-6 pt-3 border-t border-foreground/10">

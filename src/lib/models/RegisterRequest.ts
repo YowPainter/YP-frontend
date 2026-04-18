@@ -13,6 +13,10 @@ export type RegisterRequest = {
      * Slug unique (URL). Sera auto-généré si vide.
      */
     slug?: string;
+    /**
+     * URL de l'image de profil
+     */
+    imageURL?: string;
 };
 export namespace RegisterRequest {
     export enum role {

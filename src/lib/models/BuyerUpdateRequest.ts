@@ -2,14 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type AdminRegisterRequest = {
+export type BuyerUpdateRequest = {
     firstName: string;
     lastName: string;
-    email: string;
-    password: string;
     /**
-     * URL de l'image de profil
+     * Biographie de l'utilisateur
      */
-    imageURL?: string;
+    bio?: string;
 };
 

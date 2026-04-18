@@ -17,6 +17,7 @@ export function getDashboardRoute(role?: string): string {
 export interface ExtendedAuthResponse extends AuthResponse {
     id?: string;
     slug?: string;
+    bio?: string;
 }
 
 interface AuthState {
@@ -64,6 +65,15 @@ export const useAuthStore = create<AuthState>()(
                     token: response.accessToken || null,
                     isAuthenticated: !!response.accessToken,
                 });
+                // Fetch full profile after registration
+                if (response.accessToken) {
+                    OpenAPI.TOKEN = response.accessToken;
+                    try {
+                        await get().refreshProfile();
+                    } catch (e) {
+                        console.warn('Could not refresh profile after registration:', e);
+                    }
+                }
                 return response;
             },
 
@@ -82,6 +92,7 @@ export const useAuthStore = create<AuthState>()(
                                 lastName: profile.lastName ?? state.user?.lastName,
                                 profilePictureUrl: profile.profilePictureUrl ?? state.user?.profilePictureUrl,
                                 artistName: profile.artistName ?? state.user?.artistName,
+                                bio: profile.bio ?? state.user?.bio,
                                 slug: profile.slug ?? (state.user as any)?.slug,
                             },
                         }));
@@ -94,6 +105,7 @@ export const useAuthStore = create<AuthState>()(
                                 firstName: profile.firstName ?? state.user?.firstName,
                                 lastName: profile.lastName ?? state.user?.lastName,
                                 profilePictureUrl: profile.profilePictureUrl ?? state.user?.profilePictureUrl,
+                                bio: profile.bio ?? state.user?.bio,
                             },
                         }));
                     }

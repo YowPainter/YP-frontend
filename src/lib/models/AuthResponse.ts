@@ -8,10 +8,10 @@ export type AuthResponse = {
     email?: string;
     firstName?: string;
     lastName?: string;
-    profilePictureUrl?: string;
     role?: string;
     tenantId?: string;
     artistName?: string;
     message?: string;
+    imageURL?: string;
 };
 
