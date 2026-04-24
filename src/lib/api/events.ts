@@ -85,26 +85,42 @@ export async function reserveTicket(eventId: string, data: {
     userName: string;
     userEmail: string;
     phoneNumber?: string; // Ajouté pour MOMO/Orange
+    artistSlug?: string; // Pour le contexte multitenant
 }): Promise<any> {
-    const reservation = await EventsService.reserveEvent(eventId);
+    // Définir le contexte tenant pour les headers API
+    if (data.artistSlug) {
+        localStorage.setItem('currentTenantSlug', data.artistSlug);
+    }
     
-    if (!reservation.id) throw new Error("Erreur lors de la réservation");
+    try {
+        const reservation = await EventsService.reserveEvent(eventId);
+        if (!reservation.id) throw new Error("Erreur lors de la réservation");
 
-    // Si on a un numéro de téléphone (événement payant), on initie le checkout
-    if (data.phoneNumber) {
-        try {
-            const checkoutData = await EventsService.checkoutReservation(reservation.id, data.phoneNumber);
-            return {
-                ...reservation,
-                checkout: checkoutData
-            };
-        } catch (error: any) {
-            console.error("Erreur lors du checkout:", error);
-            throw new Error(error.message || "Erreur lors de l'initialisation du paiement");
+        // Si on a un numéro de téléphone (événement payant), on initie le checkout
+        if (data.phoneNumber) {
+            try {
+                // Sanitize phone number: remove all non-digits and add 237 prefix if it's 9 digits
+                const digitsOnly = data.phoneNumber.replace(/\D/g, '');
+                const formattedPhone = digitsOnly.length === 9 ? `237${digitsOnly}` : digitsOnly;
+                
+                const checkoutData = await EventsService.checkoutReservation(reservation.id, formattedPhone);
+                return {
+                    ...reservation,
+                    checkout: checkoutData
+                };
+            } catch (error: any) {
+                console.error("Erreur lors du checkout:", error);
+                throw new Error(error.message || "Erreur lors de l'initialisation du paiement");
+            }
+        }
+
+        return reservation;
+    } finally {
+        // Nettoyer le contexte tenant après les appels
+        if (data.artistSlug) {
+            localStorage.removeItem('currentTenantSlug');
         }
     }
-
-    return reservation;
 }
 
 // PROTÉGÉ : Récupérer mes billets

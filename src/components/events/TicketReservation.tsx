@@ -2,21 +2,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from '@/lib/hooks/useSession';
+import { useAuthStore } from '@/store/authStore';
 import { reserveTicket } from '@/lib/api/events';
-import { loadStripe } from '@stripe/stripe-js';
 import type { Event } from '@/lib/types/event';
 
 interface TicketReservationProps {
     event: Event;
+    artistSlug?: string;
     onSuccess?: () => void;
 }
 
-export function TicketReservation({ event, onSuccess }: TicketReservationProps) {
-    const { user } = useSession();
+export function TicketReservation({ event, artistSlug, onSuccess }: TicketReservationProps) {
+    const user = useAuthStore((state) => state.user);
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState(user?.email || '');
-    const [name, setName] = useState(user?.name || '');
+    const [name, setName] = useState(user ? (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.artistName || user.firstName || user.email?.split('@')[0] || '')) : '');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
@@ -42,11 +42,19 @@ export function TicketReservation({ event, onSuccess }: TicketReservationProps) 
                 userName: name,
                 userEmail: email,
                 phoneNumber: phoneNumber || undefined,
+                artistSlug: artistSlug,
             });
 
-            // Sauvegarder le billet
-            localStorage.setItem(`ticket_${reservation.id}`, JSON.stringify(reservation));
-            setTicket(reservation);
+            // Sauvegarder le billet enrichi avec les infos saisies (car le backend ne renvoie pas tjs l'email/nom dans la réponse initiale)
+            const enrichedTicket = {
+                ...reservation,
+                userName: name,
+                userEmail: email,
+                eventTitle: event.title,
+                purchasedAt: new Date().toISOString()
+            };
+            localStorage.setItem(`ticket_${reservation.id}`, JSON.stringify(enrichedTicket));
+            setTicket(enrichedTicket);
             setSuccess(true);
 
             if (onSuccess) onSuccess();
@@ -100,10 +108,11 @@ export function TicketReservation({ event, onSuccess }: TicketReservationProps) 
     }
 
     if (!user) {
+        const redirectPath = artistSlug ? `/${artistSlug}/events/${event.id}` : `/events/${event.id}`;
         return (
             <div className="space-y-6">
                 <button
-                    onClick={() => window.location.href = `/login?redirect=/events/${event.id}`}
+                    onClick={() => window.location.href = `/login?redirect=${redirectPath}`}
                     className="w-full py-5 bg-accent text-white rounded-[2rem] font-bold text-sm uppercase tracking-[0.3em] hover:bg-accent/90 transition-all duration-500 shadow-[0_20px_40px_-10px_rgba(var(--accent-rgb),0.3)] hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
                 >
                     Réserver mon billet

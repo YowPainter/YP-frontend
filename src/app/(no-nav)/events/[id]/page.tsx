@@ -185,7 +185,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                                     </div>
 
                                     <div className="pt-4">
-                                        <TicketReservation event={event} />
+                                        <TicketReservation event={event} artistSlug={event.artistSlug} />
                                     </div>
                                 </div>
                             </div>

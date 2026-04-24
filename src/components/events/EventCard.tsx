@@ -8,6 +8,7 @@ import type { EventResponse } from '@/lib/models/EventResponse';
 interface EventCardProps {
     event: EventResponse;
     variant?: 'grid' | 'featured';
+    artistSlug?: string;
 }
 
 const ScissorsIcon = ({ className }: { className?: string }) => (
@@ -41,7 +42,7 @@ const DottedLine = ({ className }: { className?: string }) => (
     </svg>
 );
 
-export function EventCard({ event, variant = 'grid' }: EventCardProps) {
+export function EventCard({ event, variant = 'grid', artistSlug }: EventCardProps) {
     const [imgSrc, setImgSrc] = useState(event.posterUrl || '/images/placeholder.png');
 
     const formatDateShort = (dateStr?: string) => {
@@ -57,8 +58,8 @@ export function EventCard({ event, variant = 'grid' }: EventCardProps) {
         ? event.reservedCount >= event.maxCapacity
         : false;
 
-    // Smart Linking: Si l'ID est manquant, on utilise 'gallery', sinon on utilise l'ID (qui sert de slug par défaut)
-    const tenantSlug = event.artistId || 'gallery';
+    // Smart Linking: Utilise le slug artiste si disponible, sinon fallback sur artistId
+    const tenantSlug = artistSlug || event.artistId || 'gallery';
     const detailLink = `/${tenantSlug}/events/${event.id}`;
 
     // Masques CSS pour les trous "Billet"

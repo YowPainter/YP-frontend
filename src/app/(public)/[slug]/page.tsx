@@ -6,9 +6,25 @@ import { ArtistPublicSpace } from '@/components/artist/ArtistPublicSpace'
 import { useParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/Skeleton'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 export default function ArtistSlugPage() {
   const { slug } = useParams() as { slug: string }
+
+  // Définir le contexte tenant pour les requêtes API dans cet espace
+  useEffect(() => {
+    if (slug) {
+      localStorage.setItem('currentTenantSlug', slug)
+    }
+    // Nettoyage optionnel au démontage
+    return () => {
+      // On ne nettoie que si le slug correspond pour éviter d'effacer 
+      // un nouveau slug si on navigue vite entre deux artistes
+      if (localStorage.getItem('currentTenantSlug') === slug) {
+        localStorage.removeItem('currentTenantSlug')
+      }
+    }
+  }, [slug])
 
   const { data: artist, isLoading, error } = useQuery({
     queryKey: ['artist-profile', slug],

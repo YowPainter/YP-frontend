@@ -12,6 +12,7 @@ import { ArtistResponse } from '@/lib/models/ArtistResponse'
 import { Work } from '../artdashboard/types'
 import { Skeleton } from '@/components/ui/Skeleton'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface ArtistPublicSpaceProps {
   artist: ArtistResponse
@@ -32,6 +33,26 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
   const [activeTab, setActiveTab] = useState<TabType>('gallery')
   const [modal, setModal] = useState<{ dataset: Work[]; index: number } | null>(null)
 
+  // Helpers pour les événements
+  const getEventTypeName = (type?: string) => {
+    switch (type) {
+      case 'EXHIBITION': return 'Exposition'
+      case 'WORKSHOP': return 'Atelier'
+      case 'AUCTION': return 'Vente aux enchères'
+      case 'MEETUP': return 'Rencontre'
+      default: return 'Événement'
+    }
+  }
+
+  const getStatusStyles = (status?: string) => {
+    switch (status) {
+      case 'FULL': return 'bg-red-500/10 text-red-500'
+      case 'CANCELLED': return 'bg-gray-500/10 text-gray-500'
+      case 'COMPLETED': return 'bg-foreground/5 text-foreground/40'
+      default: return 'bg-green-500/10 text-green-500'
+    }
+  }
+
   // 1. Fetch Artworks
   const { data: worksData, isLoading: isLoadingWorks } = useQuery({
     queryKey: ['artist-public-works', slug],
@@ -44,11 +65,11 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
     queryFn: () => ShopOrdersService.getProductsByArtist(slug),
   })
 
-  // 3. Fetch Events
+  // 3. Fetch Events (Utilise le slug pour une résolution tenant robuste)
   const { data: events, isLoading: isLoadingEvents } = useQuery({
-    queryKey: ['artist-public-events', artist.id],
-    queryFn: () => EventsService.getEventsByArtist(artist.id!),
-    enabled: !!artist.id
+    queryKey: ['artist-public-events', slug],
+    queryFn: () => EventsService.getEventsByArtistSlug(slug),
+    enabled: !!slug
   })
 
   const WORKS: Work[] = (worksData || []).map((w, index) => ({
@@ -175,18 +196,39 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
                     <div className="w-full md:w-1/3 aspect-video md:aspect-square relative rounded-2xl overflow-hidden shrink-0">
                       <Image src={event.posterUrl || '/images/placeholder.png'} alt={event.name!} fill className="object-cover" />
                     </div>
-                    <div className="flex-1 flex flex-col justify-center">
-                      <div className="flex items-center gap-4 mb-4">
-                        <span className="bg-accent/10 text-accent px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                          {new Date(event.startDateTime!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                        </span>
-                        <span className="text-foreground/40 text-[10px] font-bold uppercase tracking-[0.2em]">{event.location}</span>
-                      </div>
+                      <div className="flex-1 flex flex-col justify-center">
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                          <span className="bg-accent/10 text-accent px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            {new Date(event.startDateTime!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                          </span>
+                          
+                          {/* Badge Type */}
+                          <span className="bg-foreground/5 text-foreground/60 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            {getEventTypeName(event.type)}
+                          </span>
+
+                          {/* Badge Prix */}
+                          <span className={`${event.ticketPrice === 0 ? 'bg-green-500/10 text-green-600' : 'bg-accent/5 text-accent'} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest`}>
+                            {event.ticketPrice === 0 ? 'Gratuit' : `${event.ticketPrice?.toLocaleString()} FCFA`}
+                          </span>
+
+                          {/* Badge Statut (si particulier) */}
+                          {event.status && event.status !== 'PUBLISHED' && (
+                            <span className={`${getStatusStyles(event.status)} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse`}>
+                                {event.status === 'FULL' ? 'Complet' : event.status}
+                            </span>
+                          )}
+
+                          <span className="text-foreground/30 text-[10px] font-bold uppercase tracking-[0.2em] ml-auto">{event.location}</span>
+                        </div>
                       <h3 className="font-serif text-3xl md:text-4xl mb-4 group-hover:text-accent transition-colors">{event.name}</h3>
                       <p className="text-foreground/60 font-light mb-6 line-clamp-2">{event.description}</p>
-                      <button className="self-start text-[10px] uppercase tracking-[0.4em] font-bold border-b border-foreground/10 pb-1 hover:border-accent hover:text-accent transition-all">
+                      <Link 
+                        href={`/${slug}/events/${event.id}`}
+                        className="self-start text-[10px] uppercase tracking-[0.4em] font-bold border-b border-foreground/10 pb-1 hover:border-accent hover:text-accent transition-all"
+                      >
                         Réserver un ticket
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 ))}
