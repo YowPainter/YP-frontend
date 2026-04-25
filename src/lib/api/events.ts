@@ -87,9 +87,22 @@ export async function reserveTicket(eventId: string, data: {
     phoneNumber?: string; // Ajouté pour MOMO/Orange
     artistSlug?: string; // Pour le contexte multitenant
 }): Promise<any> {
-    // Définir le contexte tenant pour les headers API
+    // 1. Définir le contexte tenant pour les headers API
     if (data.artistSlug) {
         localStorage.setItem('currentTenantSlug', data.artistSlug);
+    }
+    
+    // 2. Extraire explicitement le token du store si OpenAPI ne l'a pas encore (sécurité)
+    // On importe useAuthStore uniquement à l'exécution pour éviter les cycles de dépendances
+    try {
+        const { useAuthStore } = await import('@/store/authStore');
+        const token = useAuthStore.getState().token;
+        const { OpenAPI } = await import('../core/OpenAPI');
+        if (token && !OpenAPI.TOKEN) {
+            OpenAPI.TOKEN = token;
+        }
+    } catch (e) {
+        console.warn('API Events: Could not ensure token injection from store', e);
     }
     
     try {

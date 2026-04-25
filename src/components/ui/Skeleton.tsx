@@ -1,4 +1,5 @@
 import React from 'react'
+import { cn } from '@/lib/utils'
 
 interface SkeletonProps {
   className?: string
@@ -6,12 +7,12 @@ interface SkeletonProps {
 
 export function Skeleton({ className }: SkeletonProps) {
   return (
-    <div className={`animate-pulse bg-foreground/10 rounded-md ${className}`} />
+    <div className={cn("shimmer bg-foreground/5 rounded-md", className)} />
   )
 }
 
 export function SkeletonCircle({ className }: SkeletonProps) {
   return (
-    <div className={`animate-pulse bg-foreground/10 rounded-full ${className}`} />
+    <div className={cn("shimmer bg-foreground/5 rounded-full", className)} />
   )
 }

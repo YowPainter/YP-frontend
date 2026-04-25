@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { reserveTicket } from '@/lib/api/events';
 import type { Event } from '@/lib/types/event';
@@ -14,14 +15,13 @@ interface TicketReservationProps {
 
 export function TicketReservation({ event, artistSlug, onSuccess }: TicketReservationProps) {
     const user = useAuthStore((state) => state.user);
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState(user?.email || '');
     const [name, setName] = useState(user ? (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.artistName || user.firstName || user.email?.split('@')[0] || '')) : '');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
-    const [ticket, setTicket] = useState<any>(null);
 
     const isSoldOut = event.maxAttendees
         ? event.currentAttendees >= event.maxAttendees
@@ -54,10 +54,11 @@ export function TicketReservation({ event, artistSlug, onSuccess }: TicketReserv
                 purchasedAt: new Date().toISOString()
             };
             localStorage.setItem(`ticket_${reservation.id}`, JSON.stringify(enrichedTicket));
-            setTicket(enrichedTicket);
-            setSuccess(true);
-
+            
             if (onSuccess) onSuccess();
+
+            // Rediriger vers la page de téléchargement du billet
+            router.push(`/tickets/${reservation.id}`);
             
         } catch (err: any) {
             setError(err.message || 'Erreur lors de la réservation');
@@ -67,42 +68,11 @@ export function TicketReservation({ event, artistSlug, onSuccess }: TicketReserv
         }
     };
 
-
-
     if (isSoldOut) {
         return (
             <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-[2rem] p-8 text-center backdrop-blur-sm">
                 <p className="text-red-600 font-serif text-xl italic mb-1">Épuisé</p>
                 <p className="text-red-500/60 text-xs uppercase tracking-widest font-bold">Toutes les places ont été réservées</p>
-            </div>
-        );
-    }
-
-    if (success) {
-        return (
-            <div className="bg-white/40 dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-10 border border-emerald-500/20 shadow-xl text-center space-y-6">
-                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
-                    <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 className="font-serif text-3xl font-light mb-2 text-foreground">Place Confirmée !</h3>
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-600 font-black">Réservation validée</p>
-                </div>
-                <div className="py-6 border-y border-foreground/5 space-y-4">
-                    <p className="text-sm text-foreground/60 leading-relaxed italic">
-                        &ldquo;L'art est un partage.&rdquo; <br/>
-                        Votre invitation numérique a été envoyée à l'adresse <br/>
-                        <span className="font-bold text-foreground underline decoration-accent/30">{email}</span>
-                    </p>
-                </div>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="text-[10px] uppercase tracking-[0.4em] text-foreground/40 hover:text-accent font-bold transition-colors pt-4"
-                >
-                    Terminer
-                </button>
             </div>
         );
     }

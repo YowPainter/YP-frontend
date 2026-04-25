@@ -221,7 +221,7 @@ export default function ArtistDashboardPage() {
             </div>
           </div>
           <p className="text-[13px] leading-relaxed text-foreground/70 mb-3.5 max-w-md">
-            Peintre expressionniste. Huile &amp; acrylique. Je peins ce que les mots ne peuvent pas dire.
+            {user?.bio || "Aucune bio renseignée. Cliquez sur modifier pour en ajouter une."}
           </p>
           <div className="flex gap-6 pt-3 border-t border-foreground/10">
             {isAnalyticsLoading ? (

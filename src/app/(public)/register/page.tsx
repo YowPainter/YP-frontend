@@ -13,6 +13,8 @@ import { ArtistsService } from "@/lib/services/ArtistsService";
 import { RegisterRequest } from "@/lib/models/RegisterRequest";
 import { slugify } from "@/lib/utils";
 import { Eye, EyeOff, Loader2, Camera, X } from "lucide-react";
+import { getApiErrorMessage } from "@/lib/api-error-handler";
+import { toast } from "@/lib/toast";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -62,7 +64,7 @@ export default function RegisterPage() {
         try {
           avatarUrl = await uploadToCloudinary(avatar);
         } catch (uploadErr) {
-          console.error("Cloudinary Upload Error:", uploadErr);
+          toast.error(uploadErr, "Upload de la photo");
           throw new Error("Échec de l'envoi de l'image. Veuillez réessayer.");
         }
       }
@@ -82,6 +84,7 @@ export default function RegisterPage() {
         role: role === "ARTIST" ? RegisterRequest.role.ROLE_ARTIST : RegisterRequest.role.ROLE_BUYER,
         artistName: role === "ARTIST" ? (formData.artistName || `${formData.firstName} ${formData.lastName}`) : undefined,
         slug: generatedSlug,
+        imageURL: avatarUrl, // Atomic: image URL sent during registration
       };
 
       console.log("Attempting registration with:", { ...registerData, password: '***' });
@@ -90,62 +93,18 @@ export default function RegisterPage() {
       try {
         authResponse = await register(registerData);
       } catch (regErr: any) {
-        console.error("Registration Error Details:", regErr);
-        
-        // Detailed error reporting from backend
-        if (regErr.body && typeof regErr.body === 'object') {
-          const detail = regErr.body.message || regErr.body.detail || JSON.stringify(regErr.body);
-          throw new Error(`Erreur serveur: ${detail}`);
-        }
-        
-        if (regErr.status === 403) {
-          throw new Error("Accès refusé (403). Le serveur bloque l'inscription.");
-        }
-        if (regErr.status === 400) {
-          throw new Error("Requête invalide (400). Vérifiez que l'email n'est pas déjà utilisé.");
-        }
-        throw new Error(regErr.message || "L'inscription a échoué.");
+        throw new Error(getApiErrorMessage(regErr));
       }
 
-      // Set the token on OpenAPI so subsequent calls are authenticated
-      const token = authResponse.accessToken;
-      if (token) {
-        OpenAPI.TOKEN = token;
-      }
+      // Final refresh to ensure dashboard has the latest data
+      await useAuthStore.getState().refreshProfile();
 
-      // Save avatar to the backend if uploaded
-      if (avatarUrl) {
-        try {
-          if (role === "ARTIST") {
-            await ArtistsService.updateMyProfile({
-              artistName: formData.artistName || `${formData.firstName} ${formData.lastName}`,
-              profilePictureUrl: avatarUrl,
-            });
-          } else {
-            await BuyerProfileService.updateProfilePicture({
-              profilePictureUrl: avatarUrl,
-            });
-          }
-          
-          // Refresh user state correctly from backend
-          await useAuthStore.getState().refreshProfile();
-          console.log("Avatar uploaded to Cloudinary and backend successfully updated.");
-        } catch (updateErr) {
-          console.error("Failed to update profile picture on backend:", updateErr);
-          // Fallback just in case backend still fails: update local state so user isn't stuck
-          const currentUser = useAuthStore.getState().user;
-          if (currentUser) {
-            useAuthStore.getState().setAuth({
-              ...currentUser,
-              profilePictureUrl: avatarUrl,
-            });
-          }
-        }
-      }
-
+      toast.success('Bienvenue sur YowPainter !', `Votre compte ${role === 'ARTIST' ? 'd\'artiste' : 'de collectionneur'} a été créé.`);
       router.push(getDashboardRoute(authResponse.role));
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue.");
+      const message = err.message || "Une erreur est survenue.";
+      setError(message);
+      toast.error(err, 'Inscription');
     } finally {
       setLoading(false);
     }
@@ -233,7 +192,7 @@ export default function RegisterPage() {
             {/* Avatar Upload */}
             <div className="flex flex-col items-center gap-4 mb-8">
               <div className="relative group">
-                <div className="w-32 h-32 rounded-full border-2 border-dashed border-foreground/10 flex items-center justify-center overflow-hidden bg-foreground/5 transition-all group-hover:border-accent">
+                <div className="relative w-32 h-32 rounded-full border-2 border-dashed border-foreground/10 flex items-center justify-center overflow-hidden bg-foreground/5 transition-all group-hover:border-accent">
                   {avatarPreview ? (
                     <Image src={avatarPreview} alt="Preview" fill className="object-cover" />
                   ) : (

@@ -1,69 +1,82 @@
-'use client'
-
-import { useQuery } from '@tanstack/react-query'
+import type { Metadata } from 'next'
 import { ArtistsService } from '@/lib/services/ArtistsService'
-import { ArtistPublicSpace } from '@/components/artist/ArtistPublicSpace'
-import { useParams } from 'next/navigation'
-import { Skeleton } from '@/components/ui/Skeleton'
-import Link from 'next/link'
-import { useEffect } from 'react'
+import ArtistSpaceContent from './ArtistSpaceContent'
+import { OpenAPI } from '@/lib/core/OpenAPI'
 
-export default function ArtistSlugPage() {
-  const { slug } = useParams() as { slug: string }
+// Ensure the OpenAPI BASE is set for server-side fetches
+OpenAPI.BASE = process.env.NEXT_PUBLIC_API_URL || 'https://yowpainter-backend.onrender.com'
 
-  // Définir le contexte tenant pour les requêtes API dans cet espace
-  useEffect(() => {
-    if (slug) {
-      localStorage.setItem('currentTenantSlug', slug)
+interface ArtistPageProps {
+  params: Promise<{ slug: string }>
+}
+
+/**
+ * Fetch artist data on the server side.
+ * Silently returns null if the artist is not found.
+ */
+async function getArtist(slug: string) {
+  try {
+    return await ArtistsService.getArtistBySlug(slug)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * generateMetadata — runs on the server, generates full OpenGraph tags.
+ * This is what WhatsApp, Twitter, LinkedIn, etc. use for previews.
+ */
+export async function generateMetadata({ params }: ArtistPageProps): Promise<Metadata> {
+  const { slug } = await params
+  const artist = await getArtist(slug)
+
+  if (!artist) {
+    return {
+      title: 'Artiste introuvable | YowPainter',
+      description: 'Ce profil artiste est introuvable sur YowPainter.',
     }
-    // Nettoyage optionnel au démontage
-    return () => {
-      // On ne nettoie que si le slug correspond pour éviter d'effacer 
-      // un nouveau slug si on navigue vite entre deux artistes
-      if (localStorage.getItem('currentTenantSlug') === slug) {
-        localStorage.removeItem('currentTenantSlug')
-      }
-    }
-  }, [slug])
-
-  const { data: artist, isLoading, error } = useQuery({
-    queryKey: ['artist-profile', slug],
-    queryFn: () => ArtistsService.getArtistBySlug(slug),
-    enabled: !!slug,
-    retry: 1, // Limiter les retries pour les 404
-  })
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen pt-32 px-12">
-        <div className="max-w-[1400px] mx-auto flex gap-12 items-center">
-          <Skeleton className="w-[280px] h-[350px] rounded-3xl" />
-          <div className="flex-1">
-             <Skeleton className="h-16 w-3/4 mb-6" />
-             <Skeleton className="h-4 w-1/2" />
-          </div>
-        </div>
-      </div>
-    )
   }
 
-  if (error || !artist) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center pt-32 px-6 text-center">
-        <h2 className="font-serif text-5xl mb-6">Profil Introuvable</h2>
-        <p className="text-foreground/50 max-w-md mb-10">
-          Nous n'avons pas trouvé l'artiste correspondant au lien "{slug}". Il se peut que le lien ait expiré ou que l'artiste ait changé de nom.
-        </p>
-        <Link href="/artists" className="px-10 py-4 bg-foreground text-background text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all rounded-full">
-           Parcourir les artistes
-        </Link>
-      </div>
-    )
-  }
+  const displayName = artist.artistName || `${artist.firstName ?? ''} ${artist.lastName ?? ''}`.trim()
+  const bio = artist.bio || `Découvrez l'univers artistique de ${displayName} sur YowPainter.`
+  const imageUrl = artist.profilePictureUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://yowpainter.com'}/images/og-default.png`
+  const pageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://yowpainter.com'}/${slug}`
 
-  return (
-    <main className="min-h-screen canvas-texture canvas-grain overflow-x-hidden">
-      <ArtistPublicSpace artist={artist} slug={slug} />
-    </main>
-  )
+  return {
+    title: `${displayName} | YowPainter`,
+    description: bio.length > 160 ? bio.substring(0, 157) + '...' : bio,
+    openGraph: {
+      type: 'profile',
+      title: `${displayName} — Artiste sur YowPainter`,
+      description: bio.length > 160 ? bio.substring(0, 157) + '...' : bio,
+      url: pageUrl,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `Photo de profil de ${displayName}`,
+        },
+      ],
+      siteName: 'YowPainter',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${displayName} — Artiste sur YowPainter`,
+      description: bio.length > 160 ? bio.substring(0, 157) + '...' : bio,
+      images: [imageUrl],
+    },
+  }
+}
+
+/**
+ * Page Component — Server Component.
+ * Pre-fetches artist data on the server so the client component
+ * can render immediately without an extra loading state.
+ */
+export default async function ArtistSlugPage({ params }: ArtistPageProps) {
+  const { slug } = await params
+  const artist = await getArtist(slug)
+
+  return <ArtistSpaceContent slug={slug} initialArtist={artist} />
 }

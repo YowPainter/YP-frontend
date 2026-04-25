@@ -8,19 +8,22 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class SubscriptionsService {
     /**
-     * Passer a un forfait superieur
-     * @param planName
-     * @returns any OK
+     * Initier le paiement Mobile Money pour un forfait
+     * @param plan
+     * @param phoneNumber
+     * @returns string OK
      * @throws ApiError
      */
-    public static upgradePlan(
-        planName: 'FREE' | 'PRO' | 'ELITE',
-    ): CancelablePromise<any> {
+    public static checkoutUpgrade(
+        plan: 'FREE' | 'PRO' | 'ELITE',
+        phoneNumber: string,
+    ): CancelablePromise<Record<string, string>> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/subscription/upgrade',
+            url: '/api/subscription/upgrade/checkout',
             query: {
-                'planName': planName,
+                'plan': plan,
+                'phoneNumber': phoneNumber,
             },
         });
     }

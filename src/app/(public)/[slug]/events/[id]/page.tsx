@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Calendar, ChevronLeft, MapPin, Users, Share2, Clock } from 'lucide-react'
 import { getEventById } from '@/lib/api/events'
 import { TicketReservation } from '@/components/events/TicketReservation'
-import { MyTickets } from '@/components/events/MyTickets'
 
 export default function EventDetailPage() {
   const { slug, id } = useParams() as { slug: string; id: string }
@@ -55,13 +54,13 @@ export default function EventDetailPage() {
       <div className="min-h-screen pt-32 px-6 sm:px-12 max-w-[1400px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-7 space-y-8 animate-pulse">
-            <Skeleton className="w-full aspect-[16/10] rounded-[2rem]" />
+            <Skeleton className="w-full aspect-[16/10]" />
             <Skeleton className="h-10 w-3/4" />
             <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-32 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full" />
           </div>
           <div className="lg:col-span-5 animate-pulse">
-            <Skeleton className="h-[500px] w-full rounded-[2.5rem]" />
+            <Skeleton className="h-[500px] w-full" />
           </div>
         </div>
       </div>
@@ -100,13 +99,16 @@ export default function EventDetailPage() {
 
       {/* NAVIGATION */}
       <nav className="sticky top-0 z-50 px-6 py-6 md:px-12 pointer-events-none">
-        <Link
-          href={`/${slug}`}
-          className="pointer-events-auto inline-flex items-center gap-3 px-6 py-3 bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-foreground group hover:bg-accent hover:text-white transition-all duration-500 rounded-full shadow-2xl"
+        <button
+          onClick={() => router.back()}
+          className="pointer-events-auto inline-flex items-center gap-4 px-8 py-4 bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-foreground group hover:bg-accent hover:text-white transition-all duration-500 shadow-2xl relative"
         >
           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-bold tracking-[0.2em] uppercase">{slug}</span>
-        </Link>
+          <span className="text-[11px] font-bold tracking-[0.4em] uppercase">RETOUR</span>
+          {/* Decorative corner */}
+          <div className="absolute -top-[1px] -left-[1px] w-2 h-2 border-t border-l border-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute -bottom-[1px] -right-[1px] w-2 h-2 border-b border-r border-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+        </button>
       </nav>
 
       <main className="relative z-10 max-w-[1500px] mx-auto px-6 md:px-12 pt-4">
@@ -115,53 +117,67 @@ export default function EventDetailPage() {
           {/* LEFT COLUMN: VISUALS & CONTENT */}
           <div className="lg:col-span-7 space-y-12">
             {/* Hero Image / Poster */}
-            <div className="relative aspect-[3/4] md:aspect-[16/10] overflow-hidden rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] group">
+            <div className="relative aspect-[3/4] md:aspect-[16/10] overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] group border border-foreground/5">
               <Image
                 src={event.posterUrl}
                 alt={event.title}
                 fill
+                sizes="(max-width: 768px) 100vw, 70vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-[3s] ease-out"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80" />
 
-              <div className="absolute bottom-8 left-8 right-8 text-white">
-                <span className="inline-block px-4 py-1.5 bg-accent/90 backdrop-blur-md text-[10px] uppercase tracking-[0.3em] font-bold mb-4">
+              <div className="absolute bottom-10 left-10 right-10 text-white">
+                <span className="inline-block px-5 py-2 bg-accent text-[11px] uppercase tracking-[0.3em] font-bold mb-6 border border-accent/20 shadow-xl">
                   {event.eventType === 'FREE' ? 'OFFERT' : `${event.price?.toLocaleString()} CFA`}
                 </span>
-                <h1 className="font-serif text-4xl md:text-6xl font-light leading-tight uppercase tracking-tighter">
+                <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-light leading-[1.1] uppercase tracking-tighter">
                   {event.title}
                 </h1>
               </div>
             </div>
 
-            {/* Description */}
-            <div className="space-y-8 bg-white/40 dark:bg-white/5 backdrop-blur-sm p-8 md:p-12 rounded-[2rem] border border-white/50 dark:border-white/10 shadow-sm">
-              <div className="flex items-center gap-4 text-accent">
-                <span className="w-12 h-[1px] bg-accent"></span>
-                <span className="text-xs font-bold uppercase tracking-[0.4em]">Manifeste de l&apos;Événement</span>
+            {/* Description Card */}
+            <div className="space-y-10 bg-white/40 dark:bg-black/40 backdrop-blur-sm p-10 md:p-16 border border-white/50 dark:border-white/10 shadow-sm relative overflow-hidden">
+              {/* Artistic Pattern */}
+              <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] pointer-events-none">
+                <div className="absolute inset-0 rotate-45 translate-x-16 -translate-y-16 border-[40px] border-accent" />
               </div>
-              <h2 className="font-serif text-3xl italic font-light text-foreground/90">L&apos;artiste vous propose...</h2>
-              <p className="text-xl md:text-2xl text-foreground font-light leading-[1.6] italic border-l-4 border-accent pl-8 py-2">
-                &ldquo;{event.description}&rdquo;
-              </p>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8 border-t border-foreground/5">
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-widest text-foreground/40">Artiste</p>
-                  <p className="font-bold text-sm tracking-wide">{event.artistName}</p>
+              <div className="flex items-center gap-4 text-accent">
+                <span className="w-16 h-[1px] bg-accent"></span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.5em]">Manifeste de l&apos;Événement</span>
+              </div>
+              
+              <div className="space-y-6">
+                <h2 className="font-serif text-3xl md:text-4xl italic font-light text-foreground/90">L&apos;artiste vous propose...</h2>
+                <div className="relative">
+                  <p className="text-xl md:text-3xl text-foreground font-light leading-[1.6] italic border-l-2 border-accent pl-10 py-4">
+                    &ldquo;{event.description}&rdquo;
+                  </p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-widest text-foreground/40">Type</p>
-                  <p className="font-bold text-sm tracking-wide">{event.eventType === 'FREE' ? 'Ouvert' : 'Sur réservation'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 pt-12 border-t border-foreground/5 font-mono">
+                <div className="space-y-2">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-foreground/30">Artiste</p>
+                  <p className="font-bold text-sm tracking-widest text-foreground uppercase">{event.artistName}</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-widest text-foreground/40">Capacité</p>
-                  <p className="font-bold text-sm tracking-wide">{event.maxAttendees || 'Illimitée'}</p>
+                <div className="space-y-2">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-foreground/30">Type</p>
+                  <p className="font-bold text-sm tracking-widest text-accent uppercase">{event.eventType === 'FREE' ? 'Ouvert' : 'Réservé'}</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-widest text-foreground/40">Statut</p>
-                  <p className="font-bold text-sm tracking-wide text-green-600">CONFIRMÉ</p>
+                <div className="space-y-2">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-foreground/30">Capacité</p>
+                  <p className="font-bold text-sm tracking-widest text-foreground uppercase">{event.maxAttendees || 'Illimitée'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-foreground/30">Statut</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 animate-pulse" />
+                    <p className="font-bold text-sm tracking-widest text-green-600 uppercase">Confirmé</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -169,47 +185,55 @@ export default function EventDetailPage() {
 
           {/* RIGHT COLUMN: INFOS & TICKET */}
           <div className="lg:col-span-5">
-            <div className="sticky top-28 space-y-8">
+            <div className="sticky top-28 space-y-12">
 
               {/* Practical Infos Card */}
-              <div className="bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-[2.5rem] p-10 shadow-2xl border border-white dark:border-white/10 shadow-accent/5">
-                <div className="space-y-10">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-serif text-3xl font-light">Informations</h3>
-                    <Share2 className="w-5 h-5 text-foreground/30 cursor-pointer hover:text-accent transition-colors" />
+              <div className="bg-white/95 dark:bg-zinc-950/60 backdrop-blur-md p-10 md:p-14 border border-white dark:border-white/10 shadow-2xl relative">
+                {/* Decorative Diamond */}
+                <div className="absolute -top-3 -right-3 w-6 h-6 border border-accent rotate-45 flex items-center justify-center bg-background z-10">
+                   <div className="w-2 h-2 bg-accent" />
+                </div>
+
+                <div className="space-y-12">
+                  <div className="flex items-center justify-between border-b border-foreground/5 pb-8">
+                    <h3 className="font-serif text-3xl font-light uppercase tracking-tighter">Informations</h3>
+                    <button className="p-3 bg-foreground/5 hover:bg-accent hover:text-white transition-all duration-300">
+                      <Share2 className="w-5 h-5 opacity-60" />
+                    </button>
                   </div>
 
-                  <div className="space-y-8">
-                    <div className="flex gap-6">
-                      <div className="w-14 h-14 rounded-2xl bg-accent/5 flex items-center justify-center flex-shrink-0">
-                        <Calendar className="w-6 h-6 text-accent" />
+                  <div className="space-y-10">
+                    <div className="flex gap-8 items-start">
+                      <div className="w-16 h-16 border border-accent/20 bg-accent/5 flex items-center justify-center flex-shrink-0 relative group">
+                        <Calendar className="w-7 h-7 text-accent" />
+                        <div className="absolute inset-0 bg-accent/5 scale-0 group-hover:scale-100 transition-transform duration-500" />
                       </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest text-foreground/40 mb-1">Quand ?</p>
-                        <p className="text-lg font-bold">{formatDateRange()}</p>
+                      <div className="pt-1">
+                        <p className="text-[9px] uppercase tracking-[0.4em] text-foreground/30 mb-2">Calendrier</p>
+                        <p className="text-xl font-bold tracking-tight">{formatDateRange()}</p>
                       </div>
                     </div>
 
-                    <div className="flex gap-6">
-                      <div className="w-14 h-14 rounded-2xl bg-amber-500/5 flex items-center justify-center flex-shrink-0">
-                        <MapPin className="w-6 h-6 text-amber-600" />
+                    <div className="flex gap-8 items-start">
+                      <div className="w-16 h-16 border border-amber-500/20 bg-amber-500/5 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-7 h-7 text-amber-600" />
                       </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest text-foreground/40 mb-1">Où ça se passe ?</p>
-                        <p className="text-lg font-bold">{event.location}</p>
-                        <p className="text-sm text-foreground/50 italic mt-1">
+                      <div className="pt-1">
+                        <p className="text-[9px] uppercase tracking-[0.4em] text-foreground/30 mb-2">Emplacement</p>
+                        <p className="text-xl font-bold tracking-tight">{event.location}</p>
+                        <p className="text-xs text-foreground/40 font-mono mt-2 uppercase tracking-widest border-l border-amber-500/30 pl-3">
                           {event.locationType === 'VIRTUAL' ? 'Salon Virtuel YP' : 'Galerie Physique'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex gap-6">
-                      <div className="w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center flex-shrink-0">
-                        <Users className="w-6 h-6 text-foreground/40" />
+                    <div className="flex gap-8 items-start">
+                      <div className="w-16 h-16 border border-foreground/10 bg-foreground/5 flex items-center justify-center flex-shrink-0">
+                        <Users className="w-7 h-7 text-foreground/40" />
                       </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest text-foreground/40 mb-1">Participants</p>
-                        <p className="text-lg font-bold">{event.currentAttendees} déjà inscrits</p>
+                      <div className="pt-1">
+                        <p className="text-[9px] uppercase tracking-[0.4em] text-foreground/30 mb-2">Audience</p>
+                        <p className="text-xl font-bold tracking-tight uppercase">{event.currentAttendees} INSCRIT{event.currentAttendees && event.currentAttendees > 1 ? 'S' : ''}</p>
                       </div>
                     </div>
                   </div>
@@ -220,16 +244,12 @@ export default function EventDetailPage() {
                 </div>
               </div>
 
-              {/* Mes billets pour cet événement */}
-              <div className="animate-in fade-in slide-in-from-bottom-5 duration-700">
-                <MyTickets eventId={event.id} />
-              </div>
-
               {/* Art Quote */}
-              <div className="text-center p-8">
-                <p className="font-serif italic text-foreground/30 text-sm">
-                  &ldquo;L&apos;art ne reproduit pas le visible, il rend visible.&rdquo; 🎨
+              <div className="text-center p-12 border border-foreground/5 bg-foreground/[0.02]">
+                <p className="font-serif italic text-foreground/30 text-sm leading-relaxed max-w-xs mx-auto">
+                  &ldquo;L&apos;art ne reproduit pas le visible, il rend visible.&rdquo;
                 </p>
+                <div className="mt-4 w-8 h-[1px] bg-accent/20 mx-auto" />
               </div>
             </div>
           </div>

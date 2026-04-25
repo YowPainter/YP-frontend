@@ -17,24 +17,32 @@ export function getDashboardRoute(role?: string): string {
 export interface ExtendedAuthResponse extends AuthResponse {
     id?: string;
     slug?: string;
+    bio?: string;
+    profilePictureUrl?: string;
 }
 
 interface AuthState {
     user: ExtendedAuthResponse | null;
     token: string | null;
+    refreshToken: string | null;
     isAuthenticated: boolean;
     login: (credentials: LoginRequest) => Promise<AuthResponse>;
     register: (data: RegisterRequest) => Promise<AuthResponse>;
+    refreshAccessToken: () => Promise<string | null>;
     refreshProfile: () => Promise<void>;
     setAuth: (response: AuthResponse) => void;
     logout: () => void;
 }
+
+// Store the refresh promise to avoid multiple calls at once
+let refreshPromise: Promise<string | null> | null = null;
 
 export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
             user: null,
             token: null,
+            refreshToken: null,
             isAuthenticated: false,
 
             login: async (credentials) => {
@@ -42,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: response,
                     token: response.accessToken || null,
+                    refreshToken: response.refreshToken || null,
                     isAuthenticated: !!response.accessToken,
                 });
                 // Fetch full profile after login
@@ -62,9 +71,62 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: response,
                     token: response.accessToken || null,
+                    refreshToken: response.refreshToken || null,
                     isAuthenticated: !!response.accessToken,
                 });
+                // Fetch full profile after registration
+                if (response.accessToken) {
+                    OpenAPI.TOKEN = response.accessToken;
+                    try {
+                        await get().refreshProfile();
+                    } catch (e) {
+                        console.warn('Could not refresh profile after registration:', e);
+                    }
+                }
                 return response;
+            },
+
+            refreshAccessToken: async () => {
+                // Return ongoing promise if a refresh is already in progress
+                if (refreshPromise) return refreshPromise;
+
+                refreshPromise = (async () => {
+                    const { refreshToken } = get();
+                    if (!refreshToken) {
+                        get().logout();
+                        return null;
+                    }
+
+                    try {
+                        const response = await AuthenticationService.refresh(refreshToken);
+                        const newToken = response.accessToken || null;
+                        const newRefreshToken = response.refreshToken || null;
+
+                        set({
+                            token: newToken,
+                            refreshToken: newRefreshToken,
+                            isAuthenticated: !!newToken,
+                            user: {
+                                ...get().user,
+                                ...response,
+                            }
+                        });
+
+                        if (newToken) {
+                            OpenAPI.TOKEN = newToken;
+                        }
+
+                        return newToken;
+                    } catch (error) {
+                        console.error('Failed to refresh token:', error);
+                        get().logout();
+                        return null;
+                    } finally {
+                        refreshPromise = null;
+                    }
+                })();
+
+                return refreshPromise;
             },
 
             refreshProfile: async () => {
@@ -82,6 +144,7 @@ export const useAuthStore = create<AuthState>()(
                                 lastName: profile.lastName ?? state.user?.lastName,
                                 profilePictureUrl: profile.profilePictureUrl ?? state.user?.profilePictureUrl,
                                 artistName: profile.artistName ?? state.user?.artistName,
+                                bio: profile.bio ?? state.user?.bio,
                                 slug: profile.slug ?? (state.user as any)?.slug,
                             },
                         }));
@@ -94,6 +157,7 @@ export const useAuthStore = create<AuthState>()(
                                 firstName: profile.firstName ?? state.user?.firstName,
                                 lastName: profile.lastName ?? state.user?.lastName,
                                 profilePictureUrl: profile.profilePictureUrl ?? state.user?.profilePictureUrl,
+                                bio: profile.bio ?? state.user?.bio,
                             },
                         }));
                     }
@@ -106,6 +170,7 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: response,
                     token: response.accessToken || null,
+                    refreshToken: response.refreshToken || null,
                     isAuthenticated: !!response.accessToken,
                 });
             },
@@ -115,6 +180,7 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: null,
                     token: null,
+                    refreshToken: null,
                     isAuthenticated: false,
                 });
             },

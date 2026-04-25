@@ -8,6 +8,7 @@ export type BuyerProfileResponse = {
     lastName?: string;
     email?: string;
     profilePictureUrl?: string;
+    bio?: string;
     role?: string;
 };
 

@@ -7,6 +7,8 @@ import { useAuthStore } from "@/store/authStore";
 import { ArtistsService } from "@/lib/services/ArtistsService";
 import { BuyerProfileService } from "@/lib/services/BuyerProfileService";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { getApiErrorMessage } from "@/lib/api-error-handler";
+import { toast } from "@/lib/toast";
 
 interface EditProfileModalProps {
   onClose: () => void;
@@ -21,6 +23,7 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [artistName, setArtistName] = useState(user?.artistName || "");
+  const [bio, setBio] = useState(user?.bio || "");
   
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
@@ -77,21 +80,36 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
       // API Call based on role
       if (isArtist) {
         await ArtistsService.updateMyProfile({
+          firstName,
+          lastName,
           artistName: artistName || `${firstName} ${lastName}`,
+          bio,
           profilePictureUrl: avatarUrl,
         });
       } else {
-        // For buyer, we only have updateProfilePicture right now in the service spec
-        await BuyerProfileService.updateProfilePicture({
-          profilePictureUrl: avatarUrl,
+        // Update basic info (names, bio)
+        await BuyerProfileService.updateProfile({
+          firstName,
+          lastName,
+          bio,
         });
+        
+        // Update profile picture if it changed
+        if (avatarUrl) {
+          await BuyerProfileService.updateProfilePicture({
+            profilePictureUrl: avatarUrl,
+          });
+        }
       }
 
       // Refresh the store and close modal
       await refreshProfile();
+      toast.success('Profil mis à jour !', 'Vos informations ont été enregistrées avec succès.');
       onClose();
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de la sauvegarde.");
+      const message = getApiErrorMessage(err);
+      setError(message);
+      toast.error(err, 'Mise à jour du profil');
     } finally {
       setLoading(false);
     }
@@ -159,24 +177,57 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
           </div>
 
           {/* Form Fields */}
-          {isArtist ? (
-            <div className="space-y-4">
+          <div className="space-y-4 max-h-[300px] overflow-y-auto px-1 -mx-1">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground/60 uppercase tracking-widest">Nom d'Artiste</label>
+                <label className="text-[10px] font-medium text-foreground/60 uppercase tracking-widest">Prénom</label>
+                <input 
+                  type="text" 
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm font-light"
+                  placeholder="Votre prénom"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-foreground/60 uppercase tracking-widest">Nom</label>
+                <input 
+                  type="text" 
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm font-light"
+                  placeholder="Votre nom"
+                />
+              </div>
+            </div>
+
+            {isArtist && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-foreground/60 uppercase tracking-widest">Nom d'Artiste</label>
                 <input 
                   type="text" 
                   value={artistName}
                   onChange={(e) => setArtistName(e.target.value)}
-                  className="w-full bg-transparent border-b border-foreground/20 py-2 outline-none focus:border-accent transition-colors"
+                  className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm font-light"
                   placeholder="Votre nom de scène"
                 />
               </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-foreground/60 uppercase tracking-widest">Bio / À propos</label>
+              <textarea 
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                rows={3}
+                className="w-full bg-foreground/5 border border-foreground/10 rounded-lg p-3 outline-none focus:border-accent transition-colors text-sm font-light resize-none"
+                placeholder={isArtist ? "Parlez-nous de votre style, vos inspirations..." : "Amateur d'art, collectionneur..."}
+              />
+              <p className="text-[10px] text-right text-foreground/40 italic">
+                {isArtist ? "Mettez en avant votre univers artistique." : "Partagez votre passion pour l'art."}
+              </p>
             </div>
-          ) : (
-            <div className="text-sm text-foreground/60 text-center italic bg-foreground/5 p-4 rounded-lg">
-              En tant que collectionneur, seule votre photo de profil peut être modifiée pour le moment.
-            </div>
-          )}
+          </div>
 
           {/* Actions */}
           <div className="pt-4 flex gap-3">

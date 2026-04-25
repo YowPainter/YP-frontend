@@ -60,9 +60,11 @@ function ThemeToggle() {
 export default function Navbar() {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -97,7 +99,7 @@ export default function Navbar() {
               <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all"></span>
             </Link>
             <Link href="/events" className="hover:text-accent transition-colors relative group">
-              Expositions
+              Evenements
               <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all"></span>
             </Link>
             <Link href="/shop" className="hover:text-accent transition-colors relative group">
@@ -110,19 +112,21 @@ export default function Navbar() {
         {/* Actions (Droite) */}
         <div className="flex-1 flex justify-end items-center gap-4 md:gap-6">
           <ThemeToggle />
-          
-          {isAuthenticated ? (
+
+          {!mounted ? (
+            <div className="w-10 h-10" />
+          ) : isAuthenticated ? (
             <div className="flex items-center gap-4">
-              <Link 
-                href={getDashboardRoute(user?.role)} 
+              <Link
+                href={getDashboardRoute(user?.role)}
                 className="flex items-center gap-3 group"
               >
                 <div className="w-10 h-10 rounded-full border border-foreground/10 overflow-hidden transition-all group-hover:border-accent">
                   {user?.profilePictureUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img 
-                      src={user.profilePictureUrl} 
-                      alt="Profile" 
+                    <img
+                      src={user.profilePictureUrl}
+                      alt="Profile"
                       className="object-cover w-full h-full"
                     />
                   ) : (
@@ -137,7 +141,7 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
-              <button 
+              <button
                 onClick={() => {
                   logout();
                   router.push("/");
