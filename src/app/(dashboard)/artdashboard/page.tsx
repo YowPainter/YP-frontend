@@ -13,6 +13,7 @@ import PostModal         from '@/components/artdashboard/PostModal'
 import CreatePostModal   from '@/components/artdashboard/CreatePostModal'
 import CreateArticleModal from '@/components/artdashboard/CreateArticleModal'
 import CreateEventModal  from '@/components/artdashboard/CreateEventModal'
+import WalletPanel       from '@/components/artdashboard/WalletPanel'
 
 import { useAuthStore }       from '@/store/authStore'
 import { EditProfileModal }   from '@/components/dashboard/EditProfileModal'
@@ -275,6 +276,11 @@ export default function ArtistDashboardPage() {
                 </div>
               </>
             ) : null}
+          </div>
+
+          {/* ── Porte-monnaie ── */}
+          <div className="mt-4">
+            <WalletPanel/>
           </div>
         </div>
       </div>
