@@ -1,3 +1,5 @@
+"use client";
+
 import ShopModuleNav from "@/components/shop/ShopModuleNav";
 import { useQuery } from "@tanstack/react-query";
 import { ShopOrdersService } from "@/lib/services/ShopOrdersService";
