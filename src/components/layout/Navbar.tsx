@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useAuthStore, getDashboardRoute } from "@/store/authStore";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { User, LogOut } from "lucide-react";
 
 function ThemeToggle() {
@@ -59,6 +59,7 @@ function ThemeToggle() {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -75,15 +76,25 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 sm:px-12 pointer-events-none 
-      ${scrolled ? "py-4 glass-elegant backdrop-blur-xl border-b border-foreground/5 shadow-sm" : "py-8"}`}
+      ${scrolled || pathname === '/login' || pathname === '/register' ? "py-4 glass-elegant backdrop-blur-xl border-b border-foreground/5 shadow-sm" : "py-8"}`}
     >
       <div className="max-w-[1400px] mx-auto flex justify-between items-center pointer-events-auto">
 
         {/* Logo (Gauche) */}
         <div className="flex-1 flex justify-start">
-          <Link href="/" className="flex items-baseline gap-2 group">
-            <span className="font-serif text-3xl font-bold tracking-tighter text-foreground group-hover:text-accent transition-colors">Y<span className="italic text-accent">P</span></span>
-            <span className={`font-serif text-lg italic font-light text-foreground/60 tracking-tight transition-all duration-500 ${scrolled ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>YowPainter</span>
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className={`relative transition-all duration-500 overflow-hidden ${scrolled || pathname === '/login' || pathname === '/register' ? 'w-14 h-14' : 'w-24 h-24'}`}>
+              <Image 
+                src="/images/logo.png" 
+                alt="YowPainter Logo" 
+                fill
+                className="object-contain scale-[2] transition-transform duration-500"
+                priority
+              />
+            </div>
+            <span className={`font-serif italic font-light text-foreground/80 tracking-tight transition-all duration-500 ${scrolled ? 'opacity-0 w-0 overflow-hidden text-[0px]' : 'opacity-100 w-auto text-xl'}`}>
+              YowPainter
+            </span>
           </Link>
         </div>
 

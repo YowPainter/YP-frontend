@@ -20,6 +20,11 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "YowPainter | Marketplace d'Art Moderne",
   description: "Découvrez des pépites artistiques et des chefs-d'œuvre contemporains.",
+  icons: {
+    icon: "/images/logo.png",
+    shortcut: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
 };
 
 export default function RootLayout({

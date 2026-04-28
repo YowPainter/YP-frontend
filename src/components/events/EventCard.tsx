@@ -141,19 +141,20 @@ export function EventCard({ event, variant = 'grid', artistSlug, artist }: Event
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 50vw"
                             className="object-cover group-hover:scale-110 transition-transform duration-[2s]"
-                            onError={() => setImgSrc('https://images.unsplash.com/photo-1579710838505-4cfa69f0bd2c?w=800&q=80')}
+                            onError={() => setImgSrc('https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80')}
+                            unoptimized={imgSrc.includes('unsplash.com')}
                         />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-85 group-hover:opacity-95 transition-opacity duration-500" />
                     
-                    <div className="absolute inset-x-0 bottom-0 px-10 pb-16 pt-20 flex flex-col items-center text-center text-white z-10 transition-transform duration-500 group-hover:-translate-y-2 pointer-events-none">
-                        {/* Status Badge */}
-                        <div className="absolute top-8 right-8">
-                            <span className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] font-bold bg-accent text-white border border-accent/20 shadow-lg">
-                                {event.ticketPrice && event.ticketPrice > 0 ? `${event.ticketPrice.toLocaleString()} CFA` : 'GRATUIT'}
-                            </span>
-                        </div>
+                    {/* Status Badge - Positionné en haut à droite par rapport à l'image */}
+                    <div className="absolute top-8 right-8 z-20">
+                        <span className="px-5 py-2 text-[11px] uppercase tracking-[0.3em] font-bold bg-accent text-white border border-accent/20 shadow-lg backdrop-blur-md">
+                            {event.ticketPrice && event.ticketPrice > 0 ? `${event.ticketPrice.toLocaleString()} CFA` : 'GRATUIT'}
+                        </span>
+                    </div>
 
+                    <div className="absolute inset-x-0 bottom-0 px-10 pb-16 pt-20 flex flex-col items-center text-center text-white z-10 transition-transform duration-500 group-hover:-translate-y-2 pointer-events-none">
                         {isSoldOut && (
                             <div className="mb-6 inline-block bg-red-600 text-white px-4 py-1.5 text-[11px] uppercase tracking-[0.25em] font-bold w-max shadow-lg self-center">
                                 COMPLET
@@ -225,7 +226,8 @@ export function EventCard({ event, variant = 'grid', artistSlug, artist }: Event
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-[1.5s] grayscale-[20%] group-hover:grayscale-0"
-                    onError={() => setImgSrc('https://images.unsplash.com/photo-1579710838505-4cfa69f0bd2c?w=800&q=80')}
+                    onError={() => setImgSrc('https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80')}
+                    unoptimized={imgSrc.includes('unsplash.com')}
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
                 

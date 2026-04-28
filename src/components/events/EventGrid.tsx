@@ -53,35 +53,15 @@ export function EventGrid({ artistId }: EventGridProps) {
                 return { events, artistsMap: new Map() };
             }
 
-            // Cas principal : agréger les événements de tous les artistes via leur slug
-            if (!allArtists || allArtists.length === 0) {
-                return { events: [], artistsMap: new Map() };
-            }
-
+            // Cas principal : Utiliser l'endpoint global pour tous les événements
+            const allEvents = await EventsService.getUpcomingEvents();
+            
             const artistsMap = new Map<string, ArtistResponse>();
-            const allEvents: EventResponse[] = [];
-
-            const results = await Promise.allSettled(
-                allArtists
-                    .filter(a => a.slug) // Ne traiter que les artistes avec un slug
-                    .map(async (artist) => {
-                        const events = await EventsService.getEventsByArtistSlug(artist.slug!);
-                        return { artist, events };
-                    })
-            );
-
-            results.forEach((result) => {
-                if (result.status === 'fulfilled') {
-                    const { artist, events } = result.value;
-                    // Enregistrer l'artiste dans le map (par artistId)
-                    events.forEach(event => {
-                        if (event.artistId) {
-                            artistsMap.set(event.artistId, artist);
-                        }
-                    });
-                    allEvents.push(...events);
-                }
-            });
+            if (allArtists) {
+                allArtists.forEach(artist => {
+                    if (artist.id) artistsMap.set(artist.id, artist);
+                });
+            }
 
             // Trier par date de début (les plus proches d'abord)
             allEvents.sort((a, b) => {

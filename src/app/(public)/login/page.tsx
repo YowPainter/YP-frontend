@@ -12,7 +12,7 @@ import { toast } from "@/lib/toast";
 export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,25 +39,24 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full canvas-texture canvas-grain overflow-hidden">
-      
+
       {/* Côté Gauche: Visuel Artistique */}
       <div className="hidden lg:flex relative w-1/2 flex-col justify-between p-12 overflow-hidden bg-black">
         {/* L'Image d'Art en arrière-plan with a subtle overlay */}
         <div className="absolute inset-0 z-0">
-          <Image 
-            src="/images/login-art.png" 
-            alt="Abstract Art" 
-            fill 
-            className="object-cover opacity-60 transition-transform duration-[10s] hover:scale-110" 
+          <Image
+            src="/images/login-art.png"
+            alt="Abstract Art"
+            fill
+            className="object-cover opacity-60 transition-transform duration-[10s] hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40"></div>
         </div>
 
         <AnimatedBlob className="top-[-10%] left-[-10%] w-[40vw] h-[40vw]" color="accent" opacity={0.2} />
 
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-8 h-8 bg-accent rounded-full mb-1"></div>
-          <span className="font-serif text-3xl font-medium tracking-tighter italic text-white">YowPainter</span>
+        <div className="relative z-10 flex items-center gap-4 opacity-0 h-0 overflow-hidden">
+          {/* Logo supprimé car déjà présent dans la Navbar */}
         </div>
 
         <div className="relative z-10">
@@ -83,12 +82,12 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col justify-center items-center px-6 sm:px-12 lg:px-20 relative">
         {/* Éléments artistiques on the form side */}
         <div className="absolute top-10 right-10 w-32 h-32 text-accent/10 pointer-events-none">
-           <svg viewBox="0 0 100 100" fill="currentColor"><path d="M0 100 L100 0 L100 100 Z" /></svg>
+          <svg viewBox="0 0 100 100" fill="currentColor"><path d="M0 100 L100 0 L100 100 Z" /></svg>
         </div>
         <div className="absolute bottom-20 left-10 w-48 h-1 text-accent/20 rotate-45 pointer-events-none"></div>
 
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full -z-10 pointer-events-none opacity-40">
-           <AnimatedBlob className="top-[10%] right-[10%] w-[30rem] h-[30rem]" color="accent" />
+          <AnimatedBlob className="top-[10%] right-[10%] w-[30rem] h-[30rem]" color="accent" />
         </div>
 
         <div className="w-full max-w-md">
@@ -106,8 +105,8 @@ export default function LoginPage() {
 
             <div className="space-y-2 group">
               <label className="text-[10px] uppercase tracking-[0.3em] font-bold text-foreground/40 group-focus-within:text-accent transition-colors px-4">Adresse Email</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -122,15 +121,15 @@ export default function LoginPage() {
                 <Link href="#" className="text-[10px] uppercase tracking-[0.3em] font-bold text-accent hover:text-foreground transition-colors">Oublié ?</Link>
               </div>
               <div className="relative">
-                <input 
-                  type={showPassword ? "text" : "password"} 
+                <input
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full bg-transparent border-b border-foreground/10 py-4 px-4 pr-12 outline-none focus:border-accent transition-all text-xl font-light tracking-tight placeholder:text-foreground/10"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/20 hover:text-accent transition-colors"
@@ -141,7 +140,7 @@ export default function LoginPage() {
             </div>
 
             <div className="pt-8">
-              <button 
+              <button
                 disabled={loading}
                 className="w-full bg-foreground text-background py-5 px-8 text-xs uppercase tracking-[0.4em] font-bold hover:bg-accent hover:shadow-[0_20px_50px_rgba(var(--accent-rgb),0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 shadow-xl group flex items-center justify-center gap-4"
               >
