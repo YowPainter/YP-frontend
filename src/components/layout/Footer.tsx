@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -84,8 +85,15 @@ export default function Footer() {
         
         {/* Ligne de droits */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-8 pt-12 border-t border-foreground/5">
-          <div className="flex items-center gap-4">
-            <span className="w-2 h-2 bg-accent rounded-full"></span>
+          <div className="flex items-center gap-6">
+            <div className="relative w-20 h-20 overflow-hidden">
+              <Image 
+                src="/images/logo.png" 
+                alt="YowPainter Logo" 
+                fill
+                className="object-contain opacity-80 scale-[2]"
+              />
+            </div>
             <span className="font-serif text-2xl font-medium tracking-tighter">Yow<span className="text-accent italic">Painter</span></span>
           </div>
           <p className="text-foreground/20 text-[10px] uppercase tracking-[0.5em] font-bold">© {new Date().getFullYear()} Art Without Walls.</p>

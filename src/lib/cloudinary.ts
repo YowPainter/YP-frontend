@@ -21,12 +21,12 @@ export async function uploadToCloudinary(file: File): Promise<string> {
       }
     );
 
+    const data = await response.json();
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to upload to Cloudinary');
+      throw new Error(data.error?.message || 'Failed to upload to Cloudinary');
     }
 
-    const data = await response.json();
     return data.secure_url;
   } catch (error) {
     console.error('Cloudinary Upload Error:', error);

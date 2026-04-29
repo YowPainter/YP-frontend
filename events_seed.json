@@ -1,0 +1,112 @@
+[
+  {
+    "name": "RÉVÉLATIONS PHOTOGRAPHIQUES",
+    "description": "Une immersion dans le regard des jeunes photographes d'Afrique Centrale.",
+    "posterUrl": "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=800&q=80",
+    "startDateTime": "2026-09-15T10:00:00.000Z",
+    "endDateTime": "2026-09-30T18:00:00.000Z",
+    "location": "Galerie l'Atrium, Douala",
+    "type": "EXHIBITION",
+    "maxCapacity": 100,
+    "ticketPrice": 2000
+  },
+  {
+    "name": "ATELIER : PEINTURE AU COUTEAU",
+    "description": "Apprenez les techniques de relief avec l'artiste Jean-Blaise.",
+    "posterUrl": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80",
+    "startDateTime": "2026-09-20T14:30:00.000Z",
+    "endDateTime": "2026-09-20T17:30:00.000Z",
+    "location": "Studio YP, Bastos",
+    "type": "WORKSHOP",
+    "maxCapacity": 12,
+    "ticketPrice": 15000
+  },
+  {
+    "name": "VENTE AUX ENCHÈRES : DESIGN AFRICAIN",
+    "description": "Pièces uniques de mobilier et objets d'art contemporain.",
+    "posterUrl": "https://images.unsplash.com/photo-1538688543467-f60fa6c7df32?w=800&q=80",
+    "startDateTime": "2026-10-05T16:00:00.000Z",
+    "endDateTime": "2026-10-05T21:00:00.000Z",
+    "location": "Hôtel Hilton, Yaoundé",
+    "type": "AUCTION",
+    "maxCapacity": 80,
+    "ticketPrice": 0
+  },
+  {
+    "name": "MEETUP : L'ART ET LE DIGITAL",
+    "description": "Discussion sur l'impact des NFTs et de l'IA sur la création locale.",
+    "posterUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
+    "startDateTime": "2026-10-12T18:30:00.000Z",
+    "endDateTime": "2026-10-12T20:30:00.000Z",
+    "location": "Coworking Space, Douala",
+    "type": "MEETUP",
+    "maxCapacity": 50,
+    "ticketPrice": 1000
+  },
+  {
+    "name": "SYMPOSIUM : RACINES VIVANTES",
+    "description": "Conférences sur la préservation du patrimoine artistique.",
+    "posterUrl": "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=800&q=80",
+    "startDateTime": "2026-10-25T09:00:00.000Z",
+    "endDateTime": "2026-10-27T17:00:00.000Z",
+    "location": "Palais des Congrès, Yaoundé",
+    "type": "OTHER",
+    "maxCapacity": 250,
+    "ticketPrice": 3000
+  },
+  {
+    "name": "EXPOSITION : OMBRES CHINOISES",
+    "description": "Une exploration des contrastes et de la silhouette.",
+    "posterUrl": "https://images.unsplash.com/photo-1502691876148-a84978f5d81b?w=800&q=80",
+    "startDateTime": "2026-11-05T10:00:00.000Z",
+    "endDateTime": "2026-11-20T19:00:00.000Z",
+    "location": "Espace Culturel, Kribi",
+    "type": "EXHIBITION",
+    "maxCapacity": 40,
+    "ticketPrice": 1500
+  },
+  {
+    "name": "ATELIER : SCULPTURE SUR BOIS",
+    "description": "Initiation à la taille directe sur bois précieux.",
+    "posterUrl": "https://images.unsplash.com/photo-1589311132626-9d5f7f32906b?w=800&q=80",
+    "startDateTime": "2026-11-10T13:00:00.000Z",
+    "endDateTime": "2026-11-10T17:00:00.000Z",
+    "location": "Atelier de l'Artiste, Foumban",
+    "type": "WORKSHOP",
+    "maxCapacity": 8,
+    "ticketPrice": 10000
+  },
+  {
+    "name": "SOIRÉE POÉSIE & PEINTURE",
+    "description": "Performance live mêlant slam et graffiti.",
+    "posterUrl": "https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=800&q=80",
+    "startDateTime": "2026-11-15T20:00:00.000Z",
+    "endDateTime": "2026-11-15T23:00:00.000Z",
+    "location": "Le Petit Théâtre, Douala",
+    "type": "OTHER",
+    "maxCapacity": 60,
+    "ticketPrice": 4000
+  },
+  {
+    "name": "EXPO : COULEURS DU SAHEL",
+    "description": "Peintures à l'ocre et pigments naturels du Grand Nord.",
+    "posterUrl": "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80",
+    "startDateTime": "2026-12-01T09:00:00.000Z",
+    "endDateTime": "2026-12-25T18:00:00.000Z",
+    "location": "Alliance Française, Garoua",
+    "type": "EXHIBITION",
+    "maxCapacity": 120,
+    "ticketPrice": 500
+  },
+  {
+    "name": "MASTERCLASS : CURATION D'ART",
+    "description": "Comment organiser sa première exposition professionnelle.",
+    "posterUrl": "https://images.unsplash.com/photo-1491243950741-95e9900d64b5?w=800&q=80",
+    "startDateTime": "2026-12-10T14:00:00.000Z",
+    "endDateTime": "2026-12-10T18:00:00.000Z",
+    "location": "Musée National, Yaoundé",
+    "type": "WORKSHOP",
+    "maxCapacity": 30,
+    "ticketPrice": 25000
+  }
+]

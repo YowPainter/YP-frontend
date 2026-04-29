@@ -36,7 +36,7 @@ export function EventFilters({ filters, onFilterChange }: EventFiltersProps) {
 
                 {/* Filtres par type (Pills sharp) */}
                 <div className="flex flex-wrap gap-2 overflow-x-auto hide-scrollbar">
-                    {['', 'FREE', 'PAID', 'PRIVATE'].map((type) => (
+                    {['', 'FREE', 'PAID'].map((type) => (
                         <button
                             key={type}
                             onClick={() => handleChange('eventType', type)}
@@ -46,7 +46,7 @@ export function EventFilters({ filters, onFilterChange }: EventFiltersProps) {
                                     : 'bg-transparent text-foreground/40 dark:text-white/40 border-foreground/10 dark:border-white/10 hover:border-accent hover:text-accent'
                             }`}
                         >
-                            {type === '' ? 'TOUS' : type === 'FREE' ? 'GRATUITS' : type === 'PAID' ? 'PAYANTS' : 'PRIVÉS'}
+                            {type === '' ? 'TOUS' : type === 'FREE' ? 'GRATUITS' : 'PAYANTS'}
                         </button>
                     ))}
                 </div>

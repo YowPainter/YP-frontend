@@ -5,7 +5,7 @@ import { LandingArtists } from "@/components/layout/LandingArtists";
 export default function Home() {
   return (
     <div className="relative w-full canvas-texture canvas-grain pb-24 selection:bg-accent selection:text-white overflow-hidden">
-      
+
       {/* TÂCHES DE COULEURS ABSTRAITES & DIFFORMES (L'Aquarelle) - TRÈS PROFOND */}
       <div className="absolute top-[-5%] left-[-10%] w-[50vw] h-[50vw] bg-accent/10 dark:bg-accent/20 blur-[100px] z-[-20] animate-blob" style={{ borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }}></div>
       <div className="absolute top-[20%] right-[-5%] w-[40vw] h-[60vw] bg-amber-500/10 dark:bg-amber-600/15 blur-[120px] z-[-20] animate-blob-delayed" style={{ borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%" }}></div>
@@ -14,12 +14,12 @@ export default function Home() {
 
       {/* FIGURES GÉOMÉTRIQUES ABSTRAITES (Type Kandinsky / Miro) - DERRIÈRE LE TEXTE */}
       <div className="absolute inset-0 z-[-10] pointer-events-none overflow-hidden">
-        
+
         {/* Ligne courbe éclatante - Décalée sur le côté */}
         <svg className="absolute top-[5%] left-[-15%] w-[45vw] h-[45vw] text-foreground/20 opacity-80 transform -rotate-12" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <path fill="none" stroke="currentColor" strokeWidth="2" d="M10,190 Q90,10 190,190" strokeDasharray="8,12" strokeLinecap="round" />
         </svg>
-        
+
         {/* Arc géométrique strict - Plus haut */}
         <svg className="absolute top-[2%] right-[5%] w-[25vw] h-[25vw] text-accent/40 opacity-100 animate-spin-slow" style={{ animationDuration: '60s' }} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="100 200" strokeLinecap="round" />
@@ -37,12 +37,12 @@ export default function Home() {
           <line x1="0" y1="60" x2="100" y2="60" stroke="currentColor" strokeWidth="3" />
           <line x1="0" y1="80" x2="100" y2="80" stroke="currentColor" strokeWidth="3" />
         </svg>
-        
+
         {/* Trio de cercles flottants francs - Déplacés */}
         <div className="absolute top-[60%] left-[5%] w-16 h-16 rounded-full border-4 border-foreground/15 opacity-100"></div>
         <div className="absolute top-[62%] left-[3%] w-10 h-10 rounded-full bg-accent/30 opacity-90"></div>
         <div className="absolute top-[65%] left-[7%] w-6 h-6 rounded-full border-2 border-accent opacity-80 bg-foreground/10"></div>
-        
+
         {/* Tâche géante (Triangle Penché) - Vers le bas */}
         <svg className="absolute top-[85%] left-[-15%] w-[40vw] h-[40vw] text-amber-500/10 opacity-100 transform -rotate-[45deg]" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <path fill="currentColor" d="M0,200 L200,200 L100,0 Z" />
@@ -52,14 +52,14 @@ export default function Home() {
 
       {/* 1. HERO SECTION: Musée Contemporain */}
       <section className="relative w-full min-h-[85vh] flex flex-col justify-center pt-16 px-6 sm:px-12 max-w-[1400px] mx-auto z-10">
-        
+
         {/* Lettrine Géante en Arrière-plan */}
         <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-12 font-serif text-[40rem] font-black text-foreground/[0.03] select-none pointer-events-none z-0 leading-none">
           Y
         </div>
 
         <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20 relative z-10">
-          
+
           {/* Bloc Texte Épuré */}
           <div className="w-full lg:w-1/2 flex flex-col items-start reveal">
             <div className="relative mb-6 reveal-delay-1">
@@ -82,7 +82,7 @@ export default function Home() {
             <p className="text-xl md:text-2xl text-foreground/70 max-w-lg font-light leading-relaxed mb-12 border-l-2 border-accent pl-8 py-2 reveal-delay-3">
               Chaque œuvre est une porte ouverte. Découvrez des pièces uniques, soutenez directement les créateurs et vibrez au rythme de la création contemporaine.
             </p>
-            
+
             <div className="flex items-center gap-10">
               <Link href="/galerie" className="group flex items-center gap-6 border-b border-foreground pb-3 hover:border-accent hover:text-accent transition-all duration-500">
                 <span className="font-serif text-2xl tracking-tight transition-colors">Explorer la Collection</span>
@@ -93,13 +93,13 @@ export default function Home() {
 
           {/* Composition Image Héro (Audacieuse) */}
           <div className="w-full lg:w-1/2 relative h-[600px] lg:h-[800px] mt-12 lg:mt-0 flex items-center justify-center reveal reveal-delay-2">
-            
+
             {/* L'image principale (Brush Border & Floating) */}
             <div className="relative w-[340px] md:w-[450px] aspect-[3/4] art-frame bg-white p-4 lg:p-6 z-20 parallax-slow shadow-[30px_30px_80px_rgba(0,0,0,0.1)]">
               <div className="relative w-full h-full bg-foreground/5 overflow-hidden">
-                <Image 
-                  src="/images/placeholder.png" 
-                  alt="Pièce Maîtresse" 
+                <Image
+                  src="/images/placeholder.png"
+                  alt="Pièce Maîtresse"
                   fill
                   className="object-cover transition-transform duration-[3s] hover:scale-110"
                   priority
@@ -110,11 +110,11 @@ export default function Home() {
                 "Pure Essence, 2024"
               </div>
             </div>
-            
+
             {/* Forme géométrique décalée */}
             <div className="absolute top-[10%] left-0 w-[200px] h-[300px] bg-accent/5 border border-accent/10 z-10 transform -rotate-12"></div>
             <div className="absolute bottom-[5%] right-0 w-[250px] h-[250px] rounded-full border-[0.5px] border-foreground/10 z-0"></div>
-            
+
             <div className="absolute right-[-2rem] top-1/3 translate-y-1/2 rotate-90 origin-right hidden lg:block z-30">
               <p className="text-xs tracking-[0.6em] uppercase text-foreground/30 font-bold">Curated Masterpiece</p>
             </div>
@@ -125,7 +125,7 @@ export default function Home() {
       {/* TRANSITION DRIP / SPLASH */}
       <div className="w-full h-20 flex justify-center items-start overflow-hidden pointer-events-none relative z-10">
         <svg className="w-64 h-full text-accent/10 opacity-80" viewBox="0 0 100 100" preserveAspectRatio="none">
-           <path fill="currentColor" d="M0,0 C20,40 40,0 60,60 C80,20 100,80 100,0 L100,0 L0,0 Z" />
+          <path fill="currentColor" d="M0,0 C20,40 40,0 60,60 C80,20 100,80 100,0 L100,0 L0,0 Z" />
         </svg>
       </div>
 
@@ -145,7 +145,7 @@ export default function Home() {
 
         {/* Grille Masonry Audacieuse */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-y-16 md:gap-x-12 lg:gap-x-20">
-          
+
           {/* Colonne 1 : Grande oeuvre stable */}
           <div className="md:col-span-7 lg:col-span-8 group cursor-pointer reveal">
             <div className="relative w-full aspect-[16/10] art-frame bg-white p-4 transition-all duration-700 mb-8 border border-foreground/5">
@@ -167,18 +167,18 @@ export default function Home() {
 
             {/* Oeuvre Panoramique (Déplacée à gauche) */}
             <div className="group cursor-pointer relative mt-20 -translate-x-6 md:-translate-x-12 w-full md:w-[110%] z-20">
-               <svg className="absolute -top-10 -left-10 w-40 h-20 text-accent/15 -z-10 group-hover:scale-110 transition-transform duration-1000" viewBox="0 0 200 100">
-                  <path d="M10 50 L190 50" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="10 5" />
-               </svg>
-               <div className="relative w-full h-32 md:h-40 art-frame bg-white p-3 shadow-2xl overflow-hidden">
-                 <div className="relative w-full h-full overflow-hidden">
-                    <Image src="/images/placeholder.png" alt="Format Panoramique" fill className="object-cover transition-transform duration-[4s] group-hover:scale-105" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-8">
-                       <span className="text-white text-sm uppercase tracking-[0.4em] font-medium">Horizon Infini</span>
-                    </div>
-                 </div>
-               </div>
-               <p className="mt-4 text-[10px] uppercase tracking-[0.5em] font-bold text-foreground/40 text-left">Panorama Artistique, Collection 2024</p>
+              <svg className="absolute -top-10 -left-10 w-40 h-20 text-accent/15 -z-10 group-hover:scale-110 transition-transform duration-1000" viewBox="0 0 200 100">
+                <path d="M10 50 L190 50" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="10 5" />
+              </svg>
+              <div className="relative w-full h-32 md:h-40 art-frame bg-white p-3 shadow-2xl overflow-hidden">
+                <div className="relative w-full h-full overflow-hidden">
+                  <Image src="/images/placeholder.png" alt="Format Panoramique" fill className="object-cover transition-transform duration-[4s] group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-8">
+                    <span className="text-white text-sm uppercase tracking-[0.4em] font-medium">Horizon Infini</span>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-4 text-[10px] uppercase tracking-[0.5em] font-bold text-foreground/40 text-left">Panorama Artistique, Collection 2024</p>
             </div>
           </div>
 
@@ -200,19 +200,20 @@ export default function Home() {
 
             {/* Retour de l'Étoile Tournante (Élément Décoratif à droite) */}
             <div className="relative mt-12 flex justify-end pr-12 group cursor-help">
-               <div className="relative">
-                 <svg className="w-32 h-32 text-accent/20 animate-spin-slow opacity-80" viewBox="0 0 100 100">
-                    <path d="M50 10 L60 40 L90 50 L60 60 L50 90 L40 60 L10 50 L40 40 Z" fill="currentColor" />
-                 </svg>
-                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] uppercase tracking-[0.4em] font-black text-foreground/40 rotate-12">Y-P</span>
-                 </div>
-               </div>
+              <div className="relative">
+                <svg className="w-32 h-32 text-accent/20 animate-spin-slow opacity-80" viewBox="0 0 100 100">
+                  <path d="M50 10 L60 40 L90 50 L60 60 L50 90 L40 60 L10 50 L40 40 Z" fill="currentColor" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] uppercase tracking-[0.4em] font-black text-foreground/40 rotate-12">Y-P</span>
+                </div>
+              </div>
             </div>
           </div>
 
         </div>
       </section>
+
 
       {/* 3. LE HUB DES ARTISTES: Présentation solennelle & Annuaire */}
       <section className="relative z-10 w-full bg-foreground text-background mt-24 py-20 px-6 sm:px-12 overflow-hidden">
@@ -221,7 +222,7 @@ export default function Home() {
 
         <LandingArtists />
       </section>
-      
+
     </div>
   );
 }

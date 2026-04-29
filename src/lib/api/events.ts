@@ -1,256 +1,180 @@
 // lib/api/events.ts
-import apiClient from './client';
-import type { Event, TicketReservation } from '@/lib/types/event';
+import { EventsService } from '../services/EventsService';
+import { ArtistsService } from '../services/ArtistsService';
+import type { EventResponse } from '../models/EventResponse';
+import type { Event, TicketReservation, CreateEventDTO } from '@/lib/types/event';
 
-// MOCK DATA: Événements simulés
-const MOCK_EVENTS: Event[] = [
-    {
-        id: '1',
-        title: 'Exposition d\'Art Contemporain',
-        description: 'Une exposition captivante des meilleures œuvres d\'art contemporain de la région. Venez découvrir des artistes émergents et confirmés lors de cette soirée unique.',
-        startDate: new Date(Date.now() + 86400000 * 5).toISOString(), // Dans 5 jours
-        endDate: new Date(Date.now() + 86400000 * 7).toISOString(),
-        location: 'Galerie d\'Art Moderne, Douala',
-        locationType: 'PHYSICAL',
-        posterUrl: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&q=80',
-        eventType: 'FREE',
-        status: 'PUBLISHED',
-        maxAttendees: 200,
-        currentAttendees: 150,
-        price: null,
-        artistId: 'a1',
-        artistName: 'Marius',
-        artistSlug: 'marius',
-        isRegistered: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-    {
-        id: '2',
-        title: 'Atelier de Peinture en Plein Air',
-        description: 'Rejoignez-nous pour une session de peinture en plein air. Tout le matériel est fourni, venez avec votre créativité ! Un moment de détente garanti.',
-        startDate: new Date(Date.now() + 86400000 * 2).toISOString(), // Dans 2 jours
-        endDate: new Date(Date.now() + 86400000 * 2 + 10800000).toISOString(), // +3h
-        location: 'Parc Central, Yaoundé',
-        locationType: 'PHYSICAL',
-        posterUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
-        eventType: 'PAID',
-        status: 'PUBLISHED',
-        maxAttendees: 50,
-        currentAttendees: 50, // Complet
-        price: 15000,
-        artistId: 'a2',
-        artistName: 'Sophie',
-        artistSlug: 'sophie',
-        isRegistered: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-    {
-        id: '3',
-        title: 'Vernissage Privé: "Ombres et Lumières"',
-        description: 'Une collection exclusive explorant le contraste entre la lumière et l\'obscurité. Réservé à nos membres VIP et invités spéciaux.',
-        startDate: new Date(Date.now() + 86400000 * 15).toISOString(),
-        endDate: new Date(Date.now() + 86400000 * 15 + 18000000).toISOString(),
-        location: 'Studio privé, Kribi',
-        locationType: 'PHYSICAL',
-        posterUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80',
-        eventType: 'PRIVATE',
-        status: 'PUBLISHED',
-        maxAttendees: 30,
-        currentAttendees: 12,
-        price: null,
-        artistId: 'a3',
-        artistName: 'Alexandre',
-        artistSlug: 'alexandre',
-        isRegistered: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-    {
-        id: '4',
-        title: 'Masterclass: Techniques de l\'Aquarelle',
-        description: 'Une session en ligne intensive pour maîtriser l\'aquarelle avec les meilleurs professionnels du milieu. Interactive et avec des corrections en direct.',
-        startDate: new Date(Date.now() + 86400000 * 10).toISOString(),
-        endDate: new Date(Date.now() + 86400000 * 10 + 7200000).toISOString(),
-        location: 'En ligne (Zoom)',
-        locationType: 'VIRTUAL',
-        posterUrl: 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=800&q=80',
-        eventType: 'PAID',
-        status: 'PUBLISHED',
-        maxAttendees: null,
-        currentAttendees: 340,
-        price: 5000,
-        artistId: 'a4',
-        artistName: 'Claire',
-        artistSlug: 'claire',
-        isRegistered: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-    {
-        id: '5',
-        title: 'Festival des Arts Émergents',
-        description: 'Un événement majeur rassemblant les talents de demain. Des concerts, des expos, et plein d\'animations pour tous.',
-        startDate: new Date(Date.now() - 86400000 * 2).toISOString(), // Passé (-2 jours)
-        endDate: new Date(Date.now() - 86400000 * 1).toISOString(),
-        location: 'Grande Place, Douala',
-        locationType: 'PHYSICAL',
-        posterUrl: 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=800&q=80',
-        eventType: 'FREE',
-        status: 'COMPLETED',
-        maxAttendees: 1000,
-        currentAttendees: 850,
-        price: null,
-        artistId: 'a1',
-        artistName: 'Marius',
-        artistSlug: 'marius',
-        isRegistered: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+/**
+ * Mapper pour convertir EventResponse (Backend) vers Event (Frontend)
+ */
+async function mapEventResponseToEvent(res: EventResponse): Promise<Event> {
+    // Essayer de récupérer le nom de l'artiste si artistId est présent
+    let artistName = 'Artiste YP';
+    let artistSlug = 'artiste';
+    
+    if (res.artistId) {
+        try {
+            const artist = await ArtistsService.getArtistById(res.artistId);
+            artistName = artist.artistName || `${artist.firstName} ${artist.lastName}` || 'Artiste YP';
+            artistSlug = artist.slug || 'artiste';
+        } catch (e) {
+            console.warn(`Impossible de récupérer l'artiste ${res.artistId}`, e);
+        }
     }
-];
 
-// PUBLIC : Récupérer tous les événements publiés (Mocké)
+    return {
+        id: res.id || '',
+        title: res.name || 'Sans titre',
+        description: res.description || '',
+        startDate: res.startDateTime || new Date().toISOString(),
+        endDate: res.endDateTime || new Date().toISOString(),
+        location: res.location || 'Lieu non spécifié',
+        locationType: (res.location?.toLowerCase().includes('zoom') || res.location?.toLowerCase().includes('ligne')) ? 'VIRTUAL' : 'PHYSICAL',
+        posterUrl: res.posterUrl || 'https://images.unsplash.com/photo-1579710838505-4cfa69f0bd2c?w=800&q=80',
+        eventType: (res.ticketPrice && res.ticketPrice > 0) ? 'PAID' : 'FREE',
+        status: (res.status as any) || 'PUBLISHED',
+        maxAttendees: res.maxCapacity || null,
+        currentAttendees: res.reservedCount || 0,
+        price: res.ticketPrice || null,
+        artistId: res.artistId || '',
+        artistName: artistName,
+        artistSlug: artistSlug,
+        isRegistered: false, // À calculer selon l'utilisateur connecté si possible
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    };
+}
+
+// PUBLIC : Récupérer tous les événements publiés
 export async function getPublicEvents(filters?: {
     eventType?: string;
     upcoming?: boolean;
     search?: string;
     artistId?: string;
 }): Promise<Event[]> {
-    // Simuler un délai réseau
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    let results = [...MOCK_EVENTS];
-
-    if (filters?.eventType) {
-        results = results.filter(e => e.eventType === filters.eventType);
-    }
-    
-    if (filters?.upcoming) {
-        const now = new Date();
-        results = results.filter(e => new Date(e.startDate) >= now);
-    }
-    
-    if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
-        results = results.filter(e => 
-            e.title.toLowerCase().includes(searchLower) || 
-            e.description.toLowerCase().includes(searchLower) ||
-            e.location.toLowerCase().includes(searchLower)
-        );
-    }
+    let responses: EventResponse[] = [];
     
     if (filters?.artistId) {
-        results = results.filter(e => e.artistId === filters.artistId);
-    }
-
-    return results;
-}
-
-// PUBLIC : Détail d'un événement (Mocké)
-export async function getEventById(id: string): Promise<Event> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const event = MOCK_EVENTS.find(e => e.id === id);
-    if (!event) throw new Error('Événement non trouvé');
-    return event;
-}
-
-// Helper pour gérer la persistance locale en mode démo
-const getPersistedTickets = (): TicketReservation[] => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem('yp_mock_tickets');
-    return saved ? JSON.parse(saved) : [];
-};
-
-const saveTickets = (tickets: TicketReservation[]) => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('yp_mock_tickets', JSON.stringify(tickets));
-};
-
-let MOCK_TICKETS: TicketReservation[] = [
-    {
-        id: 'tkt-12345',
-        eventId: '1',
-        eventTitle: 'Exposition d\'Art Contemporain',
-        userName: 'John Doe',
-        userEmail: 'john@example.com',
-        qrCodeData: 'mock-qr-code-data',
-        isScanned: false,
-        purchasedAt: new Date().toISOString(),
-        price: 0
-    }
-];
-
-// Initialiser avec les données du localStorage si on est dans le navigateur
-if (typeof window !== 'undefined') {
-    const persisted = getPersistedTickets();
-    if (persisted.length > 0) {
-        MOCK_TICKETS = persisted;
+        responses = await EventsService.getEventsByArtist(filters.artistId);
+    } else if (filters?.search) {
+        responses = await EventsService.searchEvents(filters.search);
     } else {
-        saveTickets(MOCK_TICKETS);
+        responses = await EventsService.getUpcomingEvents();
     }
+
+    // Filtrage supplémentaire si nécessaire (le backend devrait normalement le faire)
+    if (filters?.eventType) {
+        responses = responses.filter(r => {
+            const type = (r.ticketPrice && r.ticketPrice > 0) ? 'PAID' : 'FREE';
+            return type === filters.eventType;
+        });
+    }
+
+    // Mapping asynchrone en parallèle
+    return Promise.all(responses.map(mapEventResponseToEvent));
 }
 
-// PROTÉGÉ : Réserver un billet (gratuit) (Mocké)
+// PUBLIC : Détail d'un événement
+export async function getEventById(id: string): Promise<Event> {
+    const res = await EventsService.getEvent(id);
+    return mapEventResponseToEvent(res);
+}
+
+// PROTÉGÉ : Réserver un billet
 export async function reserveTicket(eventId: string, data: {
     userName: string;
     userEmail: string;
-}): Promise<TicketReservation> {
-    await new Promise(resolve => setTimeout(resolve, 600));
+    phoneNumber?: string; // Ajouté pour MOMO/Orange
+    artistSlug?: string; // Pour le contexte multitenant
+}): Promise<any> {
+    // 1. Définir le contexte tenant pour les headers API
+    if (data.artistSlug) {
+        localStorage.setItem('currentTenantSlug', data.artistSlug);
+    }
     
-    const event = MOCK_EVENTS.find(e => e.id === eventId);
-    if (!event) throw new Error("Événement non trouvé");
+    // 2. Extraire explicitement le token du store si OpenAPI ne l'a pas encore (sécurité)
+    // On importe useAuthStore uniquement à l'exécution pour éviter les cycles de dépendances
+    try {
+        const { useAuthStore } = await import('@/store/authStore');
+        const token = useAuthStore.getState().token;
+        const { OpenAPI } = await import('../core/OpenAPI');
+        if (token && !OpenAPI.TOKEN) {
+            OpenAPI.TOKEN = token;
+        }
+    } catch (e) {
+        console.warn('API Events: Could not ensure token injection from store', e);
+    }
+    
+    try {
+        const reservation = await EventsService.reserveEvent(eventId);
+        if (!reservation.id) throw new Error("Erreur lors de la réservation");
 
-    const newTicket: TicketReservation = {
-        id: `tkt-${Math.random().toString(36).substring(2, 9)}`,
-        eventId,
-        eventTitle: event.title,
-        userName: data.userName,
-        userEmail: data.userEmail,
-        qrCodeData: `mock-qr-${Date.now()}`,
-        isScanned: false,
-        purchasedAt: new Date().toISOString(),
-        price: event.price || 0,
-    };
-    
-    MOCK_TICKETS.push(newTicket);
-    saveTickets(MOCK_TICKETS); // Sauvegarder !
-    
-    // Mettre à jour l'événement pour la démo
-    event.currentAttendees += 1;
-    event.isRegistered = true;
+        // Si on a un numéro de téléphone (événement payant), on initie le checkout
+        if (data.phoneNumber) {
+            try {
+                // Sanitize phone number: remove all non-digits and add 237 prefix if it's 9 digits
+                const digitsOnly = data.phoneNumber.replace(/\D/g, '');
+                const formattedPhone = digitsOnly.length === 9 ? `237${digitsOnly}` : digitsOnly;
+                
+                const checkoutData = await EventsService.checkoutReservation(reservation.id, formattedPhone);
+                return {
+                    ...reservation,
+                    checkout: checkoutData
+                };
+            } catch (error: any) {
+                console.error("Erreur lors du checkout:", error);
+                throw new Error(error.message || "Erreur lors de l'initialisation du paiement");
+            }
+        }
 
-    return newTicket;
+        return reservation;
+    } finally {
+        // Nettoyer le contexte tenant après les appels
+        if (data.artistSlug) {
+            localStorage.removeItem('currentTenantSlug');
+        }
+    }
 }
 
-// PROTÉGÉ : Récupérer mes billets (Mocké)
+// PROTÉGÉ : Récupérer mes billets
 export async function getMyTickets(eventId?: string): Promise<TicketReservation[]> {
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // Dans le cadre de la démo, on récupère les billets du localStorage
+    if (typeof window === 'undefined') return [];
     
-    // S'assurer de charger les dernières données du localStorage
-    const currentTickets = typeof window !== 'undefined' ? getPersistedTickets() : MOCK_TICKETS;
-    
-    if (eventId) {
-        return currentTickets.filter(t => t.eventId === eventId);
+    const tickets: TicketReservation[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('ticket_')) {
+            try {
+                const ticket = JSON.parse(localStorage.getItem(key) || '');
+                if (!eventId || ticket.eventId === eventId || ticket.event?.id === eventId) {
+                    tickets.push({
+                        id: ticket.id,
+                        eventId: ticket.eventId || ticket.event?.id,
+                        eventTitle: ticket.eventTitle || ticket.event?.name || 'Événement',
+                        userName: ticket.userName || 'Invité',
+                        userEmail: ticket.userEmail || '',
+                        qrCodeData: ticket.qrCodeData || ticket.id,
+                        isScanned: ticket.isScanned || false,
+                        purchasedAt: ticket.purchasedAt || ticket.createdAt || new Date().toISOString(),
+                        price: ticket.price || 0
+                    });
+                }
+            } catch (e) {
+                console.error("Erreur parsing ticket local", e);
+            }
+        }
     }
-    return currentTickets;
+    
+    // Trier par date d'achat décroissante
+    return tickets.sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime());
 }
 
-// PROTÉGÉ (ARTISTE) : Scanner un billet (validation entrée) (Mocké)
+// PROTÉGÉ (ARTISTE) : Scanner un billet
 export async function validateTicket(qrCodeData: string): Promise<{ valid: boolean; message: string }> {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const ticketIndex = MOCK_TICKETS.findIndex(t => t.qrCodeData === qrCodeData);
-    
-    if (ticketIndex === -1) {
-        return { valid: false, message: 'Billet introuvable ou invalide.' };
-    }
-    
-    if (MOCK_TICKETS[ticketIndex].isScanned) {
-        return { valid: false, message: 'Ce billet a déjà été scanné !' };
-    }
-    
-    MOCK_TICKETS[ticketIndex].isScanned = true;
-    return { valid: true, message: 'Billet valide et scanné avec succès !' };
+    const res = await EventsService.validateTicket(qrCodeData);
+    return {
+        valid: !!res.id,
+        message: res.id ? 'Billet valide !' : 'Billet invalide.'
+    };
 }

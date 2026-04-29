@@ -12,6 +12,7 @@ import { ArtistResponse } from '@/lib/models/ArtistResponse'
 import { Work } from '../artdashboard/types'
 import { Skeleton } from '@/components/ui/Skeleton'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface ArtistPublicSpaceProps {
   artist: ArtistResponse
@@ -32,6 +33,26 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
   const [activeTab, setActiveTab] = useState<TabType>('gallery')
   const [modal, setModal] = useState<{ dataset: Work[]; index: number } | null>(null)
 
+  // Helpers pour les événements
+  const getEventTypeName = (type?: string) => {
+    switch (type) {
+      case 'EXHIBITION': return 'Exposition'
+      case 'WORKSHOP': return 'Atelier'
+      case 'AUCTION': return 'Vente aux enchères'
+      case 'MEETUP': return 'Rencontre'
+      default: return 'Événement'
+    }
+  }
+
+  const getStatusStyles = (status?: string) => {
+    switch (status) {
+      case 'FULL': return 'bg-red-500/10 text-red-500'
+      case 'CANCELLED': return 'bg-gray-500/10 text-gray-500'
+      case 'COMPLETED': return 'bg-foreground/5 text-foreground/40'
+      default: return 'bg-green-500/10 text-green-500'
+    }
+  }
+
   // 1. Fetch Artworks
   const { data: worksData, isLoading: isLoadingWorks } = useQuery({
     queryKey: ['artist-public-works', slug],
@@ -44,11 +65,11 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
     queryFn: () => ShopOrdersService.getProductsByArtist(slug),
   })
 
-  // 3. Fetch Events
+  // 3. Fetch Events (Utilise le slug pour une résolution tenant robuste)
   const { data: events, isLoading: isLoadingEvents } = useQuery({
-    queryKey: ['artist-public-events', artist.id],
-    queryFn: () => EventsService.getEventsByArtist(artist.id!),
-    enabled: !!artist.id
+    queryKey: ['artist-public-events', slug],
+    queryFn: () => EventsService.getEventsByArtistSlug(slug),
+    enabled: !!slug
   })
 
   const WORKS: Work[] = (worksData || []).map((w, index) => ({
@@ -165,30 +186,72 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
             </div>
 
             {isLoadingEvents ? (
-              <div className="space-y-6">
-                {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
+              <div className="grid grid-cols-1 gap-10">
+                {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-[350px] w-full" />)}
               </div>
             ) : events && events.length > 0 ? (
-              <div className="grid grid-cols-1 gap-8">
+              <div className="grid grid-cols-1 gap-10 md:gap-12">
                 {events.map((event) => (
-                  <div key={event.id} className="flex flex-col md:flex-row gap-8 bg-foreground/[0.02] border border-foreground/5 p-8 rounded-3xl hover:bg-foreground/[0.04] transition-all group">
-                    <div className="w-full md:w-1/3 aspect-video md:aspect-square relative rounded-2xl overflow-hidden shrink-0">
-                      <Image src={event.posterUrl || '/images/placeholder.png'} alt={event.name!} fill className="object-cover" />
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center">
-                      <div className="flex items-center gap-4 mb-4">
-                        <span className="bg-accent/10 text-accent px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                          {new Date(event.startDateTime!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  <Link 
+                    key={event.id}
+                    href={`/${slug}/events/${event.id}`}
+                    className="group relative h-[400px] md:h-[350px] overflow-hidden border border-foreground/5 shadow-2xl flex flex-col justify-end p-8 md:p-14 transition-all duration-700"
+                  >
+                    {/* Background Image - Full Bleed landscape */}
+                    <Image 
+                      src={event.posterUrl || '/images/placeholder.png'} 
+                      alt={event.name!} 
+                      fill 
+                      className="object-cover transition-transform duration-[3s] group-hover:scale-105" 
+                    />
+                    
+                    {/* Decorative Overlay Gradient - Adjusted for horizontal */}
+                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                    
+                    {/* Artistic Line Accent */}
+                    <div className="absolute top-0 left-0 w-[2px] h-full bg-accent scale-y-0 group-hover:scale-y-100 transition-transform duration-700 origin-top" />
+
+                    {/* Content Overlay */}
+                    <div className="relative z-10 space-y-6 md:space-y-8 max-w-3xl">
+                      <div className="flex flex-wrap items-center gap-4">
+                        <span className="bg-accent text-white px-5 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] shadow-xl">
+                          {new Date(event.startDateTime!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                         </span>
-                        <span className="text-foreground/40 text-[10px] font-bold uppercase tracking-[0.2em]">{event.location}</span>
+                        
+                        {/* Glass Badge Type */}
+                        <span className="bg-white/10 backdrop-blur-xl text-white border border-white/20 px-5 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em]">
+                          {getEventTypeName(event.type)}
+                        </span>
+
+                        {/* Price Badge */}
+                        <span className="bg-white/5 backdrop-blur-xl text-white/80 border border-white/10 px-5 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em]">
+                          {event.ticketPrice === 0 ? 'Entrée Libre' : `${event.ticketPrice?.toLocaleString()} FCFA`}
+                        </span>
                       </div>
-                      <h3 className="font-serif text-3xl md:text-4xl mb-4 group-hover:text-accent transition-colors">{event.name}</h3>
-                      <p className="text-foreground/60 font-light mb-6 line-clamp-2">{event.description}</p>
-                      <button className="self-start text-[10px] uppercase tracking-[0.4em] font-bold border-b border-foreground/10 pb-1 hover:border-accent hover:text-accent transition-all">
-                        Réserver un ticket
-                      </button>
+
+                      <div className="space-y-4">
+                        <h3 className="font-serif text-4xl md:text-6xl text-white font-light uppercase tracking-tighter group-hover:text-accent transition-colors duration-700 leading-[0.9]">
+                          {event.name}
+                        </h3>
+                        <p className="text-white/50 font-light text-sm md:text-base line-clamp-2 max-w-2xl italic group-hover:text-white/80 transition-colors">
+                          {event.description}
+                        </p>
+                      </div>
+
+                      <div className="pt-6 flex flex-wrap items-center gap-10">
+                         <div className="flex items-center gap-3">
+                            <span className="text-[11px] text-accent font-black uppercase tracking-[0.5em] group-hover:translate-x-4 transition-all duration-500">
+                              Réserver mon pass →
+                            </span>
+                         </div>
+                         <div className="h-[1px] w-12 bg-white/20 group-hover:w-20 transition-all duration-700" />
+                         <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">{event.location}</span>
+                      </div>
                     </div>
-                  </div>
+
+                    {/* Corner Accent Detail */}
+                    <div className="absolute top-10 right-10 w-8 h-8 border-t border-r border-white/10 group-hover:border-accent transition-colors duration-700" />
+                  </Link>
                 ))}
               </div>
             ) : (

@@ -8,6 +8,7 @@ import { ArtistsService } from "@/lib/services/ArtistsService";
 import { BuyerProfileService } from "@/lib/services/BuyerProfileService";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { getApiErrorMessage } from "@/lib/api-error-handler";
+import { toast } from "@/lib/toast";
 
 interface EditProfileModalProps {
   onClose: () => void;
@@ -103,9 +104,12 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
 
       // Refresh the store and close modal
       await refreshProfile();
+      toast.success('Profil mis à jour !', 'Vos informations ont été enregistrées avec succès.');
       onClose();
     } catch (err: any) {
-      setError(getApiErrorMessage(err));
+      const message = getApiErrorMessage(err);
+      setError(message);
+      toast.error(err, 'Mise à jour du profil');
     } finally {
       setLoading(false);
     }

@@ -24,19 +24,25 @@ export interface ExtendedAuthResponse extends AuthResponse {
 interface AuthState {
     user: ExtendedAuthResponse | null;
     token: string | null;
+    refreshToken: string | null;
     isAuthenticated: boolean;
     login: (credentials: LoginRequest) => Promise<AuthResponse>;
     register: (data: RegisterRequest) => Promise<AuthResponse>;
+    refreshAccessToken: () => Promise<string | null>;
     refreshProfile: () => Promise<void>;
     setAuth: (response: AuthResponse) => void;
     logout: () => void;
 }
+
+// Store the refresh promise to avoid multiple calls at once
+let refreshPromise: Promise<string | null> | null = null;
 
 export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
             user: null,
             token: null,
+            refreshToken: null,
             isAuthenticated: false,
 
             login: async (credentials) => {
@@ -44,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: response,
                     token: response.accessToken || null,
+                    refreshToken: response.refreshToken || null,
                     isAuthenticated: !!response.accessToken,
                 });
                 // Fetch full profile after login
@@ -64,6 +71,7 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: response,
                     token: response.accessToken || null,
+                    refreshToken: response.refreshToken || null,
                     isAuthenticated: !!response.accessToken,
                 });
                 // Fetch full profile after registration
@@ -76,6 +84,49 @@ export const useAuthStore = create<AuthState>()(
                     }
                 }
                 return response;
+            },
+
+            refreshAccessToken: async () => {
+                // Return ongoing promise if a refresh is already in progress
+                if (refreshPromise) return refreshPromise;
+
+                refreshPromise = (async () => {
+                    const { refreshToken } = get();
+                    if (!refreshToken) {
+                        get().logout();
+                        return null;
+                    }
+
+                    try {
+                        const response = await AuthenticationService.refresh(refreshToken);
+                        const newToken = response.accessToken || null;
+                        const newRefreshToken = response.refreshToken || null;
+
+                        set({
+                            token: newToken,
+                            refreshToken: newRefreshToken,
+                            isAuthenticated: !!newToken,
+                            user: {
+                                ...get().user,
+                                ...response,
+                            }
+                        });
+
+                        if (newToken) {
+                            OpenAPI.TOKEN = newToken;
+                        }
+
+                        return newToken;
+                    } catch (error) {
+                        console.error('Failed to refresh token:', error);
+                        get().logout();
+                        return null;
+                    } finally {
+                        refreshPromise = null;
+                    }
+                })();
+
+                return refreshPromise;
             },
 
             refreshProfile: async () => {
@@ -119,6 +170,7 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: response,
                     token: response.accessToken || null,
+                    refreshToken: response.refreshToken || null,
                     isAuthenticated: !!response.accessToken,
                 });
             },
@@ -128,6 +180,7 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: null,
                     token: null,
+                    refreshToken: null,
                     isAuthenticated: false,
                 });
             },

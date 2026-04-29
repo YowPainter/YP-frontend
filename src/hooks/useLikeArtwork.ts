@@ -12,5 +12,8 @@ export function useLikeArtwork() {
             queryClient.invalidateQueries({ queryKey: ["artworks"] });
             queryClient.invalidateQueries({ queryKey: ["artwork-detail"] });
         },
+        // onError: (err) => {
+        //     toast.error(err, 'Action like');
+        // },
     });
 }

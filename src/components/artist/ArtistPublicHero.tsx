@@ -27,7 +27,7 @@ export function ArtistPublicHero({ artist, isLoading }: ArtistPublicHeroProps) {
         <div className="relative shrink-0 reveal">
           <div className="w-[200px] h-[250px] md:w-[280px] md:h-[350px] rounded-[30%_70%_70%_30%/30%_30%_70%_70%] overflow-hidden border border-foreground/10 bg-white p-2 shadow-2xl">
             {isLoading ? (
-              <div className="w-full h-full bg-foreground/5 animate-pulse" />
+              <div className="w-full h-full shimmer rounded-[30%_70%_70%_30%/30%_30%_70%_70%]" />
             ) : (
               <Image 
                 src={artist?.profilePictureUrl || '/images/placeholder.png'} 
