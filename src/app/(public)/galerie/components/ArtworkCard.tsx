@@ -2,22 +2,53 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MessageSquare } from "lucide-react";
-import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
+import { Eye, Heart } from "lucide-react";
+import type { GalleryArtwork } from "@/lib/services/ArtworksService";
 import { useLikeArtwork } from "@/hooks/useLikeArtwork";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface ArtworkCardProps {
-    artwork: ArtworkResponse;
+    artwork: GalleryArtwork;
     isLoggedIn?: boolean;
 }
 
+const isValidImageSrc = (value?: string) => {
+    if (!value) return false;
+
+    try {
+        const url = new URL(value);
+        const allowedHosts = new Set([
+            "res.cloudinary.com",
+            "images.unsplash.com",
+        ]);
+
+        const hasImageExtension = /\.(jpg|jpeg|png|webp|gif|avif|svg)$/i.test(url.pathname);
+        return allowedHosts.has(url.hostname) || hasImageExtension;
+    } catch {
+        return value.startsWith("/");
+    }
+};
+
+const formatArtworkDate = (value?: string) => {
+    if (!value) return "Date inconnue";
+
+    return new Date(value).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+};
+
+const getArtistInitial = (name?: string) => {
+    const trimmed = name?.trim();
+    return trimmed ? trimmed.charAt(0).toUpperCase() : "A";
+};
+
 export default function ArtworkCard({ artwork, isLoggedIn = false }: ArtworkCardProps) {
     const { mutate: toggleLike } = useLikeArtwork();
-    const [isLiked, setIsLiked] = useState(false); // Local state for immediate feedback
+    const [isLiked, setIsLiked] = useState(false);
     const [localLikes, setLocalLikes] = useState(artwork.likeCount || 0);
-    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
     const handleLike = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -28,101 +59,144 @@ export default function ArtworkCard({ artwork, isLoggedIn = false }: ArtworkCard
             return;
         }
 
+        if (!artwork.id || !artwork.artistSlug) {
+            return;
+        }
+
         const newLikedState = !isLiked;
         setIsLiked(newLikedState);
-        setLocalLikes(prev => newLikedState ? prev + 1 : prev - 1);
-
-        if (artwork.id) {
-            toggleLike({ artworkId: artwork.id, liked: newLikedState });
-        }
+        setLocalLikes(prev => newLikedState ? prev + 1 : Math.max(prev - 1, 0));
+        toggleLike({ artworkId: artwork.id, artistSlug: artwork.artistSlug });
     };
 
     const description = artwork.description || "";
-    const descriptionLimit = 80;
-    const isLongDescription = description.length > descriptionLimit;
-    const displayDescription = isDescriptionExpanded
-        ? description
-        : description.slice(0, descriptionLimit) + (isLongDescription ? "..." : "");
+    const artistPath = artwork.artistSlug ? `/${artwork.artistSlug}` : "/galerie";
+    const detailPath = artwork.artistSlug && artwork.id
+        ? `${artistPath}/gallery/${artwork.id}`
+        : artistPath;
+    const primaryArtworkImage = artwork.imageUrls?.[0];
 
-    // Smart Linking: Priorité à l'ID de l'artiste, l'architecture multi-tenant utilisera cet ID comme slug de base.
-    const tenantSlug = artwork.artistId || 'gallery';
-    const artistPath = `/${tenantSlug}`;
-    const detailPath = `${artistPath}/gallery/${artwork.id}`;
+const artworkImageSrc: string =
+    primaryArtworkImage && isValidImageSrc(primaryArtworkImage)
+        ? primaryArtworkImage
+        : "/images/placeholder.png";
+    const artistProfileImage = artwork.artistProfilePictureUrl;
+
+const artistImageSrc: string =
+    artistProfileImage && isValidImageSrc(artistProfileImage)
+        ? artistProfileImage
+        : "/images/avatar-placeholder.png";
+    const hasArtistPhoto = artistImageSrc !== "/images/placeholder.png";
+    const publishedLabel = formatArtworkDate(artwork.publishedAt || artwork.createdAt);
+    const hasDescription = description.trim().length > 0;
 
     return (
-        <div className="group relative flex flex-col reveal h-full">
-            {/* Container Image */}
-            <div className="relative aspect-square md:aspect-[3/4] overflow-hidden bg-foreground/5 art-frame cursor-pointer mb-6">
-                <Link
-                    href={detailPath}
-                    className="absolute inset-0"
-                >
-                    <Image
-                        src={artwork.imageUrls?.[0] || "/images/placeholder.png"}
-                        alt={artwork.title || "Untitled"}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                </Link>
-
-                {/* Artist Info Top Left */}
-                <Link
-                    href={artistPath}
-                    className="absolute top-4 left-4 z-20 flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-full py-1.5 pl-1.5 pr-4 border border-white/20 hover:bg-white/20 transition-all shadow-lg"
-                >
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/40">
+        <article className="group flex h-full flex-col overflow-hidden border border-white/10 bg-[#f7f2ea] text-[#1f1a17] shadow-[0_20px_50px_rgba(0,0,0,0.18)] transition-transform duration-300 hover:-translate-y-1">
+            <div className="flex items-start gap-3 border-b border-black/6 px-5 py-4">
+                <Link href={artistPath} className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/10 bg-black/5">
+                    {hasArtistPhoto ? (
                         <Image
-                            src={"/images/placeholder.png"}
+                            src={artistImageSrc}
                             alt={artwork.artistName || "Unknown Artist"}
                             fill
                             className="object-cover"
                         />
-                    </div>
-                    <span className="text-[10px] font-bold text-white uppercase tracking-widest truncate max-w-[120px]">
-                        {artwork.artistName || "Unknown Artist"}
-                    </span>
-                </Link>
-
-                {/* Badge En Vente - Top Right */}
-                {artwork.status === 'ON_SALE' && (
-                    <div className="absolute top-4 right-4 z-10">
-                        <span className="bg-accent text-white text-[9px] font-bold uppercase tracking-widest px-3 py-1 shadow-lg ring-1 ring-white/20">
-                            En Vente
+                    ) : (
+                        <span className="font-semibold text-sm text-black/60">
+                            {getArtistInitial(artwork.artistName)}
                         </span>
+                    )}
+                </Link>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                            <Link href={artistPath} className="block truncate text-sm font-semibold hover:text-accent transition-colors">
+                                {artwork.artistName || "Unknown Artist"}
+                            </Link>
+                            <p className="mt-0.5 text-xs text-black/50">
+                                Artiste · {publishedLabel}
+                            </p>
+                        </div>
+                        {artwork.status === "ON_SALE" && (
+                            <span className="shrink-0 rounded-full bg-accent/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
+                                En vente
+                            </span>
+                        )}
                     </div>
-                )}
-            </div>
-
-            {/* Détails */}
-            <div className="flex flex-col gap-3 flex-1">
-                <div className="flex justify-between items-start">
-                    <Link href={detailPath} className="flex-1 mr-4">
-                        <h3 className="font-serif text-2xl font-medium tracking-tight group-hover:text-accent transition-colors">
-                            {artwork.title}
+                    <Link href={detailPath} className="mt-2 block">
+                        <h3 className="font-serif text-[30px] leading-none tracking-tight transition-colors group-hover:text-accent">
+                            {artwork.title || "Untitled"}
                         </h3>
                     </Link>
+                </div>
+            </div>
+
+            <div className="px-5 pt-4">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-black/45">
+                    Publication artistique
+                </p>
+                <p className="text-sm leading-relaxed text-black/75">
+                    {hasDescription ? description : "Aucune description fournie pour cette œuvre."}
+                </p>
+            </div>
+
+            <Link href={detailPath} className="relative mt-4 mx-5 block aspect-[1.12/1] overflow-hidden border border-black/6 bg-black/5">
+                <Image
+                    src={artworkImageSrc}
+                    alt={artwork.title || "Untitled"}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                />
+            </Link>
+
+            <div className="flex flex-1 flex-col px-5 pb-4 pt-4">
+                <div className="mb-4 flex items-center justify-between text-xs text-black/45">
+                    <span>{localLikes} mentions J&apos;aime</span>
+                    <span>{artwork.viewCount || 0} vues</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 border-b border-black/6 pb-4">
+                    <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-black/60">
+                        {artwork.technique || "Technique"}
+                    </span>
+                    <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-black/60">
+                        {artwork.style || "Style"}
+                    </span>
+                    {artwork.dimensions && artwork.dimensions !== "string" && (
+                        <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-black/60">
+                            {artwork.dimensions}
+                        </span>
+                    )}
+                </div>
+
+                <div className="mt-4 flex items-center justify-between text-sm text-black/55">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={handleLike}
+                            disabled={!artwork.artistSlug}
                             className={cn(
-                                "flex items-center gap-1.5 transition-all duration-300",
-                                isLiked ? "text-accent" : "text-foreground/40 hover:text-accent"
+                                "flex items-center gap-1.5 transition-colors",
+                                isLiked ? "text-accent" : "hover:text-accent",
+                                !artwork.artistSlug && "cursor-not-allowed opacity-50"
                             )}
                         >
-                            <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
-                            <span className="text-xs font-bold">{localLikes}</span>
+                            <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+                            <span>{localLikes}</span>
                         </button>
+                        <span className="flex items-center gap-1.5">
+                            <Eye className="h-4 w-4" />
+                            {artwork.viewCount || 0}
+                        </span>
                     </div>
-                </div>
-
-                {/* Technique/Style Row */}
-                <div className="mt-auto pt-4 flex items-center justify-between border-t border-foreground/5 text-[10px] uppercase tracking-[0.2em] font-bold text-foreground/30">
-                    <span>{artwork.technique}</span>
-                    <span className="text-accent/30">•</span>
-                    <span>{artwork.style}</span>
+                    <Link
+                        href={detailPath}
+                        className="text-xs font-bold uppercase tracking-[0.18em] text-accent transition-colors hover:text-[#9c5646]"
+                    >
+                        Voir l&apos;œuvre
+                    </Link>
                 </div>
             </div>
-        </div>
+        </article>
     );
 }

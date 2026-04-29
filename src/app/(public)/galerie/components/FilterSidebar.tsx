@@ -5,6 +5,8 @@ import { FilterParams } from "@/types/artwork";
 import { ChevronDown, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ArtworksService } from "@/lib/services/ArtworksService";
 
 interface FilterSidebarProps {
     initialFilters: FilterParams;
@@ -12,18 +14,32 @@ interface FilterSidebarProps {
     onReset: () => void;
 }
 
-const TECHNIQUES = ["Huile", "Acrylique", "Aquarelle", "Biseautage", "Digital", "Sculpture"];
-const STYLES = ["Abstrait", "Réaliste", "Minimaliste", "Impressionniste", "Surréaliste"];
+const FALLBACK_TECHNIQUES = ["OIL", "ACRYLIC", "WATERCOLOR", "GOUACHE", "PASTEL", "CHARCOAL", "PENCIL", "MIXED_MEDIA", "OTHER"];
+const FALLBACK_STYLES = ["ABSTRACT", "FIGURATIVE", "PORTRAIT", "LANDSCAPE", "STILL_LIFE", "SURREALISM", "IMPRESSIONISM", "POP_ART", "CONTEMPORARY", "OTHER"];
+
+const formatOptionLabel = (value: string) =>
+    value
+        .toLowerCase()
+        .split("_")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
 
 export default function FilterSidebar({ initialFilters, onFilterChange, onReset }: FilterSidebarProps) {
     const { register, handleSubmit, reset } = useForm<FilterParams>({
         defaultValues: initialFilters,
     });
+    const { data: techniques = FALLBACK_TECHNIQUES } = useQuery({
+        queryKey: ["artwork-techniques"],
+        queryFn: () => ArtworksService.getTechniques(),
+    });
+    const { data: styles = FALLBACK_STYLES } = useQuery({
+        queryKey: ["artwork-styles"],
+        queryFn: () => ArtworksService.getStyles(),
+    });
 
     const [openSections, setOpenSections] = useState({
         technique: true,
         style: true,
-        price: true,
         status: true,
     });
 
@@ -62,7 +78,7 @@ export default function FilterSidebar({ initialFilters, onFilterChange, onReset 
 
                     {openSections.technique && (
                         <div className="grid grid-cols-1 gap-3 pl-1">
-                            {TECHNIQUES.map((tech) => (
+                            {techniques.map((tech) => (
                                 <label key={tech} className="flex items-center gap-3 group cursor-pointer">
                                     <input
                                         type="radio"
@@ -71,7 +87,7 @@ export default function FilterSidebar({ initialFilters, onFilterChange, onReset 
                                         onChange={handleSubmit(onSubmit)}
                                         className="w-4 h-4 border-foreground/20 text-accent focus:ring-accent accent-accent transition-all"
                                     />
-                                    <span className="text-sm text-foreground/50 group-hover:text-foreground transition-colors font-light italic">{tech}</span>
+                                    <span className="text-sm text-foreground/50 group-hover:text-foreground transition-colors font-light italic">{formatOptionLabel(tech)}</span>
                                 </label>
                             ))}
                         </div>
@@ -91,7 +107,7 @@ export default function FilterSidebar({ initialFilters, onFilterChange, onReset 
 
                     {openSections.style && (
                         <div className="grid grid-cols-1 gap-3 pl-1">
-                            {STYLES.map((style) => (
+                            {styles.map((style) => (
                                 <label key={style} className="flex items-center gap-3 group cursor-pointer">
                                     <input
                                         type="radio"
@@ -100,48 +116,9 @@ export default function FilterSidebar({ initialFilters, onFilterChange, onReset 
                                         onChange={handleSubmit(onSubmit)}
                                         className="w-4 h-4 border-foreground/20 text-accent focus:ring-accent accent-accent transition-all"
                                     />
-                                    <span className="text-sm text-foreground/50 group-hover:text-foreground transition-colors font-light italic">{style}</span>
+                                    <span className="text-sm text-foreground/50 group-hover:text-foreground transition-colors font-light italic">{formatOptionLabel(style)}</span>
                                 </label>
                             ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Prix */}
-                <div className="flex flex-col gap-4">
-                    <button
-                        type="button"
-                        onClick={() => toggleSection("price")}
-                        className="flex items-center justify-between w-full group"
-                    >
-                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60 group-hover:text-foreground transition-colors">Fourchette de Prix</span>
-                        <ChevronDown className={cn("w-4 h-4 text-foreground/30 transition-transform duration-300", !openSections.price && "-rotate-90")} />
-                    </button>
-
-                    {openSections.price && (
-                        <div className="flex flex-col gap-4 pl-1 mt-2">
-                            <div className="flex items-center gap-4">
-                                <input
-                                    type="number"
-                                    placeholder="Min"
-                                    {...register("minPrice")}
-                                    className="w-full bg-white dark:bg-background border border-foreground/10 py-2 px-3 text-sm font-light focus:outline-none focus:border-accent transition-colors"
-                                />
-                                <span className="text-foreground/20">—</span>
-                                <input
-                                    type="number"
-                                    placeholder="Max"
-                                    {...register("maxPrice")}
-                                    className="w-full bg-white dark:bg-background border border-foreground/10 py-2 px-3 text-sm font-light focus:outline-none focus:border-accent transition-colors"
-                                />
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleSubmit(onSubmit)}
-                                className="w-full bg-foreground text-background py-2 text-[10px] uppercase font-bold tracking-widest hover:bg-accent transition-all"
-                            >
-                                Appliquer
-                            </button>
                         </div>
                     )}
                 </div>

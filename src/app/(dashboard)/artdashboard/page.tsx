@@ -67,10 +67,15 @@ function CreateBtn({ label }: { label: string }) {
   )
 }
 
+function isUsableImageUrl(value?: string | null) {
+  return Boolean(value && /^https?:\/\//.test(value) && !value.includes('...'))
+}
+
 export default function ArtistDashboardPage() {
   const router = useRouter()
   const { user, logout } = useAuthStore()
   const displayName = user?.artistName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Artiste'
+  const profileImageUrl = isUsableImageUrl(user?.profilePictureUrl) ? user?.profilePictureUrl : null
   const [tab, setTab]       = useState<Tab>('oeuvres')
   const [filter, setFilter] = useState<'tous' | 'vente' | 'vendus'>('tous')
   const [modal, setModal]   = useState<ModalState>(null)
@@ -195,10 +200,10 @@ export default function ArtistDashboardPage() {
         <div className="max-w-[900px] mx-auto px-4 md:px-8 pb-5 relative">
           <div className="flex items-end justify-between -mt-[46px] mb-3">
             <div className="w-[84px] h-[84px] rounded-full bg-background border-[4px] border-background flex items-center justify-center font-serif text-3xl font-semibold text-accent shadow-lg overflow-hidden relative z-10">
-              {status === 'loading' ? (
+              {!user ? (
                 <SkeletonCircle className="w-full h-full" />
-              ) : user?.profilePictureUrl ? (
-                <Image src={user.profilePictureUrl} alt="Avatar" width={72} height={72} className="object-cover w-full h-full" />
+              ) : profileImageUrl ? (
+                <Image src={profileImageUrl} alt="Avatar" width={72} height={72} className="object-cover w-full h-full" />
               ) : (
                 <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40 text-xl font-sans"><User /></span>
               )}

@@ -5,8 +5,8 @@
  */
 
 export async function uploadToCloudinary(file: File): Promise<string> {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'placeholder-cloud-name';
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'placeholder-preset';
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dqgrwthil';
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'yowpainterfrontend';
 
   const formData = new FormData();
   formData.append('file', file);

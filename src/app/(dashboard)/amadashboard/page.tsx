@@ -108,6 +108,10 @@ function EmptyState({ title, message, actionLabel, actionHref }: { title: string
   )
 }
 
+function isUsableImageUrl(value?: string | null) {
+  return Boolean(value && /^https?:\/\//.test(value) && !value.includes('...'))
+}
+
 /* ─────────────────────────────────────────────
    LIKED GRID — cadres pour works, sacs pour articles
 ───────────────────────────────────────────── */
@@ -529,6 +533,7 @@ export default function AmateurDashboardPage() {
   const [modal, setModal] = useState<ModalState>(null)
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
   const { user, logout } = useAuthStore()
+  const profileImageUrl = isUsableImageUrl(user?.profilePictureUrl) ? user?.profilePictureUrl : null
 
   // 1. Profil
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -645,8 +650,8 @@ export default function AmateurDashboardPage() {
             <div className="w-[84px] h-[84px] rounded-full bg-background border-[4px] border-background flex items-center justify-center font-serif text-3xl font-semibold text-accent shadow-lg overflow-hidden relative z-10">
               {status === 'loading' ? (
                 <SkeletonCircle className="w-full h-full" />
-              ) : user?.profilePictureUrl ? (
-                <Image src={user.profilePictureUrl} alt="Avatar" width={72} height={72} className="object-cover w-full h-full" />
+              ) : profileImageUrl ? (
+                <Image src={profileImageUrl} alt="Avatar" width={72} height={72} className="object-cover w-full h-full" />
               ) : (
                 <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40 text-xl font-sans"><User /></span>
               )}

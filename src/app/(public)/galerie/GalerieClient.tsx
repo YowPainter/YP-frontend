@@ -2,44 +2,64 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FilterParams, useArtworks } from "@/hooks/useArtworks";
+import { useArtworks } from "@/hooks/useArtworks";
 import ArtworkGrid from "./components/ArtworkGrid";
 import FilterSidebar from "./components/FilterSidebar";
 import SearchBar from "./components/SearchBar";
 import { ChevronRight, Filter } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/authStore";
+import type { FilterParams } from "@/types/artwork";
 
 interface GalerieClientProps {
     initialFilters: FilterParams;
 }
 
+const sanitizeFilters = (filters: FilterParams): FilterParams =>
+    Object.fromEntries(
+        Object.entries(filters).filter(
+            ([, value]) =>
+                value !== undefined &&
+                value !== null &&
+                value !== "" &&
+                value !== false
+        )
+    ) as FilterParams;
+
 export default function GalerieClient({ initialFilters }: GalerieClientProps) {
     const router = useRouter();
-    const [filters, setFilters] = useState<FilterParams>(initialFilters);
+    const [filters, setFilters] = useState<FilterParams>(sanitizeFilters(initialFilters));
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+    const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
+    const user = useAuthStore((state) => state.user);
 
-    const { data, isLoading, isError, refetch } = useArtworks(filters);
+    const { data, isLoading, isError, refetch } = useArtworks(filters, undefined, {
+        role: user?.role,
+        artistSlug: user?.slug,
+        artistName: user?.artistName,
+        artistProfilePictureUrl: (user as { profilePictureUrl?: string } | null)?.profilePictureUrl,
+    });
 
     const filterString = JSON.stringify(filters);
     // Update URL when filters change
     useEffect(() => {
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
-            if (value !== undefined && value !== "" && value !== false) {
+            if (value !== undefined && value !== null && value !== "" && value !== false) {
                 params.set(key, value.toString());
             }
         });
         const queryString = params.toString();
-        router.push(`/galerie?${queryString}`, { scroll: false });
+        router.push(queryString ? `/galerie?${queryString}` : "/galerie", { scroll: false });
     }, [filterString, router, filters]);
 
     const handleFilterChange = (newFilters: Partial<FilterParams>) => {
-        setFilters(prev => ({ ...prev, ...newFilters }));
+        setFilters(prev => sanitizeFilters({ ...prev, ...newFilters }));
     };
 
     const handleSearch = (search: string) => {
-        setFilters(prev => ({ ...prev, search }));
+        setFilters(prev => sanitizeFilters({ ...prev, search }));
     };
 
     const handleReset = () => {
@@ -134,7 +154,7 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
                             <ArtworkGrid
                                 artworks={data || []}
                                 isLoading={isLoading}
-                                isLoggedIn={false} // Would be dynamic based on auth
+                                isLoggedIn={isLoggedIn}
                             />
                         </>
                     )}

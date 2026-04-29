@@ -4,11 +4,13 @@
 /* eslint-disable */
 import type { ArtworkCreateRequest } from '../models/ArtworkCreateRequest';
 import type { ArtworkResponse } from '../models/ArtworkResponse';
+import type { ArtistResponse } from '../models/ArtistResponse';
 import type { CommentRequest } from '../models/CommentRequest';
 import type { CommentResponse } from '../models/CommentResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ArtistsService } from './ArtistsService';
 export class ArtworksService {
     /**
      * Modifier une oeuvre (Artiste proprietaire)
@@ -284,4 +286,169 @@ export class ArtworksService {
             mediaType: 'application/json',
         });
     }
+}
+
+export interface GalleryViewerContext {
+    role?: string;
+    artistSlug?: string;
+    artistName?: string;
+    artistProfilePictureUrl?: string;
+}
+
+export interface GalleryArtwork extends ArtworkResponse {
+    artistSlug?: string;
+    artistProfilePictureUrl?: string;
+}
+
+const normalizeFilterValue = (value?: string) =>
+    value?.trim().toUpperCase().replace(/[\s-]+/g, "_");
+
+const matchesSearch = (artwork: ArtworkResponse, query?: string) => {
+    if (!query) return true;
+
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return true;
+
+    return [
+        artwork.title,
+        artwork.description,
+        artwork.artistName,
+        artwork.technique,
+        artwork.style,
+        ...(artwork.tags || []),
+    ]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(normalizedQuery));
+};
+
+const applyGalleryFilters = (
+    artworks: Array<GalleryArtwork>,
+    filters: {
+        technique?: string;
+        style?: string;
+        search?: string;
+        forSale?: boolean;
+    },
+) => {
+    const normalizedTechnique = normalizeFilterValue(filters.technique);
+    const normalizedStyle = normalizeFilterValue(filters.style);
+
+    return artworks.filter((artwork) => {
+        if (
+            normalizedTechnique &&
+            normalizeFilterValue(artwork.technique) !== normalizedTechnique
+        ) {
+            return false;
+        }
+
+        if (
+            normalizedStyle &&
+            normalizeFilterValue(artwork.style) !== normalizedStyle
+        ) {
+            return false;
+        }
+
+        if (filters.forSale && artwork.status !== 'ON_SALE') {
+            return false;
+        }
+
+        return matchesSearch(artwork, filters.search);
+    });
+};
+
+const dedupeGalleryArtworks = (artworks: Array<GalleryArtwork>) => {
+    const byId = new Map<string, GalleryArtwork>();
+
+    artworks.forEach((artwork) => {
+        if (!artwork.id) return;
+        byId.set(artwork.id, artwork);
+    });
+
+    return Array.from(byId.values()).sort((a, b) => {
+        const dateA = new Date(a.publishedAt || a.createdAt || 0).getTime();
+        const dateB = new Date(b.publishedAt || b.createdAt || 0).getTime();
+        return dateB - dateA;
+    });
+};
+
+export async function getGalleryArtworks(
+    filters: {
+        technique?: string;
+        style?: string;
+        search?: string;
+        forSale?: boolean;
+    },
+    artistSlug?: string,
+    viewer?: GalleryViewerContext,
+): Promise<Array<GalleryArtwork>> {
+    if (artistSlug) {
+        try {
+            const artist = await ArtistsService.getArtistBySlug(artistSlug);
+            const artworks = filters.search
+                ? await ArtworksService.searchArtworks(artistSlug, filters.search)
+                : await ArtworksService.getAllPublicArtworks(artistSlug);
+
+            return applyGalleryFilters(
+                artworks.map((artwork) => ({
+                    ...artwork,
+                    artistSlug,
+                    artistProfilePictureUrl: artist.profilePictureUrl,
+                    artistName: artwork.artistName || artist.artistName,
+                })),
+                filters,
+            );
+        } catch {
+            return [];
+        }
+    }
+
+    const merged: Array<GalleryArtwork> = [];
+
+    try {
+        const latestArtworks = await ArtworksService.getLatestArtworks();
+        if (latestArtworks.length > 0) {
+            const enriched = await Promise.all(
+                latestArtworks.map(async (artwork) => {
+                    let artist: ArtistResponse | undefined;
+
+                    if (artwork.artistId) {
+                        try {
+                            artist = await ArtistsService.getArtistById(artwork.artistId);
+                        } catch {
+                            artist = undefined;
+                        }
+                    }
+
+                    return {
+                        ...artwork,
+                        artistSlug: artist?.slug,
+                        artistProfilePictureUrl: artist?.profilePictureUrl,
+                        artistName: artwork.artistName || artist?.artistName,
+                    };
+                }),
+            );
+
+            merged.push(...enriched);
+        }
+    } catch {
+        // Keep going with authenticated fallback.
+    }
+
+    if (merged.length === 0 && viewer) {
+        try {
+            const myArtworks = await ArtworksService.getMyArtworks();
+            merged.push(
+                ...myArtworks.map((artwork) => ({
+                    ...artwork,
+                    artistSlug: viewer.artistSlug,
+                    artistProfilePictureUrl: viewer.artistProfilePictureUrl,
+                    artistName: artwork.artistName || viewer.artistName,
+                })),
+            );
+        } catch {
+            // Ignore if the deployed backend does not expose /api/artworks/me.
+        }
+    }
+
+    return applyGalleryFilters(dedupeGalleryArtworks(merged), filters);
 }

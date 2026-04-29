@@ -18,6 +18,7 @@ export interface ExtendedAuthResponse extends AuthResponse {
     id?: string;
     slug?: string;
     bio?: string;
+    profilePictureUrl?: string;
 }
 
 interface AuthState {
@@ -142,4 +143,3 @@ export const useAuthStore = create<AuthState>()(
         }
     )
 );
-

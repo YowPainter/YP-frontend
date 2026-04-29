@@ -5,9 +5,26 @@ import { ArtworksService } from '@/lib/services/ArtworksService'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { ChevronLeft, Heart, Share2 } from 'lucide-react'
+import { ChevronLeft, Eye, Heart, MessageSquare, Share2 } from 'lucide-react'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
+
+const isValidImageSrc = (value?: string) => {
+  if (!value) return false
+
+  try {
+    const url = new URL(value)
+    const allowedHosts = new Set([
+      'res.cloudinary.com',
+      'images.unsplash.com',
+    ])
+
+    const hasImageExtension = /\.(jpg|jpeg|png|webp|gif|avif|svg)$/i.test(url.pathname)
+    return allowedHosts.has(url.hostname) || hasImageExtension
+  } catch {
+    return value.startsWith('/')
+  }
+}
 
 export default function ArtworkDetailPage() {
   const { slug, id } = useParams() as { slug: string; id: string }
@@ -43,6 +60,11 @@ export default function ArtworkDetailPage() {
      )
   }
 
+  const artworkImageSrc: string =
+  artwork.imageUrls?.[0] && isValidImageSrc(artwork.imageUrls[0])
+    ? artwork.imageUrls[0]
+    : '/images/placeholder.png'
+
   return (
     <main className="min-h-screen canvas-texture canvas-grain pb-24">
       <div className="pt-32 px-6 sm:px-12 max-w-[1400px] mx-auto">
@@ -61,7 +83,7 @@ export default function ArtworkDetailPage() {
           <div className="relative aspect-square md:aspect-[4/5] bg-white p-4 shadow-2xl border border-foreground/5 transform -rotate-1 group">
              <div className="relative h-full w-full overflow-hidden">
                 <Image 
-                  src={artwork.imageUrls?.[0] || '/images/placeholder.png'} 
+                  src={artworkImageSrc}
                   alt={artwork.title || ''} 
                   fill 
                   className="object-cover"
@@ -109,6 +131,25 @@ export default function ArtworkDetailPage() {
 
             <div className="prose prose-slate dark:prose-invert mb-12 font-light leading-relaxed text-foreground/70">
               <p>{artwork.description || "Aucune description fournie pour cette œuvre."}</p>
+            </div>
+
+            <div className="mb-12 rounded-2xl border border-foreground/8 bg-foreground/[0.02] p-5">
+              <div className="flex items-center justify-between text-sm text-foreground/55">
+                <span className="flex items-center gap-2">
+                  <Heart className="w-4 h-4" />
+                  {artwork.likeCount || 0} j&apos;aime
+                </span>
+                <span className="flex items-center gap-2">
+                  <Eye className="w-4 h-4" />
+                  {artwork.viewCount || 0} vues
+                </span>
+              </div>
+              <div className="mt-4 border-t border-foreground/8 pt-4">
+                <button className="flex items-center gap-2 text-sm font-medium text-foreground/65 hover:text-accent transition-colors">
+                  <MessageSquare className="w-4 h-4" />
+                  Commenter cette œuvre
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-8 mb-12 border-y border-foreground/5 py-8">

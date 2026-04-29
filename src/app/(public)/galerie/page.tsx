@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import GalerieClient from "./GalerieClient";
-import { ArtworksService } from "@/lib/services/ArtworksService";
+import { fetchArtworks } from "@/hooks/useArtworks";
+import type { FilterParams } from "@/types/artwork";
 
 export const generateMetadata = async (): Promise<Metadata> => {
     return {
@@ -23,20 +24,19 @@ export default async function GaleriePage(
     const searchParams = await props.searchParams;
     const queryClient = new QueryClient();
 
-    const filters = {
-        technique: (searchParams.technique as string) || undefined,
-        style: (searchParams.style as string) || undefined,
-        search: (searchParams.search as string) || undefined,
-    };
+    const filters: FilterParams = {
+    technique: (searchParams.technique as string) || undefined,
+    style: (searchParams.style as string) || undefined,
+    search: (searchParams.search as string) || undefined,
+    forSale:
+        searchParams.forSale !== undefined
+            ? searchParams.forSale === "true"
+            : undefined,
+};
 
-    // Prefetch data for SSR/ISR
     await queryClient.prefetchQuery({
         queryKey: ["artworks", filters],
-        queryFn: async () => {
-            // For the global gallery, we use getFeatured or search suggestions for now
-            // until a paginated public endpoint is clearly defined in the client
-            return await ArtworksService.getFeatured();
-        },
+        queryFn: () => fetchArtworks(filters),
     });
 
     return (

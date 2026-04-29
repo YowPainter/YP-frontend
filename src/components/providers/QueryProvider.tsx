@@ -1,10 +1,12 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { initializeApi } from "@/lib/apiInit";
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
+    initializeApi();
+
     const [queryClient] = useState(
         () =>
             new QueryClient({
@@ -16,10 +18,6 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
                 },
             })
     );
-
-    useEffect(() => {
-        initializeApi();
-    }, []);
 
     return (
         <QueryClientProvider client={queryClient}>

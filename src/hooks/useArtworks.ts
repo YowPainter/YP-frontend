@@ -1,32 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArtworksService } from "@/lib/services/ArtworksService";
-import { GlobalSearchService } from "@/lib/services/GlobalSearchService";
-import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
+import {
+    getGalleryArtworks,
+    type GalleryArtwork,
+    type GalleryViewerContext,
+} from "@/lib/services/ArtworksService";
+import type { FilterParams } from "@/types/artwork";
 
-export interface FilterParams {
-    technique?: string;
-    style?: string;
-    search?: string;
+export async function fetchArtworks(
+    filters: FilterParams,
+    artistSlug?: string,
+    viewer?: GalleryViewerContext,
+): Promise<Array<GalleryArtwork>> {
+    console.log("Filters sent:", filters);
+    return getGalleryArtworks(filters, artistSlug, viewer);
 }
 
-export function useArtworks(filters: FilterParams, artistSlug?: string) {
+export function useArtworks(filters: FilterParams, artistSlug?: string, viewer?: GalleryViewerContext) {
     return useQuery({
-        queryKey: ["artworks", filters, artistSlug],
-        queryFn: async (): Promise<Array<ArtworkResponse>> => {
-            if (artistSlug) {
-                // Fetch for specific artist shop
-                if (filters.search) {
-                    return await ArtworksService.searchArtworks(artistSlug, filters.search);
-                }
-                return await ArtworksService.getAllPublicArtworks(artistSlug);
-            } else {
-                // Global search or featured
-                if (filters.search) {
-                    const results = await GlobalSearchService.globalSearch(filters.search);
-                    return results.artworks || [];
-                }
-                return await ArtworksService.getLatestArtworks();
-            }
-        },
+        queryKey: ["artworks", filters, artistSlug, viewer?.role, viewer?.artistSlug],
+        queryFn: () => fetchArtworks(filters, artistSlug, viewer),
     });
 }

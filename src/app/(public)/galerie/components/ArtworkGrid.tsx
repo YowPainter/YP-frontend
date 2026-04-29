@@ -1,11 +1,11 @@
 "use client";
 
-import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
+import type { GalleryArtwork } from "@/lib/services/ArtworksService";
 import ArtworkCard from "./ArtworkCard";
 import GallerySkeleton from "./GallerySkeleton";
 
 interface ArtworkGridProps {
-    artworks: ArtworkResponse[];
+    artworks: GalleryArtwork[];
     isLoading: boolean;
     isLoggedIn?: boolean;
 }
@@ -30,7 +30,7 @@ export default function ArtworkGrid({ artworks, isLoading, isLoggedIn }: Artwork
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 xl:gap-10">
             {artworks.map((artwork) => (
                 <ArtworkCard
                     key={artwork.id}
