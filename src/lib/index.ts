@@ -51,6 +51,7 @@ export { BuyerProfileService } from './services/BuyerProfileService';
 export { ChatControllerService } from './services/ChatControllerService';
 export { EventsService } from './services/EventsService';
 export { GlobalSearchService } from './services/GlobalSearchService';
+export { HealthControllerService } from './services/HealthControllerService';
 export { NotificationsService } from './services/NotificationsService';
 export { PaymentsService } from './services/PaymentsService';
 export { ShopOrdersService } from './services/ShopOrdersService';

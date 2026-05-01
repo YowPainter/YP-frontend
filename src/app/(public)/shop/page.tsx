@@ -2,144 +2,168 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import ShopModuleNav from "@/components/shop/ShopModuleNav";
+import ShopArticleCard from "@/components/shop/ShopArticleCard";
 import { AnimatedBlob } from "@/components/ui/AnimatedBlob";
 import { useQuery } from "@tanstack/react-query";
 import { ArtworksService } from "@/lib/services/ArtworksService";
 import { ShopOrdersService } from "@/lib/services/ShopOrdersService";
-import { formatPrice } from "@/lib/utils";
-
-// Static placeholders as requested for missing API equivalents
-const boutiqueKpis = [
-  { label: "Oeuvres en vente", value: "24" },
-  { label: "Panier moyen", value: "186 500 XAF" },
-  { label: "Commandes ce mois", value: "42" },
-  { label: "Taux de conversion", value: "3,7%" },
-];
+import { ArtistsService } from "@/lib/services/ArtistsService";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Pagination } from "@/components/ui/Pagination";
+import { useState } from "react";
+import type { ArtistResponse } from "@/lib/models/ArtistResponse";
+import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
 
 export default function ShopIndexPage() {
-  const { data: artworks, isLoading } = useQuery({
-    queryKey: ["shop-latest"],
-    queryFn: () => ArtworksService.getLatestArtworks(),
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
+
+  // 1. Fetch Global Products
+  const { data: products, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ["shop-global-products"],
+    queryFn: () => ShopOrdersService.getGlobalProducts(),
   });
+
+  const paginatedProducts = products ? products.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE) : [];
+  const totalPages = products ? Math.ceil(products.length / ITEMS_PER_PAGE) : 0;
+
+  // 2. Batch Fetch Artist Info & Artworks
+  const artistIds = Array.from(new Set(products?.map(p => p.artistId).filter(Boolean))) as string[];
+  const artworkIds = Array.from(new Set(products?.map(p => p.artworkId).filter(Boolean))) as string[];
+
+  const { data: artistsMap, isLoading: isLoadingArtists } = useQuery({
+    queryKey: ["shop-artists", artistIds],
+    queryFn: async () => {
+      const map = new Map<string, ArtistResponse>();
+      const results = await Promise.allSettled(artistIds.map(id => ArtistsService.getArtistById(id)));
+      results.forEach((res, i) => {
+        if (res.status === 'fulfilled') map.set(artistIds[i], res.value);
+      });
+      return map;
+    },
+    enabled: artistIds.length > 0,
+  });
+
+  const { data: artworksMap, isLoading: isLoadingArtworks } = useQuery({
+    queryKey: ["shop-artworks", artworkIds],
+    queryFn: async () => {
+      const map = new Map<string, ArtworkResponse>();
+      // Pour chaque artworkId, on tente de le récupérer. 
+      // Note: On utilise un pattern de batching avec Promise.allSettled.
+      // Comme on n'a pas getArtworkById(id) sans slug, on va utiliser getLatestArtworks 
+      // et filtrer, ou espérer que l'API nous donne un moyen.
+      // Ici, on va faire un petit hack: on récupère les dernières oeuvres globales et on les mappe.
+      const latest = await ArtworksService.getLatestArtworks();
+      latest.forEach(art => {
+        if (art.id && artworkIds.includes(art.id)) map.set(art.id, art);
+      });
+      return map;
+    },
+    enabled: artworkIds.length > 0,
+  });
+
+  const isLoading = isLoadingProducts || (artistIds.length > 0 && isLoadingArtists) || (artworkIds.length > 0 && isLoadingArtworks);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-6 sm:px-12 pt-32 pb-24 canvas-texture canvas-grain relative overflow-hidden">
       
-      {/* Arrière-plans artistiques */}
+      {/* Backgrounds */}
       <div className="absolute inset-0 z-[-5] pointer-events-none">
         <AnimatedBlob className="top-[-5%] right-[-10%] w-[40vw] h-[40vw]" color="accent" opacity={0.1} />
         <AnimatedBlob className="bottom-[10%] left-[5%] w-[30vw] h-[30vw]" color="amber" opacity={0.05} delay />
       </div>
 
-      <section className="reveal relative overflow-hidden rounded-[3rem] border border-foreground/5 bg-background/40 backdrop-blur-xl p-8 md:p-16 mb-16 shadow-2xl">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+      {/* Hero Section: Artistique & Épuré */}
+      <section className="relative w-full min-h-[40vh] flex flex-col justify-center mb-24 reveal">
         
+        {/* Lettrine Géante en Arrière-plan (Esprit du site) */}
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-16 font-serif text-[30rem] font-black text-foreground/[0.02] select-none pointer-events-none z-0 leading-none">
+          S
+        </div>
+
         <div className="relative z-10 max-w-4xl">
-          <p className="mb-6 text-xs uppercase tracking-[0.5em] font-bold text-accent flex items-center gap-4">
-            <span className="w-12 h-[1px] bg-accent"></span> Le Shop YowPainter
-          </p>
-          <h1 className="font-serif text-5xl leading-[1.1] md:text-7xl tracking-tighter mb-8">
-            Acquérir l'Unique. <br />
-            <span className="italic font-normal text-foreground/80">En toute sérénité.</span>
-          </h1>
-          <p className="max-w-xl text-xl text-foreground/60 font-light leading-relaxed mb-10 border-l border-accent/30 pl-8">
-            Une expérience de collection simplifiée, premium et sécurisée. Du coup de cœur à la livraison, nous veillons sur chaque chef-d'œuvre.
-          </p>
-          <div className="flex flex-wrap gap-6 pt-4">
-            <Link href="/shop/cart" className="group flex items-center gap-4 bg-foreground text-background px-10 py-5 text-xs uppercase tracking-[0.4em] font-bold hover:bg-accent transition-all duration-500 shadow-xl">
-              Accéder au Panier
-              <span className="text-xl transition-transform group-hover:translate-x-2">&rarr;</span>
-            </Link>
+          <div className="flex items-center gap-6 mb-10">
+            <span className="w-16 h-[1px] bg-accent"></span>
+            <p className="text-[10px] uppercase tracking-[0.5em] font-black text-accent">
+              YowPainter Fine Art Store
+            </p>
           </div>
+          
+          <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl font-light leading-[0.9] tracking-tighter mb-8">
+            Le goût de <br />
+            <span className="italic font-normal text-accent relative">
+              l'exceptionnel.
+            </span>
+          </h1>
         </div>
       </section>
 
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 mb-16">
-        {boutiqueKpis.map((kpi) => (
-          <article key={kpi.label} className="group rounded-3xl border border-foreground/5 bg-background/50 p-8 backdrop-blur transition-all duration-500 hover:border-accent/20 hover:shadow-xl">
-            <p className="text-[10px] uppercase tracking-[0.4em] font-bold text-foreground/30 group-hover:text-accent transition-colors">{kpi.label}</p>
-            <p className="mt-4 font-serif text-4xl tracking-tighter">{kpi.value}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="mb-12 border-b border-foreground/5 pb-8">
-        <ShopModuleNav />
+      <div className="mb-16 flex flex-col md:flex-row justify-between items-end gap-10 border-b border-foreground/5 pb-12">
+        <div className="max-w-md">
+          <h2 className="font-serif text-5xl tracking-tighter mb-4">La Sélection</h2>
+          <p className="text-foreground/30 font-light text-lg">Explorez les créations de nos artistes partenaires.</p>
+        </div>
+        
+        {/* Filtre Raffiné */}
+        <div className="flex items-center gap-8">
+           <span className="text-[10px] uppercase tracking-[0.4em] font-black text-foreground/20">Trier par</span>
+           <button className="text-[10px] uppercase tracking-[0.3em] font-bold text-foreground hover:text-accent transition-colors border-b border-foreground/20 pb-1">
+             Pertinence
+           </button>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="animate-pulse aspect-[3/4] bg-foreground/5 rounded-2xl"></div>
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i}>
+              <Skeleton className="aspect-[4/5] rounded-2xl mb-4" />
+              <Skeleton className="h-6 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
           ))}
         </div>
       ) : (
-        <section className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {(artworks || []).map((art) => (
-            <article key={art.id} className="group transition-all duration-700">
-              {/* Le lien pointe vers l'espace de l'artiste pour respecter le multi-tenancy */}
-              <Link href={`/${art.artistId}/gallery/${art.id}`} className="block">
-                <div className="relative aspect-[3/4] overflow-hidden bg-white p-3 shadow-sm group-hover:shadow-2xl transition-all duration-700 border border-foreground/5 mb-6">
-                  <div className="relative w-full h-full overflow-hidden">
-                    <Image src={art.imageUrls?.[0] || "/images/placeholder.png"} alt={art.title || ""} fill className="object-cover transition-transform duration-[2s] group-hover:scale-110" />
-                  </div>
-                  
-                  <div className="absolute left-6 top-6 transition-all duration-500 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0">
-                    <span className="rounded-full bg-background/90 backdrop-blur px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
-                      {art.style}
-                    </span>
-                  </div>
-
-                  {art.status !== 'ON_SALE' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                      <span className="rounded-full bg-foreground px-6 py-2 text-[10px] uppercase tracking-[0.3em] font-black text-background">
-                        Indisponible
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </Link>
-
-              <div className="space-y-4 px-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="font-serif text-2xl tracking-tight group-hover:text-accent transition-colors">{art.title}</h2>
-                    <Link href={`/${art.artistId}`} className="text-xs text-foreground/40 font-bold uppercase tracking-widest mt-1 hover:text-accent transition-colors">
-                      {art.artistName || "Artiste Inconnu"}
-                    </Link>
-                  </div>
-                </div>
-                
-                <div className="h-[1px] w-12 bg-accent/20 transition-all duration-500 group-hover:w-full"></div>
-
-                <div className="flex items-end justify-between">
-                  <div className="flex flex-col text-accent">
-                    <span className="text-xl font-black tracking-tight">
-                        {/* Sur YowPainter, le prix est souvent indicatif dans la galerie, ou réel si ON_SALE */}
-                        {formatPrice(350000)}
-                    </span>
-                  </div>
-                  
-                  <button
-                    type="button"
-                    disabled={art.status !== 'ON_SALE'}
-                    className={`flex h-12 w-12 items-center justify-center rounded-full transition-all duration-500 ${
-                      art.status === 'ON_SALE'
-                        ? "bg-foreground text-background hover:bg-accent hover:shadow-lg"
-                        : "cursor-not-allowed opacity-20 bg-foreground/15"
-                    }`}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+        <section className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {paginatedProducts.map((product) => {
+            const artist = product.artistId ? artistsMap?.get(product.artistId) : undefined;
+            const artwork = product.artworkId ? artworksMap?.get(product.artworkId) : undefined;
+            return (
+              <ShopArticleCard 
+                key={product.id} 
+                product={product} 
+                artwork={artwork}
+                artist={artist ? {
+                  name: artist.artistName || `${artist.firstName} ${artist.lastName}`.trim(),
+                  avatar: artist.profilePictureUrl,
+                  username: artist.email?.split('@')[0],
+                  slug: artist.slug
+                } : undefined}
+              />
+            );
+          })}
         </section>
       )}
 
+      {!isLoadingProducts && totalPages > 1 && (
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(p) => {
+            setCurrentPage(p);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="mt-20"
+        />
+      )}
+
+      {products?.length === 0 && !isLoadingProducts && (
+        <div className="py-24 text-center border border-dashed border-foreground/10 rounded-[3rem]">
+          <p className="text-foreground/40 italic">Aucun article n'est disponible pour le moment.</p>
+        </div>
+      )}
     </div>
   );
 }
+
 

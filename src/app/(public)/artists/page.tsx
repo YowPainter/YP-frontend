@@ -6,15 +6,20 @@ import { ArtistsService } from '@/lib/services/ArtistsService'
 import { ArtistCard, ArtistCardSkeleton } from '@/components/ui/ArtistCard'
 import { AnimatedBlob } from '@/components/ui/AnimatedBlob'
 import { AbstractShapes } from '@/components/ui/AbstractShapes'
+import { Pagination } from '@/components/ui/Pagination'
 
 export default function ArtistsPage() {
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 8
 
   const { data: artists, isLoading } = useQuery({
     queryKey: ['artists-directory', search],
     queryFn: () => ArtistsService.searchArtists(search),
-    // debounce simple : on pourrait ajouter un délai mais searchArtists('') est léger
   })
+
+  const paginatedArtists = artists ? artists.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE) : []
+  const totalPages = artists ? Math.ceil(artists.length / ITEMS_PER_PAGE) : 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased font-sans canvas-texture canvas-grain relative selection:bg-accent/30 pt-32 pb-24">
@@ -65,11 +70,24 @@ export default function ArtistsPage() {
               <ArtistCardSkeleton key={i} />
             ))
           ) : (
-            artists?.map((artist, idx) => (
+            paginatedArtists?.map((artist, idx) => (
               <ArtistCard key={artist.id} artist={artist} index={idx} />
             ))
           )}
         </div>
+
+        {/* Pagination */}
+        {!isLoading && totalPages > 1 && (
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(p) => {
+              setCurrentPage(p);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="mt-24"
+          />
+        )}
 
         {/* Empty State */}
         {!isLoading && artists?.length === 0 && (

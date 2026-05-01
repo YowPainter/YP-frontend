@@ -25,7 +25,7 @@ export function ArtistPublicHero({ artist, isLoading }: ArtistPublicHeroProps) {
         
         {/* Avatar Asymétrique */}
         <div className="relative shrink-0 reveal">
-          <div className="w-[200px] h-[250px] md:w-[280px] md:h-[350px] rounded-[30%_70%_70%_30%/30%_30%_70%_70%] overflow-hidden border border-foreground/10 bg-white p-2 shadow-2xl">
+          <div className="relative w-[200px] h-[250px] md:w-[280px] md:h-[350px] rounded-[30%_70%_70%_30%/30%_30%_70%_70%] overflow-hidden border border-foreground/10 bg-white p-2 shadow-2xl">
             {isLoading ? (
               <div className="w-full h-full shimmer rounded-[30%_70%_70%_30%/30%_30%_70%_70%]" />
             ) : (
@@ -33,6 +33,7 @@ export function ArtistPublicHero({ artist, isLoading }: ArtistPublicHeroProps) {
                 src={artist?.profilePictureUrl || '/images/placeholder.png'} 
                 alt={displayName} 
                 fill 
+                sizes="(max-width: 768px) 200px, 280px"
                 className="object-cover"
               />
             )}

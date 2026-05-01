@@ -5,6 +5,11 @@ import { useState, useEffect } from "react";
 import { initializeApi } from "@/lib/apiInit";
 import { toast } from "@/lib/toast";
 
+// Initialize API configuration synchronously before any queries run
+if (typeof window !== "undefined") {
+    initializeApi();
+}
+
 export function QueryProvider({ children }: { children: React.ReactNode }) {
     const [queryClient] = useState(
         () =>
@@ -35,10 +40,6 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
                 },
             })
     );
-
-    useEffect(() => {
-        initializeApi();
-    }, []);
 
     return (
         <QueryClientProvider client={queryClient}>

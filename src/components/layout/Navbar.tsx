@@ -76,18 +76,19 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 sm:px-12 pointer-events-none 
-      ${scrolled || pathname === '/login' || pathname === '/register' ? "py-4 glass-elegant backdrop-blur-xl border-b border-foreground/5 shadow-sm" : "py-8"}`}
+      ${scrolled || pathname === '/login' || pathname === '/register' || pathname?.includes('dashboard') ? "py-4 glass-elegant backdrop-blur-xl border-b border-foreground/5 shadow-sm" : "py-8"}`}
     >
       <div className="max-w-[1400px] mx-auto flex justify-between items-center pointer-events-auto">
 
         {/* Logo (Gauche) */}
         <div className="flex-1 flex justify-start">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className={`relative transition-all duration-500 overflow-hidden ${scrolled || pathname === '/login' || pathname === '/register' ? 'w-14 h-14' : 'w-24 h-24'}`}>
+            <div className={`relative transition-all duration-500 overflow-hidden ${scrolled || pathname === '/login' || pathname === '/register' || pathname?.includes('dashboard') ? 'w-14 h-14' : 'w-24 h-24'}`}>
               <Image 
                 src="/images/logo.png" 
                 alt="YowPainter Logo" 
                 fill
+                sizes="100px"
                 className="object-contain scale-[2] transition-transform duration-500"
                 priority
               />

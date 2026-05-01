@@ -45,7 +45,7 @@ export default function LoginPage() {
         {/* L'Image d'Art en arrière-plan with a subtle overlay */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/login-art.png"
+            src="/images/african-art-v2.png"
             alt="Abstract Art"
             fill
             className="object-cover opacity-60 transition-transform duration-[10s] hover:scale-110"

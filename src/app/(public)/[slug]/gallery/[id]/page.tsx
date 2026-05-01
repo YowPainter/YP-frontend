@@ -9,19 +9,34 @@ import { ChevronLeft, Heart, Share2 } from 'lucide-react'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
 
+import { ShopOrdersService } from '@/lib/services/ShopOrdersService'
+
 export default function ArtworkDetailPage() {
   const { slug, id } = useParams() as { slug: string; id: string }
   const router = useRouter()
 
-  const { data: artwork, isLoading, error } = useQuery({
+  // 1. Fetch Artwork
+  const { data: artwork, isLoading: isArtworkLoading, error: artworkError } = useQuery({
     queryKey: ['artwork-detail', slug, id],
     queryFn: () => ArtworksService.getArtwork(slug, id),
     enabled: !!slug && !!id
   })
 
+  // 2. Fetch associated product if on sale
+  const { data: products } = useQuery({
+    queryKey: ['artist-products', slug],
+    queryFn: () => ShopOrdersService.getProductsByArtist(slug),
+    enabled: !!slug && artwork?.status === 'ON_SALE'
+  })
+
+  const associatedProduct = products?.find(p => p.artworkId === id)
+
+  const isLoading = isArtworkLoading
+  const error = artworkError
+
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-32 px-6 sm:px-12 max-w-[1400px] mx-auto animate-pulse">
+      <div className="min-h-screen pt-32 px-6 sm:px-12 max-w-[1400px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
            <Skeleton className="aspect-square rounded-3xl" />
            <div className="space-y-6">
@@ -64,6 +79,7 @@ export default function ArtworkDetailPage() {
                   src={artwork.imageUrls?.[0] || '/images/placeholder.png'} 
                   alt={artwork.title || ''} 
                   fill 
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
                 />
              </div>
@@ -85,7 +101,7 @@ export default function ArtworkDetailPage() {
             </div>
 
             <h1 className="font-serif text-5xl md:text-7xl leading-tight tracking-tighter mb-8">
-              {artwork.title}
+              {associatedProduct?.name || artwork.title}
             </h1>
 
             <div className="h-[1px] w-full bg-foreground/5 mb-8"></div>
@@ -94,7 +110,7 @@ export default function ArtworkDetailPage() {
               <div className="flex flex-col">
                  <span className="text-xs text-foreground/40 uppercase tracking-widest font-bold mb-1">Prix de l'œuvre</span>
                  <span className="text-4xl font-black tracking-tighter text-accent">
-                   {formatPrice(350000)} {/* Placeholder price logic */}
+                   {associatedProduct ? formatPrice(associatedProduct.price || 0) : 'Prix sur demande'}
                  </span>
               </div>
               <div className="flex gap-4">
@@ -108,7 +124,7 @@ export default function ArtworkDetailPage() {
             </div>
 
             <div className="prose prose-slate dark:prose-invert mb-12 font-light leading-relaxed text-foreground/70">
-              <p>{artwork.description || "Aucune description fournie pour cette œuvre."}</p>
+              <p>{associatedProduct?.description || artwork.description || "Aucune description fournie pour cette œuvre."}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-8 mb-12 border-y border-foreground/5 py-8">
@@ -123,10 +139,10 @@ export default function ArtworkDetailPage() {
             </div>
 
             <button 
-              disabled={artwork.status !== 'ON_SALE'}
+              disabled={artwork.status !== 'ON_SALE' || (associatedProduct?.stockQuantity === 0)}
               className="w-full bg-foreground text-background py-6 text-xs uppercase tracking-[0.5em] font-bold hover:bg-accent transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-xl"
             >
-              Initialiser l'acquisition
+              {associatedProduct?.stockQuantity === 0 ? 'En rupture de stock' : artwork.status === 'ON_SALE' ? 'Initialiser l\'acquisition' : 'Indisponible'}
             </button>
           </div>
 

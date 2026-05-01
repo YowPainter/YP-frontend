@@ -98,16 +98,17 @@ export default function Home() {
             <div className="relative w-[340px] md:w-[450px] aspect-[3/4] art-frame bg-white p-4 lg:p-6 z-20 parallax-slow shadow-[30px_30px_80px_rgba(0,0,0,0.1)]">
               <div className="relative w-full h-full bg-foreground/5 overflow-hidden">
                 <Image
-                  src="/images/placeholder.png"
+                  src="/images/african-art-v2.png"
                   alt="Pièce Maîtresse"
                   fill
+                  sizes="(max-width: 768px) 100vw, 450px"
                   className="object-cover transition-transform duration-[3s] hover:scale-110"
                   priority
                 />
               </div>
               {/* Annotation manuscrite factice */}
               <div className="absolute -bottom-12 -right-8 font-serif italic text-accent/60 text-lg rotate-[-5deg] select-none">
-                "Pure Essence, 2024"
+                "Heritage Soul, 2024"
               </div>
             </div>
 
@@ -150,7 +151,7 @@ export default function Home() {
           <div className="md:col-span-7 lg:col-span-8 group cursor-pointer reveal">
             <div className="relative w-full aspect-[16/10] art-frame bg-white p-4 transition-all duration-700 mb-8 border border-foreground/5">
               <div className="relative w-full h-full overflow-hidden">
-                <Image src="/images/placeholder.png" alt="Grand format" fill className="object-cover transition-transform duration-[2s] group-hover:scale-105" />
+                <Image src="/images/african-art-v2.png" alt="Grand format" fill className="object-cover transition-transform duration-[2s] group-hover:scale-105" />
                 {/* Overlay dégradé — lisible en mode clair ET sombre */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 <div className="absolute inset-0 flex flex-col justify-end p-10 opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-10 group-hover:translate-y-0">
@@ -172,7 +173,7 @@ export default function Home() {
               </svg>
               <div className="relative w-full h-32 md:h-40 art-frame bg-white p-3 shadow-2xl overflow-hidden">
                 <div className="relative w-full h-full overflow-hidden">
-                  <Image src="/images/placeholder.png" alt="Format Panoramique" fill className="object-cover transition-transform duration-[4s] group-hover:scale-105" />
+                  <Image src="/images/african-art-v2.png" alt="Format Panoramique" fill className="object-cover transition-transform duration-[4s] group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-8">
                     <span className="text-white text-sm uppercase tracking-[0.4em] font-medium">Horizon Infini</span>
                   </div>
@@ -186,7 +187,7 @@ export default function Home() {
             <div className="group cursor-pointer mb-20">
               <div className="relative w-full aspect-[3/5] art-frame bg-white p-4 mb-6 shadow-xl">
                 <div className="relative w-full h-full overflow-hidden">
-                  <Image src="/images/placeholder.png" alt="Oeuvre vertical" fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
+                  <Image src="/images/african-art-v2.png" alt="Oeuvre vertical" fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
                 </div>
               </div>
               <div className="flex justify-between items-end">

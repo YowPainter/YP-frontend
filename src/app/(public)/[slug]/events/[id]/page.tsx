@@ -53,13 +53,13 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen pt-32 px-6 sm:px-12 max-w-[1400px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-7 space-y-8 animate-pulse">
+          <div className="lg:col-span-7 space-y-8">
             <Skeleton className="w-full aspect-[16/10]" />
             <Skeleton className="h-10 w-3/4" />
             <Skeleton className="h-6 w-1/2" />
             <Skeleton className="h-32 w-full" />
           </div>
-          <div className="lg:col-span-5 animate-pulse">
+          <div className="lg:col-span-5">
             <Skeleton className="h-[500px] w-full" />
           </div>
         </div>

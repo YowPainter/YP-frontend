@@ -61,6 +61,7 @@ function ArtistBanner({ artist, className = '' }: { artist: ArtistResponse; clas
                         src={artist.profilePictureUrl}
                         alt={displayName}
                         fill
+                        sizes="32px"
                         className="object-cover"
                     />
                 ) : (
@@ -140,9 +141,8 @@ export function EventCard({ event, variant = 'grid', artistSlug, artist }: Event
                             alt={event.name || ''}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 50vw"
-                            className="object-cover group-hover:scale-110 transition-transform duration-[2s]"
+                            className="object-cover"
                             onError={() => setImgSrc('https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80')}
-                            unoptimized={imgSrc.includes('unsplash.com')}
                         />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-85 group-hover:opacity-95 transition-opacity duration-500" />
@@ -225,9 +225,8 @@ export function EventCard({ event, variant = 'grid', artistSlug, artist }: Event
                     alt={event.name || ''}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-[1.5s] grayscale-[20%] group-hover:grayscale-0"
+                    className="object-cover"
                     onError={() => setImgSrc('https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80')}
-                    unoptimized={imgSrc.includes('unsplash.com')}
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
                 

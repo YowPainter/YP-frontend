@@ -1,35 +1,43 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/Skeleton";
-
 export default function ArtworkCardSkeleton() {
     return (
-        <div className="flex flex-col h-full">
-            {/* Container Image Skeleton */}
-            <div className="relative aspect-square md:aspect-[3/4] overflow-hidden bg-foreground/5 art-frame mb-6 shimmer">
-                {/* Artist Info Top Left Skeleton */}
-                <div className="absolute top-4 left-4 z-20 flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-full py-1.5 pl-1.5 pr-4 border border-white/20">
-                    <div className="w-8 h-8 rounded-full bg-white/20"></div>
-                    <div className="h-2 w-16 bg-white/20 rounded"></div>
+        <article className="bg-background border border-foreground/8 rounded-2xl overflow-hidden shadow-sm flex flex-col shimmer">
+            
+            {/* Header: Profil */}
+            <div className="px-5 pt-5 pb-4 flex items-center gap-3 shrink-0">
+                <div className="w-11 h-11 rounded-full bg-foreground/10 shrink-0"></div>
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                    <div className="h-4 w-32 bg-foreground/10 rounded"></div>
+                    <div className="h-3 w-20 bg-foreground/5 rounded"></div>
                 </div>
             </div>
 
-            {/* Details Skeleton */}
-            <div className="flex flex-col gap-3 flex-1">
-                <div className="flex justify-between items-start">
-                    <Skeleton className="h-7 w-3/4 mb-1" />
-                    <div className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-10" />
-                    </div>
-                </div>
-
-                {/* Technique/Style Row Skeleton */}
-                <div className="mt-auto pt-4 flex items-center justify-between border-t border-foreground/5">
-                    <Skeleton className="h-3 w-1/4" />
-                    <div className="h-2 w-2 rounded-full bg-foreground/5"></div>
-                    <Skeleton className="h-3 w-1/4" />
+            {/* Body: Texte */}
+            <div className="px-5 pb-4 flex flex-col gap-3 shrink-0">
+                <div className="h-6 w-3/4 bg-foreground/10 rounded"></div>
+                <div className="h-4 w-full bg-foreground/5 rounded"></div>
+                <div className="h-4 w-5/6 bg-foreground/5 rounded"></div>
+                
+                {/* Tags */}
+                <div className="flex gap-2 mt-2">
+                    <div className="h-5 w-16 bg-foreground/5 rounded-full"></div>
+                    <div className="h-5 w-20 bg-foreground/5 rounded-full"></div>
                 </div>
             </div>
-        </div>
+
+            {/* Image */}
+            <div className="px-4 pb-3">
+                <div className="w-full aspect-[4/3] rounded-xl bg-foreground/5"></div>
+            </div>
+
+            {/* Footer: Actions */}
+            <div className="px-5 py-3 flex items-center gap-6 border-t border-foreground/5">
+                <div className="h-8 w-16 bg-foreground/5 rounded-full"></div>
+                <div className="h-8 w-16 bg-foreground/5 rounded-full"></div>
+                <div className="h-8 w-16 bg-foreground/5 rounded-full ml-auto"></div>
+            </div>
+            
+        </article>
     );
 }

@@ -1,16 +1,30 @@
-'use client'
+import Image from 'next/image'
 import type { Work } from './types'
 
 export default function FrameCard({ work, onClick }: { work: Work; onClick: () => void }) {
+  const mainImage = work.imageUrls?.[0]
+
   return (
-    <div className="cursor-pointer" onClick={onClick}>
-      <div className="wood-outer relative overflow-hidden rounded-sm p-2.5 transition-shadow">
+    <div className="cursor-pointer group" onClick={onClick}>
+      <div className="wood-outer relative overflow-hidden rounded-sm p-2.5 transition-all duration-500 hover:shadow-2xl">
         <div className="wood-inner rounded-px p-0.5">
-          <div className="relative aspect-square overflow-hidden">
-            <div
-              className="absolute inset-0 flex items-center justify-center font-display text-xs text-white/80 text-center p-2"
-              style={{ background: work.bg }}
-            />
+          <div className="relative aspect-square overflow-hidden bg-ink">
+            {mainImage ? (
+              <Image 
+                src={mainImage} 
+                alt={work.title} 
+                fill 
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover transition-transform duration-700 hover:scale-[1.03]" 
+              />
+            ) : (
+              <div
+                className="absolute inset-0 flex items-center justify-center font-display text-xs text-white/80 text-center p-2"
+                style={{ background: work.bg }}
+              >
+                {work.title}
+              </div>
+            )}
             {/* stats overlay */}
             <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2.5 px-2 pb-1.5 pt-5"
                  style={{ background: 'linear-gradient(to top,rgba(20,16,12,.75),transparent)' }}>

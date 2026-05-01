@@ -29,13 +29,16 @@ export default async function GaleriePage(
         search: (searchParams.search as string) || undefined,
     };
 
-    // Prefetch data for SSR/ISR
+    // Prefetch data for SSR/ISR to match useArtworks client hook exactly
     await queryClient.prefetchQuery({
-        queryKey: ["artworks", filters],
+        queryKey: ["artworks", filters, undefined],
         queryFn: async () => {
-            // For the global gallery, we use getFeatured or search suggestions for now
-            // until a paginated public endpoint is clearly defined in the client
-            return await ArtworksService.getFeatured();
+            if (filters.search) {
+                const { GlobalSearchService } = await import("@/lib/services/GlobalSearchService");
+                const results = await GlobalSearchService.globalSearch(filters.search);
+                return results.artworks || [];
+            }
+            return await ArtworksService.getLatestArtworks();
         },
     });
 

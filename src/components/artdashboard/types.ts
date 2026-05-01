@@ -10,6 +10,8 @@ export type Work = {
   date: string;
   desc: string;
   tags: string[];
+  status?: 'DRAFT' | 'PUBLISHED' | 'ON_SALE' | 'SUSPENDED' | 'SOLD' | 'ARCHIVED' | 'DELETED';
+  imageUrls?: string[];
 };
 
 export type Article = {
@@ -26,4 +28,5 @@ export type Article = {
   date: string;
   desc: string;
   tags: string[];
+  imageUrl?: string;
 };
