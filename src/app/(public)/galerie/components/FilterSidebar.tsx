@@ -52,7 +52,7 @@ export default function FilterSidebar({ initialFilters, onFilterChange, onReset 
     };
 
     return (
-        <div className="w-full lg:w-72 flex flex-col gap-10">
+        <div className="w-full lg:w-56 flex flex-col gap-6">
             <div className="flex items-center justify-between pb-4 border-b border-foreground/10">
                 <h2 className="font-serif text-2xl font-medium tracking-tight">Filtres</h2>
                 <button

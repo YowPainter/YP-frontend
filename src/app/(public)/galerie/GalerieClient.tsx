@@ -68,7 +68,7 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
 
     return (
         <div className="w-full pt-32 pb-24 px-6 sm:px-12 max-w-[1400px] mx-auto min-h-screen canvas-texture canvas-grain relative">
-            
+
             {/* Éléments de Décoration SVGs (Style Kandinsky/Miro) */}
             <div className="absolute inset-0 z-[-5] pointer-events-none overflow-hidden">
                 <svg className="absolute top-[5%] left-[-5%] w-[30vw] h-[30vw] text-accent/10 opacity-60 transform -rotate-12" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">

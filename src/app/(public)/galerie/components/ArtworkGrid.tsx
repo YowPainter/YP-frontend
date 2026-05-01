@@ -30,7 +30,7 @@ export default function ArtworkGrid({ artworks, isLoading, isLoggedIn }: Artwork
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 xl:gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8 xl:gap-10">
             {artworks.map((artwork) => (
                 <ArtworkCard
                     key={artwork.id}
