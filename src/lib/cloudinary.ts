@@ -5,8 +5,16 @@
  */
 
 export async function uploadToCloudinary(file: File): Promise<string> {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'placeholder-cloud-name';
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'placeholder-preset';
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+  if (!cloudName || cloudName === 'placeholder-cloud-name') {
+    throw new Error('Cloudinary Cloud Name is not configured. Please set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME.');
+  }
+  
+  if (!uploadPreset || uploadPreset === 'placeholder-preset') {
+    throw new Error('Cloudinary Upload Preset is not configured. Please set NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.');
+  }
 
   const formData = new FormData();
   formData.append('file', file);

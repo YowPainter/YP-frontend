@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+import { SafeImage } from './SafeImage'
 import Link from 'next/link'
 import { ArtistResponse } from '@/lib/models/ArtistResponse'
 
@@ -26,7 +26,7 @@ export function ArtistCard({ artist, index }: ArtistCardProps) {
       className="flex flex-col group cursor-pointer transition-all duration-700"
     >
       <div className={`w-full aspect-[4/5] mb-8 overflow-hidden relative ${shapeClass} border border-foreground/10 dark:border-background/20 transition-all duration-700 shadow-sm group-hover:shadow-xl`}>
-        <Image 
+        <SafeImage 
           src={artist.profilePictureUrl || '/images/placeholder.png'} 
           alt={artist.artistName || 'Artiste'} 
           fill 

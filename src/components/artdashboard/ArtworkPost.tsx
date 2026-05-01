@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+import { SafeImage } from '@/components/ui/SafeImage'
 import Link from 'next/link'
 import { useState, useRef } from 'react'
 import type { Work } from './types'
@@ -66,7 +66,7 @@ export default function ArtworkPost({ work, artist, onClick, onDelete, inlineCom
       <Link href={`/${artist.slug || artist.username || '#'}`} className="px-5 pt-5 pb-4 flex items-center gap-3 shrink-0 group/header">
         <div className="w-11 h-11 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center font-serif text-base font-semibold text-accent overflow-hidden shrink-0 group-hover/header:border-accent transition-colors">
           {artist.avatar ? (
-            <Image src={artist.avatar} alt={artist.name} width={44} height={44} sizes="44px" className="object-cover w-full h-full" />
+            <SafeImage src={artist.avatar} alt={artist.name} width={44} height={44} sizes="44px" className="object-cover w-full h-full" />
           ) : (
             <span className="text-lg">{artist.name.charAt(0)}</span>
           )}
@@ -123,7 +123,7 @@ export default function ArtworkPost({ work, artist, onClick, onDelete, inlineCom
           onClick={!inlineComments ? onClick : undefined}
         >
           <div className="relative w-full aspect-[4/3] overflow-hidden rounded-xl border border-foreground/8 bg-foreground/[0.03]">
-            <Image
+            <SafeImage
               src={mainImage}
               alt={work.title}
               fill

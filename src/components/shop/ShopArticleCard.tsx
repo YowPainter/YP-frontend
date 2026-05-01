@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+import { SafeImage } from '@/components/ui/SafeImage'
 import Link from 'next/link'
 import { ProductResponse } from '@/lib/models/ProductResponse'
 import { ArtworkResponse } from '@/lib/models/ArtworkResponse'
@@ -31,7 +31,7 @@ export default function ShopArticleCard({ product, artist, artwork, hideArtistHe
         <Link href={`/${artistSlug}`} className="px-5 pt-5 pb-4 flex items-center gap-3 shrink-0 group/header">
           <div className="w-10 h-10 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center font-serif text-base font-semibold text-accent overflow-hidden shrink-0 group-hover/header:border-accent transition-colors">
             {artist.avatar ? (
-              <Image src={artist.avatar} alt={artist.name} width={40} height={40} sizes="40px" className="object-cover w-full h-full" />
+              <SafeImage src={artist.avatar} alt={artist.name} width={40} height={40} sizes="40px" className="object-cover w-full h-full" />
             ) : (
               <span className="text-sm">{artist.name.charAt(0)}</span>
             )}
@@ -48,13 +48,13 @@ export default function ShopArticleCard({ product, artist, artwork, hideArtistHe
       {/* ── Body: Image ── */}
       <div className={`px-5 pb-5 ${hideArtistHeader ? 'pt-5' : ''}`}>
         <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-foreground/[0.02] border border-foreground/5 group-hover:border-accent/20 transition-colors">
-          <Image
-            src={imageUrl}
-            alt={product.name || 'Article'}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-[2s] group-hover:scale-110"
-          />
+            <SafeImage
+              src={imageUrl}
+              alt={product.name || 'Article'}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-[2s] group-hover:scale-110"
+            />
         </div>
       </div>
 
