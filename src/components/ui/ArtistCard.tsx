@@ -1,9 +1,8 @@
 'use client'
 
-import Image from 'next/image'
+import { SafeImage } from './SafeImage'
 import Link from 'next/link'
 import { ArtistResponse } from '@/lib/models/ArtistResponse'
-import { Skeleton } from './Skeleton'
 
 interface ArtistCardProps {
   artist: ArtistResponse
@@ -26,11 +25,12 @@ export function ArtistCard({ artist, index }: ArtistCardProps) {
       href={artistUrl} 
       className="flex flex-col group cursor-pointer transition-all duration-700"
     >
-      <div className={`w-full aspect-[4/5] mb-8 overflow-hidden relative ${shapeClass} border border-foreground/10 dark:border-background/20 group-hover:scale-105 transition-all duration-700 shadow-sm group-hover:shadow-xl`}>
-        <Image 
+      <div className={`w-full aspect-[4/5] mb-8 overflow-hidden relative ${shapeClass} border border-foreground/10 dark:border-background/20 transition-all duration-700 shadow-sm group-hover:shadow-xl`}>
+        <SafeImage 
           src={artist.profilePictureUrl || '/images/placeholder.png'} 
           alt={artist.artistName || 'Artiste'} 
           fill 
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" 
         />
         
@@ -59,11 +59,11 @@ export function ArtistCardSkeleton({ index = 0 }: { index?: number }) {
   const shapeClass = SHAPES[index % SHAPES.length]
   return (
     <div className="flex flex-col">
-      <div className={`w-full aspect-[4/5] mb-8 shimmer bg-foreground/5 ${shapeClass} border border-foreground/5`}></div>
+      <div className={`w-full aspect-[4/5] mb-8 shimmer bg-current/[0.05] ${shapeClass} border border-current/[0.05]`}></div>
       <div className="flex flex-col items-center">
-        <Skeleton className="h-8 w-3/4 mb-3" />
-        <div className="h-[1px] w-8 bg-accent/20 mb-3"></div>
-        <Skeleton className="h-3 w-1/2" />
+        <div className="shimmer h-8 w-3/4 mb-3 bg-current/[0.05] rounded-md"></div>
+        <div className="h-[1px] w-8 bg-accent/30 mb-3"></div>
+        <div className="shimmer h-3 w-1/2 bg-current/[0.05] rounded-md"></div>
       </div>
     </div>
   )

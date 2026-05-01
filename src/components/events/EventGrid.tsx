@@ -7,6 +7,7 @@ import { ArtistsService } from '@/lib/services/ArtistsService';
 import { EventCard } from './EventCard';
 import { EventFilters } from './EventFilters';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Pagination } from '@/components/ui/Pagination';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ArtistResponse } from '@/lib/models/ArtistResponse';
 import type { EventResponse } from '@/lib/models/EventResponse';
@@ -30,38 +31,22 @@ export function EventGrid({ artistId }: EventGridProps) {
         setCurrentPage(1);
     }, [filters]);
 
-    // 1. Fetch all artists (via searchArtists('') qui retourne tous les artistes)
-    const { data: allArtists } = useQuery({
-        queryKey: ['all-artists-for-events'],
-        queryFn: () => ArtistsService.searchArtists(''),
-        enabled: !artistId, // Ne fetch que si on est sur la page globale
-    });
-
-    // 2. Fetch events — stratégie : agréger les événements de chaque artiste par slug
+    // 1. Fetch events
     const { data: eventsData, isLoading: isLoadingEvents } = useQuery({
-        queryKey: ['public-events-aggregated', filters, artistId, allArtists?.map(a => a.slug)],
-        queryFn: async (): Promise<{ events: EventResponse[]; artistsMap: Map<string, ArtistResponse> }> => {
-            // Cas recherche
+        queryKey: ['public-events-aggregated', filters, artistId],
+        queryFn: async (): Promise<{ events: EventResponse[] }> => {
             if (filters.search) {
                 const events = await EventsService.searchEvents(filters.search);
-                return { events, artistsMap: new Map() };
+                return { events };
             }
 
-            // Cas filtrage par artiste spécifique (via artistId)
             if (artistId) {
                 const events = await EventsService.getEventsByArtist(artistId);
-                return { events, artistsMap: new Map() };
+                return { events };
             }
 
             // Cas principal : Utiliser l'endpoint global pour tous les événements
             const allEvents = await EventsService.getUpcomingEvents();
-            
-            const artistsMap = new Map<string, ArtistResponse>();
-            if (allArtists) {
-                allArtists.forEach(artist => {
-                    if (artist.id) artistsMap.set(artist.id, artist);
-                });
-            }
 
             // Trier par date de début (les plus proches d'abord)
             allEvents.sort((a, b) => {
@@ -70,18 +55,16 @@ export function EventGrid({ artistId }: EventGridProps) {
                 return dateA - dateB;
             });
 
-            return { events: allEvents, artistsMap };
+            return { events: allEvents };
         },
-        enabled: !!artistId || !!allArtists,
     });
 
     const events = eventsData?.events || [];
-    const artistsMap = eventsData?.artistsMap || new Map<string, ArtistResponse>();
 
-    // Pour les cas recherche/artiste spécifique, on fetch les artistes séparément
+    // On récupère les IDs d'artistes uniques présents dans les événements
     const uniqueArtistIds = Array.from(
         new Set(events.map(e => e.artistId).filter(Boolean))
-    ).filter(id => !artistsMap.has(id!)) as string[];
+    ) as string[];
 
     const { data: extraArtists, isLoading: isLoadingExtraArtists } = useQuery({
         queryKey: ['event-artists-extra', uniqueArtistIds],
@@ -100,11 +83,8 @@ export function EventGrid({ artistId }: EventGridProps) {
         enabled: uniqueArtistIds.length > 0,
     });
 
-    // Fusionner les deux maps d'artistes
-    const mergedArtistsMap = new Map<string, ArtistResponse>([
-        ...artistsMap.entries(),
-        ...(extraArtists?.entries() || []),
-    ]);
+    // Map d'artistes pour l'affichage
+    const mergedArtistsMap = extraArtists || new Map<string, ArtistResponse>();
 
     const isLoading = isLoadingEvents || (uniqueArtistIds.length > 0 && isLoadingExtraArtists);
 
@@ -138,7 +118,7 @@ export function EventGrid({ artistId }: EventGridProps) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[...Array(6)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
+                    <div key={i}>
                         <Skeleton className="rounded-xl h-48 w-full" />
                         <Skeleton className="h-5 mt-4 w-3/4" />
                         <Skeleton className="h-4 mt-2 w-1/2" />
@@ -199,66 +179,14 @@ export function EventGrid({ artistId }: EventGridProps) {
                         ))}
                     </div>
 
-                    {/* Pagination UI */}
+                    {/* Pagination UI standardized */}
                     {totalPages > 1 && (
-                        <div className="mt-24 flex justify-center items-center gap-6">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="w-9 h-9 rotate-45 border border-foreground/10 flex items-center justify-center hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-current group"
-                            >
-                                <ChevronLeft className="w-5 h-5 -rotate-45 transition-transform group-hover:scale-110" />
-                            </button>
-                            
-                            <div className="flex items-center gap-4">
-                                {[...Array(totalPages)].map((_, i) => {
-                                    const pageNum = i + 1;
-                                    const isActive = currentPage === pageNum;
-                                    
-                                    // Afficher seulement quelques numéros de page si trop nombreux
-                                    if (
-                                        totalPages > 5 && 
-                                        pageNum !== 1 && 
-                                        pageNum !== totalPages && 
-                                        Math.abs(pageNum - currentPage) > 1
-                                    ) {
-                                        if (pageNum === 2 || pageNum === totalPages - 1) {
-                                            return <span key={pageNum} className="text-foreground/20 font-serif mx-1">...</span>;
-                                        }
-                                        return null;
-                                    }
-
-                                    return (
-                                        <button
-                                            key={pageNum}
-                                            onClick={() => handlePageChange(pageNum)}
-                                            className={`relative w-9 h-9 rotate-45 flex items-center justify-center transition-all duration-500 ${
-                                                isActive 
-                                                ? 'bg-accent text-white shadow-[0_10px_20px_rgba(0,0,0,0.15)] scale-110 z-10' 
-                                                : 'bg-background border border-foreground/5 text-foreground/40 hover:border-accent/40 hover:text-accent hover:bg-accent/5'
-                                            }`}
-                                        >
-                                            <span className="-rotate-45 block text-[11px] font-bold tracking-tighter">
-                                                {pageNum.toString().padStart(2, '0')}
-                                            </span>
-                                            
-                                            {/* Subtle diamond inner border for active state */}
-                                            {isActive && (
-                                                <div className="absolute inset-[3px] border border-white/30 pointer-events-none"></div>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="w-9 h-9 rotate-45 border border-foreground/10 flex items-center justify-center hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-current group"
-                            >
-                                <ChevronRight className="w-5 h-5 -rotate-45 transition-transform group-hover:scale-110" />
-                            </button>
-                        </div>
+                        <Pagination 
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            className="mt-24"
+                        />
                     )}
                 </div>
             )}

@@ -55,8 +55,12 @@ export const useAuthStore = create<AuthState>()(
                 });
                 // Fetch full profile after login
                 if (response.accessToken) {
-                    // Allow OpenAPI to pick up the token
-                    OpenAPI.TOKEN = response.accessToken;
+                    // Set currentTenantSlug if user is artist
+                    const extendedResponse = response as any;
+                    if (response.role === 'ROLE_ARTIST' && extendedResponse.slug) {
+                        localStorage.setItem('currentTenantSlug', extendedResponse.slug);
+                    }
+
                     try {
                         await get().refreshProfile();
                     } catch (e) {
@@ -76,7 +80,6 @@ export const useAuthStore = create<AuthState>()(
                 });
                 // Fetch full profile after registration
                 if (response.accessToken) {
-                    OpenAPI.TOKEN = response.accessToken;
                     try {
                         await get().refreshProfile();
                     } catch (e) {
@@ -112,10 +115,6 @@ export const useAuthStore = create<AuthState>()(
                             }
                         });
 
-                        if (newToken) {
-                            OpenAPI.TOKEN = newToken;
-                        }
-
                         return newToken;
                     } catch (error) {
                         console.error('Failed to refresh token:', error);
@@ -148,6 +147,11 @@ export const useAuthStore = create<AuthState>()(
                                 slug: profile.slug ?? (state.user as any)?.slug,
                             },
                         }));
+                        
+                        // Sync tenant slug for API headers
+                        if (profile.slug) {
+                            localStorage.setItem('currentTenantSlug', profile.slug);
+                        }
                     } else {
                         const profile = await BuyerProfileService.getMe();
                         set((state) => ({
@@ -176,7 +180,6 @@ export const useAuthStore = create<AuthState>()(
             },
 
             logout: () => {
-                OpenAPI.TOKEN = undefined;
                 set({
                     user: null,
                     token: null,
@@ -188,10 +191,8 @@ export const useAuthStore = create<AuthState>()(
         {
             name: 'yowpainter-auth',
             onRehydrateStorage: () => (state) => {
-                // Restore OpenAPI.TOKEN when Zustand rehydrates from localStorage
-                if (state?.token) {
-                    OpenAPI.TOKEN = state.token;
-                }
+                // We rely on initializeApi() dynamic token getter,
+                // so we do not overwrite OpenAPI.TOKEN here anymore.
             },
         }
     )

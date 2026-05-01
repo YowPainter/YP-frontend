@@ -109,6 +109,17 @@ export class ShopOrdersService {
         });
     }
     /**
+     * Lister tous les produits en vente sur la plateforme (tous artistes confondus)
+     * @returns ProductResponse OK
+     * @throws ApiError
+     */
+    public static getGlobalProducts(): CancelablePromise<Array<ProductResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/shop/v1/public/products',
+        });
+    }
+    /**
      * Details d'une commande
      * @param id
      * @returns OrderResponse OK

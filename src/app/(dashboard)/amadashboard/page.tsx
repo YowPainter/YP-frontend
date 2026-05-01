@@ -12,6 +12,7 @@ import { getMyTickets } from '@/lib/api/events'
 import Link from 'next/link'
 import { LogOut, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Navbar from '@/components/layout/Navbar'
 import { Skeleton, SkeletonCircle } from '@/components/ui/Skeleton'
 import { formatPrice } from '@/lib/utils'
 
@@ -612,104 +613,90 @@ export default function AmateurDashboardPage() {
       </div>
 
       {/* Topbar Harmonisée */}
-      <header className="sticky top-0 z-50 bg-background border-b border-foreground/10 px-4 md:px-8 shadow-sm relative">
-        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-accent via-accent-light to-accent"></div>
-        <div className="max-w-[900px] mx-auto h-[64px] flex items-center justify-between">
-          <Link href="/" className="font-serif text-[24px] font-bold tracking-wide hover:opacity-80 transition-opacity">
-            Yow<span className="italic text-accent">Painter</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-[13px] font-medium text-foreground/70 hover:text-accent transition-colors hidden sm:flex items-center gap-1.5 border border-foreground/10 px-4 py-1.5 rounded-full hover:border-accent">
-              <LogOut size={14} className="rotate-180" />
-              Retour galerie
-            </Link>
-            <div className="flex items-center gap-3 pl-4 border-l border-foreground/10">
-              <button
-                onClick={() => {
-                  logout()
-                  router.push('/')
-                }}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-foreground/5 text-foreground/60 hover:text-rose-500 hover:bg-rose-500/10 transition-all hover:scale-105"
-                title="Déconnexion"
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Profil Harmonisé */}
-      <div className="bg-background/60 backdrop-blur-md border-b border-foreground/10 relative z-10">
-        <div className="h-[200px] w-full relative border-b border-foreground/10 shadow-inner">
-          <Image src="/images/register-art.png" alt="Cover art" fill className="object-cover opacity-90 dark:opacity-60" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+      <div className="bg-background/60 backdrop-blur-md border-b border-foreground/10 relative z-10 pt-[88px]">
+        <div className="h-[280px] w-full relative border-b border-foreground/10 shadow-inner">
+          <Image src="/images/african-art-v2.png" alt="Cover art" fill className="object-cover opacity-90 dark:opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-90"></div>
         </div>
-        <div className="max-w-[900px] mx-auto px-4 md:px-8 pb-5 relative">
-          <div className="flex items-end justify-between -mt-[46px] mb-3">
-            <div className="w-[84px] h-[84px] rounded-full bg-background border-[4px] border-background flex items-center justify-center font-serif text-3xl font-semibold text-accent shadow-lg overflow-hidden relative z-10">
-              {status === 'loading' ? (
-                <SkeletonCircle className="w-full h-full" />
-              ) : profileImageUrl ? (
-                <Image src={profileImageUrl} alt="Avatar" width={72} height={72} className="object-cover w-full h-full" />
-              ) : (
-                <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40 text-xl font-sans"><User /></span>
-              )}
+        <div className="max-w-[1200px] mx-auto px-4 md:px-12 pb-8 relative">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 -mt-[70px] relative z-10">
+
+            {/* Left Side: Avatar + Info */}
+            <div className="flex flex-col md:flex-row items-start md:items-end gap-6 md:gap-8">
+              <div className="w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-full bg-background border-[6px] border-background flex items-center justify-center font-serif text-4xl font-semibold text-accent shadow-xl overflow-hidden shrink-0">
+                {status === 'loading' ? (
+                  <SkeletonCircle className="w-full h-full" />
+                ) : user?.profilePictureUrl ? (
+                  <Image src={user.profilePictureUrl} alt="Avatar" width={150} height={150} className="object-cover w-full h-full" />
+                ) : (
+                  <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40"><User size={48} /></span>
+                )}
+              </div>
+
+              <div className="pb-2 flex flex-col gap-2">
+                <div className="flex items-center gap-4">
+                  <h1 className="font-serif text-4xl md:text-5xl font-semibold leading-none tracking-tight">{displayName}</h1>
+                </div>
+                <div className="text-sm text-foreground/50 font-mono tracking-tight">@{user?.email?.split('@')[0] || 'amateur'}</div>
+                <p className="text-sm md:text-base leading-relaxed text-foreground/70 max-w-2xl font-light mt-2 border-l-2 border-foreground/20 pl-4">
+                  {user?.bio || "Amateur d'art et de peinture contemporaine. Collectionneur débutant."}
+                </p>
+              </div>
             </div>
-            <button
-              onClick={() => setIsEditProfileOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 border border-foreground/20 rounded-full text-xs font-medium hover:border-accent hover:text-accent hover:bg-accent/5 transition-all relative z-10 bg-background"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Modifier
-            </button>
-          </div>
-          <div className="font-serif text-2xl font-semibold leading-tight">{displayName}</div>
-          <div className="text-[13px] text-foreground/50 mt-0.5 mb-2">@{user?.email?.split('@')[0] || 'amateur'}</div>
-          <p className="text-[13px] leading-relaxed text-foreground/70 mb-3.5 max-w-md">
-            {user?.bio || "Amateur d'art et de peinture contemporaine. Collectionneur débutant."}
-          </p>
-          {/* stats */}
-          <div className="flex gap-6 pt-3 border-t border-foreground/10">
-            {isProfileLoading ? (
-              <>
-                <div className="w-16"><Skeleton className="h-4 w-full mb-1" /><Skeleton className="h-3 w-3/4" /></div>
-                <div className="w-16"><Skeleton className="h-4 w-full mb-1" /><Skeleton className="h-3 w-3/4" /></div>
-                <div className="w-16"><Skeleton className="h-4 w-full mb-1" /><Skeleton className="h-3 w-3/4" /></div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <div className="font-serif text-xl font-semibold leading-none">{LIKED.length}</div>
-                  <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Likes</div>
-                </div>
-                <div>
-                  <div className="font-serif text-xl font-semibold leading-none">{PURCHASES.length}</div>
-                  <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Achats</div>
-                </div>
-                <div>
-                  <div className="font-serif text-xl font-semibold leading-none">{MY_TICKETS.length}</div>
-                  <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Billets</div>
-                </div>
-                <div>
-                  <div className="font-serif text-xl font-semibold leading-none">0</div>
-                  <div className="text-[11px] text-foreground/50 mt-1 uppercase tracking-wider">Suivis</div>
-                </div>
-              </>
-            )}
+
+            {/* Right Side: Action + Stats */}
+            <div className="flex flex-col items-start md:items-end gap-6 pb-2">
+              <button
+                onClick={() => setIsEditProfileOpen(true)}
+                className="flex items-center gap-2 px-6 py-2.5 border border-foreground/20 rounded-full text-xs uppercase tracking-widest font-bold hover:border-foreground hover:text-background hover:bg-foreground transition-all shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Éditer le profil
+              </button>
+
+              <div className="flex gap-8 md:gap-12 bg-foreground/5 px-8 py-5 rounded-3xl border border-foreground/10 backdrop-blur-md shadow-sm">
+                {isProfileLoading ? (
+                  <>
+                    <div className="w-16"><Skeleton className="h-6 w-full mb-2" /><Skeleton className="h-3 w-3/4" /></div>
+                    <div className="w-16"><Skeleton className="h-6 w-full mb-2" /><Skeleton className="h-3 w-3/4" /></div>
+                    <div className="w-16"><Skeleton className="h-6 w-full mb-2" /><Skeleton className="h-3 w-3/4" /></div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-col items-center">
+                      <div className="font-serif text-3xl md:text-4xl font-semibold leading-none text-accent">{LIKED.length}</div>
+                      <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Likes</div>
+                    </div>
+                    <div className="w-[1px] bg-foreground/10 self-stretch"></div>
+                    <div className="flex flex-col items-center">
+                      <div className="font-serif text-3xl md:text-4xl font-semibold leading-none">{PURCHASES.length}</div>
+                      <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Achats</div>
+                    </div>
+                    <div className="w-[1px] bg-foreground/10 self-stretch"></div>
+                    <div className="flex flex-col items-center">
+                      <div className="font-serif text-3xl md:text-4xl font-semibold leading-none">{MY_TICKETS.length}</div>
+                      <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Billets</div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Tabnav Harmonisé */}
-      <nav className="sticky top-[60px] z-40 glass-elegant shadow-sm">
-        <div className="max-w-[900px] mx-auto px-4 md:px-8 flex overflow-x-auto no-scrollbar">
+      <nav className="sticky top-[80px] md:top-[88px] z-40 glass-elegant shadow-sm border-b border-foreground/10">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-12 flex overflow-x-auto no-scrollbar gap-4">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`relative flex items-center gap-2 px-5 py-3.5 text-xs uppercase tracking-[0.06em] transition-colors whitespace-nowrap ${tab === t.id ? 'text-foreground font-semibold' : 'text-foreground/50 hover:text-foreground'}`}>
+              className={`relative flex items-center gap-2 px-6 py-4 text-xs uppercase tracking-[0.1em] transition-all whitespace-nowrap ${tab === t.id ? 'text-foreground font-bold' : 'text-foreground/50 hover:text-foreground'}`}>
               {t.icon}
               {t.label}
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${tab === t.id ? 'bg-foreground text-background' : 'bg-foreground/5 text-foreground/60'}`}>
@@ -722,7 +709,7 @@ export default function AmateurDashboardPage() {
       </nav>
 
       {/* Contenu */}
-      <div className="max-w-[900px] mx-auto px-4 md:px-8 py-6 pb-16 relative z-10">
+      <div className="pb-16 pt-8 relative z-10 max-w-[1200px] mx-auto px-4 md:px-12">
 
         {tab === 'likes' && (
           <LikedGrid items={LIKED} onOpen={i => setModal({ index: i })} />
@@ -730,14 +717,14 @@ export default function AmateurDashboardPage() {
         {tab === 'achats' && (
           isPurchasesLoading ? (
             <div className="flex flex-col gap-3">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl opacity-40" />)}
+              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
             </div>
           ) : <PurchasesTab purchases={PURCHASES} />
         )}
         {tab === 'billets' && (
           isTicketsLoading ? (
             <div className="flex flex-col gap-3">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl opacity-40" />)}
+              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
             </div>
           ) : <TicketsTab tickets={MY_TICKETS} />
         )}

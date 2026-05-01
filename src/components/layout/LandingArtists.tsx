@@ -38,9 +38,9 @@ export function LandingArtists() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-16 w-full mb-16">
         {isLoading ? (
           <>
-            <ArtistCardSkeleton />
-            <ArtistCardSkeleton />
-            <ArtistCardSkeleton />
+            <ArtistCardSkeleton index={0} />
+            <ArtistCardSkeleton index={1} />
+            <ArtistCardSkeleton index={2} />
           </>
         ) : (
           displayArtists.map((artist, idx) => (

@@ -7,6 +7,7 @@ import ArtworkGrid from "./components/ArtworkGrid";
 import FilterSidebar from "./components/FilterSidebar";
 import SearchBar from "./components/SearchBar";
 import { ChevronRight, Filter } from "lucide-react";
+import { Pagination } from "@/components/ui/Pagination";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
@@ -31,15 +32,18 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
     const router = useRouter();
     const [filters, setFilters] = useState<FilterParams>(sanitizeFilters(initialFilters));
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-    const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
-    const user = useAuthStore((state) => state.user);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 12;
 
-    const { data, isLoading, isError, refetch } = useArtworks(filters, undefined, {
-        role: user?.role,
-        artistSlug: user?.slug,
-        artistName: user?.artistName,
-        artistProfilePictureUrl: (user as { profilePictureUrl?: string } | null)?.profilePictureUrl,
-    });
+    const { data, isLoading, isError, refetch } = useArtworks(filters);
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+
+    const paginatedArtworks = data ? data.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE) : [];
+    const totalPages = data ? Math.ceil(data.length / ITEMS_PER_PAGE) : 0;
 
     const filterString = JSON.stringify(filters);
     // Update URL when filters change
@@ -152,10 +156,22 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
                     ) : (
                         <>
                             <ArtworkGrid
-                                artworks={data || []}
+                                artworks={paginatedArtworks}
                                 isLoading={isLoading}
-                                isLoggedIn={isLoggedIn}
+                                isLoggedIn={false} // Would be dynamic based on auth
                             />
+
+                            {!isLoading && totalPages > 1 && (
+                                <Pagination 
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={(p) => {
+                                        setCurrentPage(p);
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    className="mt-16"
+                                />
+                            )}
                         </>
                     )}
                 </div>

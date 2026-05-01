@@ -114,25 +114,22 @@ export default function RegisterPage() {
     <div className="flex min-h-screen w-full canvas-texture canvas-grain overflow-hidden">
 
       {/* Côté Gauche: Visuel Artistique */}
-      <div className="hidden lg:flex relative w-1/2 flex-col justify-between p-12 overflow-hidden bg-accent">
+      <div className="hidden lg:flex relative w-1/2 flex-col p-12 overflow-hidden bg-accent">
         {/* L'Image d'Art en arrière-plan */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/register-art.png"
+            src="/images/african-art-v2.png"
             alt="Vibrant Abstract Art"
             fill
-            className="object-cover opacity-40 mix-blend-overlay transition-transform duration-[12s] hover:scale-110"
+            sizes="50vw"
+            className="object-cover opacity-60 mix-blend-overlay transition-transform duration-[12s] hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-accent via-transparent to-accent/40"></div>
         </div>
 
         <AnimatedBlob className="top-[-10%] right-[-10%] w-[45vw] h-[45vw]" color="slate" opacity={0.2} />
 
-        <div className="relative z-10 flex items-center gap-4 opacity-0 h-0 overflow-hidden">
-          {/* Logo supprimé car déjà présent dans la Navbar */}
-        </div>
-
-        <div className="relative z-10">
+        <div className="relative z-10 mt-32">
           <h2 className="font-serif text-6xl font-light leading-[1.1] tracking-tight mb-6 text-white">
             Devenez <br />
             <span className="italic font-normal">l'Avant-Garde.</span>
@@ -142,7 +139,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="relative z-10 flex justify-between items-end border-t border-white/10 pt-8">
+        <div className="relative z-10 mt-auto flex justify-between items-end border-t border-white/10 pt-8">
           <div className="flex flex-col gap-1">
             <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-white/40">Statut actuel</span>
             <span className="text-sm font-serif italic text-white/90">
@@ -193,7 +190,7 @@ export default function RegisterPage() {
               <div className="relative group">
                 <div className="relative w-32 h-32 rounded-full border-2 border-dashed border-foreground/10 flex items-center justify-center overflow-hidden bg-foreground/5 transition-all group-hover:border-accent">
                   {avatarPreview ? (
-                    <Image src={avatarPreview} alt="Preview" fill className="object-cover" />
+                    <Image src={avatarPreview} alt="Preview" fill sizes="128px" className="object-cover" />
                   ) : (
                     <Camera className="text-foreground/20 group-hover:text-accent transition-colors" size={40} />
                   )}

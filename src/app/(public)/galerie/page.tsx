@@ -34,9 +34,17 @@ export default async function GaleriePage(
             : undefined,
 };
 
+    // Prefetch data for SSR/ISR to match useArtworks client hook exactly
     await queryClient.prefetchQuery({
-        queryKey: ["artworks", filters],
-        queryFn: () => fetchArtworks(filters),
+        queryKey: ["artworks", filters, undefined],
+        queryFn: async () => {
+            if (filters.search) {
+                const { GlobalSearchService } = await import("@/lib/services/GlobalSearchService");
+                const results = await GlobalSearchService.globalSearch(filters.search);
+                return results.artworks || [];
+            }
+            //return await ArtworksService.getLatestArtworks();
+        },
     });
 
     return (

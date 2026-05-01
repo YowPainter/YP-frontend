@@ -7,10 +7,13 @@ import { EventsService } from '@/lib/services/EventsService'
 import { ArtistPublicHero } from './ArtistPublicHero'
 import FrameCard from '@/components/artdashboard/FrameCard'
 import PostModal from '@/components/artdashboard/PostModal'
+import ArtworkPost from '@/components/artdashboard/ArtworkPost'
+import ShopArticleCard from '@/components/shop/ShopArticleCard'
 import { useState } from 'react'
 import { ArtistResponse } from '@/lib/models/ArtistResponse'
 import { Work } from '../artdashboard/types'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { Pagination } from '@/components/ui/Pagination'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -32,6 +35,14 @@ const GRADIENTS = [
 export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
   const [activeTab, setActiveTab] = useState<TabType>('gallery')
   const [modal, setModal] = useState<{ dataset: Work[]; index: number } | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 8
+
+  // Reset page when tab changes
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab)
+    setCurrentPage(1)
+  }
 
   // Helpers pour les événements
   const getEventTypeName = (type?: string) => {
@@ -83,7 +94,16 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
     date: new Date(w.publishedAt || w.createdAt!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
     desc: w.description || '',
     tags: w.tags || [],
+    imageUrls: w.imageUrls || [],
   }))
+
+  const paginatedWorks = WORKS.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const paginatedProducts = (products || []).slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const paginatedEvents = (events || []).slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  const totalPagesWorks = Math.ceil(WORKS.length / ITEMS_PER_PAGE)
+  const totalPagesProducts = Math.ceil((products || []).length / ITEMS_PER_PAGE)
+  const totalPagesEvents = Math.ceil((events || []).length / ITEMS_PER_PAGE)
 
   return (
     <div className="w-full">
@@ -99,7 +119,7 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`py-6 text-xs uppercase tracking-[0.3em] font-bold transition-all relative ${
                 activeTab === tab.id ? 'text-accent' : 'text-foreground/40 hover:text-foreground/60'
               }`}
@@ -124,17 +144,37 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
             </div>
 
             {isLoadingWorks ? (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="aspect-square wood-outer p-2.5 opacity-40"><Skeleton className="w-full h-full" /></div>
+                  <div key={i} className="aspect-square wood-outer p-2.5"><Skeleton className="w-full h-full" /></div>
                 ))}
               </div>
             ) : WORKS.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
-                {WORKS.map((work, i) => (
-                  <FrameCard key={work.id} work={work} onClick={() => setModal({ dataset: WORKS, index: i })} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {paginatedWorks.map((work, i) => (
+                    <ArtworkPost 
+                      key={work.id} 
+                      work={work}
+                      inlineComments
+                      artist={{
+                        name: artist.artistName || `${artist.firstName} ${artist.lastName}`.trim(),
+                        avatar: artist.profilePictureUrl,
+                        username: artist.email?.split('@')[0],
+                        slug: artist.slug
+                      }}
+                    />
+                  ))}
+                </div>
+                {totalPagesWorks > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPagesWorks}
+                    onPageChange={setCurrentPage}
+                    className="mt-12"
+                  />
+                )}
+              </>
             ) : (
               <EmptyState message="L'artiste n'a pas encore publié d'œuvres." />
             )}
@@ -152,24 +192,45 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
 
             {isLoadingProducts ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-80 w-full rounded-2xl" />)}
-              </div>
-            ) : products && products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {products.map((product) => (
-                  <div key={product.id} className="group cursor-pointer">
-                    <div className="aspect-[3/4] bg-foreground/5 rounded-2xl overflow-hidden relative mb-4">
-                      {/* ProductResponse ne contient pas directement d'image URL dans cette version du DTO */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-accent/5 text-accent/20 font-serif text-5xl">YP</div>
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-black">
-                        {product.price} FCFA
-                      </div>
-                    </div>
-                    <h3 className="font-serif text-xl mb-1">{product.name}</h3>
-                    <p className="text-xs text-foreground/40 uppercase tracking-widest font-bold">Produit de l'artiste</p>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i}>
+                    <Skeleton className="aspect-[4/5] rounded-2xl mb-4" />
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
                   </div>
                 ))}
               </div>
+            ) : products && products.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {paginatedProducts.map((product) => {
+                    // Trouver l'oeuvre associée pour l'image
+                    const associatedArtwork = worksData?.find(w => w.id === product.artworkId)
+                    return (
+                      <ShopArticleCard 
+                        key={product.id} 
+                        product={product} 
+                        artwork={associatedArtwork}
+                        artist={{
+                          name: artist.artistName || `${artist.firstName} ${artist.lastName}`.trim(),
+                          avatar: artist.profilePictureUrl,
+                          username: artist.slug || artist.id, // Fallback safe
+                          slug: artist.slug
+                        }}
+                        hideArtistHeader // On cache car on est sur son profil
+                      />
+                    )
+                  })}
+                </div>
+                {totalPagesProducts > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPagesProducts}
+                    onPageChange={setCurrentPage}
+                    className="mt-12"
+                  />
+                )}
+              </>
             ) : (
               <EmptyState message="Aucun article en vente pour le moment." />
             )}
@@ -190,70 +251,73 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
                 {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-[350px] w-full" />)}
               </div>
             ) : events && events.length > 0 ? (
-              <div className="grid grid-cols-1 gap-10 md:gap-12">
-                {events.map((event) => (
-                  <Link 
-                    key={event.id}
-                    href={`/${slug}/events/${event.id}`}
-                    className="group relative h-[400px] md:h-[350px] overflow-hidden border border-foreground/5 shadow-2xl flex flex-col justify-end p-8 md:p-14 transition-all duration-700"
-                  >
-                    {/* Background Image - Full Bleed landscape */}
-                    <Image 
-                      src={event.posterUrl || '/images/placeholder.png'} 
-                      alt={event.name!} 
-                      fill 
-                      className="object-cover transition-transform duration-[3s] group-hover:scale-105" 
-                    />
-                    
-                    {/* Decorative Overlay Gradient - Adjusted for horizontal */}
-                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-                    
-                    {/* Artistic Line Accent */}
-                    <div className="absolute top-0 left-0 w-[2px] h-full bg-accent scale-y-0 group-hover:scale-y-100 transition-transform duration-700 origin-top" />
+              <>
+                <div className="grid grid-cols-1 gap-10 md:gap-12">
+                  {paginatedEvents.map((event) => (
+                    <Link 
+                      key={event.id}
+                      href={`/${slug}/events/${event.id}`}
+                      className="group relative h-[400px] md:h-[350px] overflow-hidden border border-foreground/5 shadow-2xl flex flex-col justify-end p-8 md:p-14 transition-all duration-700"
+                    >
+                      {/* ... (Event content) ... */}
+                      <Image 
+                        src={event.posterUrl || '/images/placeholder.png'} 
+                        alt={event.name!} 
+                        fill 
+                        sizes="(max-width: 768px) 100vw, 80vw"
+                        className="object-cover transition-transform duration-[3s] group-hover:scale-105" 
+                      />
+                      
+                      <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                      
+                      <div className="absolute top-0 left-0 w-[2px] h-full bg-accent scale-y-0 group-hover:scale-y-100 transition-transform duration-700 origin-top" />
 
-                    {/* Content Overlay */}
-                    <div className="relative z-10 space-y-6 md:space-y-8 max-w-3xl">
-                      <div className="flex flex-wrap items-center gap-4">
-                        <span className="bg-accent text-white px-5 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] shadow-xl">
-                          {new Date(event.startDateTime!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                        </span>
-                        
-                        {/* Glass Badge Type */}
-                        <span className="bg-white/10 backdrop-blur-xl text-white border border-white/20 px-5 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em]">
-                          {getEventTypeName(event.type)}
-                        </span>
+                      <div className="relative z-10 space-y-6 md:space-y-8 max-w-3xl">
+                        <div className="flex flex-wrap items-center gap-4">
+                          <span className="bg-accent text-white px-5 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] shadow-xl">
+                            {new Date(event.startDateTime!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                          </span>
+                          <span className="bg-white/10 backdrop-blur-xl text-white border border-white/20 px-5 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em]">
+                            {getEventTypeName(event.type)}
+                          </span>
+                          <span className="bg-white/5 backdrop-blur-xl text-white/80 border border-white/10 px-5 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em]">
+                            {event.ticketPrice === 0 ? 'Entrée Libre' : `${event.ticketPrice?.toLocaleString()} FCFA`}
+                          </span>
+                        </div>
 
-                        {/* Price Badge */}
-                        <span className="bg-white/5 backdrop-blur-xl text-white/80 border border-white/10 px-5 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em]">
-                          {event.ticketPrice === 0 ? 'Entrée Libre' : `${event.ticketPrice?.toLocaleString()} FCFA`}
-                        </span>
+                        <div className="space-y-4">
+                          <h3 className="font-serif text-4xl md:text-6xl text-white font-light uppercase tracking-tighter group-hover:text-accent transition-colors duration-700 leading-[0.9]">
+                            {event.name}
+                          </h3>
+                          <p className="text-white/50 font-light text-sm md:text-base line-clamp-2 max-w-2xl italic group-hover:text-white/80 transition-colors">
+                            {event.description}
+                          </p>
+                        </div>
+
+                        <div className="pt-6 flex flex-wrap items-center gap-10">
+                           <div className="flex items-center gap-3">
+                              <span className="text-[11px] text-accent font-black uppercase tracking-[0.5em] group-hover:translate-x-4 transition-all duration-500">
+                                Réserver mon pass →
+                              </span>
+                           </div>
+                           <div className="h-[1px] w-12 bg-white/20 group-hover:w-20 transition-all duration-700" />
+                           <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">{event.location}</span>
+                        </div>
                       </div>
 
-                      <div className="space-y-4">
-                        <h3 className="font-serif text-4xl md:text-6xl text-white font-light uppercase tracking-tighter group-hover:text-accent transition-colors duration-700 leading-[0.9]">
-                          {event.name}
-                        </h3>
-                        <p className="text-white/50 font-light text-sm md:text-base line-clamp-2 max-w-2xl italic group-hover:text-white/80 transition-colors">
-                          {event.description}
-                        </p>
-                      </div>
-
-                      <div className="pt-6 flex flex-wrap items-center gap-10">
-                         <div className="flex items-center gap-3">
-                            <span className="text-[11px] text-accent font-black uppercase tracking-[0.5em] group-hover:translate-x-4 transition-all duration-500">
-                              Réserver mon pass →
-                            </span>
-                         </div>
-                         <div className="h-[1px] w-12 bg-white/20 group-hover:w-20 transition-all duration-700" />
-                         <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">{event.location}</span>
-                      </div>
-                    </div>
-
-                    {/* Corner Accent Detail */}
-                    <div className="absolute top-10 right-10 w-8 h-8 border-t border-r border-white/10 group-hover:border-accent transition-colors duration-700" />
-                  </Link>
-                ))}
-              </div>
+                      <div className="absolute top-10 right-10 w-8 h-8 border-t border-r border-white/10 group-hover:border-accent transition-colors duration-700" />
+                    </Link>
+                  ))}
+                </div>
+                {totalPagesEvents > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPagesEvents}
+                    onPageChange={setCurrentPage}
+                    className="mt-12"
+                  />
+                )}
+              </>
             ) : (
               <EmptyState message="L'artiste n'a aucun événement prévu prochainement." />
             )}
@@ -261,7 +325,7 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
         )}
       </div>
 
-      {modal && <PostModal dataset={modal.dataset} initialIndex={modal.index} onClose={() => setModal(null)} />}
+
     </div>
   )
 }

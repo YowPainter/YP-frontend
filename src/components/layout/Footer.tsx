@@ -91,6 +91,7 @@ export default function Footer() {
                 src="/images/logo.png" 
                 alt="YowPainter Logo" 
                 fill
+                sizes="80px"
                 className="object-contain opacity-80 scale-[2]"
               />
             </div>
