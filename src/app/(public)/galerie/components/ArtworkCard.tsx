@@ -8,6 +8,8 @@ import { useLikeArtwork } from "@/hooks/useLikeArtwork";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
+import { toast } from "@/lib/toast";
+
 interface ArtworkCardProps {
     artwork: ArtworkResponse;
     isLoggedIn?: boolean;
@@ -24,7 +26,7 @@ export default function ArtworkCard({ artwork, isLoggedIn = false }: ArtworkCard
         e.stopPropagation();
 
         if (!isLoggedIn) {
-            alert("Veuillez vous connecter pour liker cette œuvre.");
+            toast.error("Connexion requise", "Veuillez vous connecter pour liker cette œuvre.");
             return;
         }
 

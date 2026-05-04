@@ -31,8 +31,8 @@ export default function CreateEventModal({ onClose, eventToEdit }: CreateEventMo
   const [endDateTime, setEndDateTime] = useState(
     eventToEdit?.endDateTime ? new Date(eventToEdit.endDateTime).toISOString().slice(0, 16) : ""
   );
-  const [maxCapacity, setMaxCapacity] = useState<number | string>(eventToEdit?.maxCapacity || "");
-  const [ticketPrice, setTicketPrice] = useState<number | string>(eventToEdit?.ticketPrice || "");
+  const [maxCapacity, setMaxCapacity] = useState<number | string>(eventToEdit?.maxCapacity !== undefined ? eventToEdit.maxCapacity : "");
+  const [ticketPrice, setTicketPrice] = useState<number | string>(eventToEdit?.ticketPrice !== undefined ? eventToEdit.ticketPrice : 0);
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(
@@ -65,26 +65,34 @@ export default function CreateEventModal({ onClose, eventToEdit }: CreateEventMo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic date validation
+    if (new Date(startDateTime) >= new Date(endDateTime)) {
+      setError("La date de fin doit être après la date de début.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      let finalImageUrl = eventToEdit?.posterUrl || "";
+      let finalImageUrl = eventToEdit?.posterUrl || undefined;
 
       if (imageFile) {
         finalImageUrl = await uploadToCloudinary(imageFile);
       }
 
+      // Sanitize the request body: only include optional fields if they have a value
       const requestBody: EventCreateRequest = {
         name,
-        description,
-        location,
         type,
         startDateTime: new Date(startDateTime).toISOString(),
         endDateTime: new Date(endDateTime).toISOString(),
-        maxCapacity: maxCapacity ? Number(maxCapacity) : undefined,
-        ticketPrice: ticketPrice ? Number(ticketPrice) : undefined,
-        posterUrl: finalImageUrl,
+        description: description.trim() || undefined,
+        location: location.trim() || undefined,
+        posterUrl: finalImageUrl || undefined,
+        maxCapacity: maxCapacity !== "" ? Number(maxCapacity) : undefined,
+        ticketPrice: ticketPrice !== "" ? Number(ticketPrice) : undefined,
       };
 
       if (isEditMode) {
@@ -241,6 +249,7 @@ export default function CreateEventModal({ onClose, eventToEdit }: CreateEventMo
                 <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2"><Users size={12}/> Capacité</label>
                 <input 
                   type="number" 
+                  min="0"
                   value={maxCapacity}
                   onChange={(e) => setMaxCapacity(e.target.value)}
                   className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm"
@@ -253,6 +262,7 @@ export default function CreateEventModal({ onClose, eventToEdit }: CreateEventMo
               <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em]">Prix du billet (XAF)</label>
               <input 
                 type="number" 
+                min="0"
                 value={ticketPrice}
                 onChange={(e) => setTicketPrice(e.target.value)}
                 className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm font-semibold text-accent"

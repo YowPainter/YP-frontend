@@ -172,9 +172,7 @@ export default function ArtworkPost({ work, artist, onClick, onDelete, inlineCom
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              if(confirm('Voulez-vous vraiment supprimer cette œuvre ?')) {
-                onDelete(work.id);
-              }
+              onDelete(work.id);
             }}
             className="ml-auto p-2 text-foreground/20 hover:text-rose-500 transition-colors"
             title="Supprimer"

@@ -40,7 +40,7 @@ export default function CreateArticleModal({ onClose, artwork }: CreateArticleMo
       const requestBody: ProductCreateRequest = {
         artworkId: artwork.id,
         name,
-        description,
+        description: description.trim() || undefined,
         price: Number(price),
         stockQuantity: Number(stockQuantity),
       };

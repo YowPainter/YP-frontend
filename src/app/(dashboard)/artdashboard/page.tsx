@@ -21,6 +21,7 @@ import { Work, Article } from '@/components/artdashboard/types'
 import CreateArtworkModal from '@/components/artdashboard/CreateArtworkModal'
 import CreateEventModal from '@/components/artdashboard/CreateEventModal'
 import CreateArticleModal from '@/components/artdashboard/CreateArticleModal'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArtistsService } from '@/lib/services/ArtistsService'
@@ -96,6 +97,20 @@ export default function ArtistDashboardPage() {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false)
   const [isCreateArticleOpen, setIsCreateArticleOpen] = useState(false)
   const [itemToEdit, setItemToEdit] = useState<any>(null)
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    onConfirm: () => void;
+    isLoading?: boolean;
+    variant?: "danger" | "warning" | "info";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['artist-analytics'],
@@ -163,26 +178,76 @@ export default function ArtistDashboardPage() {
   };
 
   const handleDeleteArtwork = async (work: any) => {
-    try {
-      await ArtworksService.bulkDelete([work.id]);
-      toast.success("Œuvre supprimée !");
-      setModal(null);
-      queryClient.invalidateQueries({ queryKey: ['artist-works'] });
-    } catch (err) {
-      toast.error(err, "Suppression");
-    }
+    setConfirmState({
+      isOpen: true,
+      title: "Supprimer l'œuvre",
+      message: `Êtes-vous sûr de vouloir supprimer "${work.title}" ? Cette action est irréversible.`,
+      confirmLabel: "Supprimer",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmState(prev => ({ ...prev, isLoading: true }));
+          await ArtworksService.bulkDelete([work.id]);
+          toast.success("Œuvre supprimée !");
+          setModal(null);
+          queryClient.invalidateQueries({ queryKey: ['artist-works'] });
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          toast.error(err, "Suppression");
+        } finally {
+          setConfirmState(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
   };
 
   const handleCancelEvent = async (id: string) => {
-    if (confirm("Voulez-vous vraiment annuler cet événement ?")) {
-      try {
-        await EventsService.cancelEvent(id);
-        toast.success("Événement annulé !");
-        queryClient.invalidateQueries({ queryKey: ['artist-events'] });
-      } catch (err) {
-        toast.error(err, "Annulation d'événement");
+    const event = eventsData?.find(e => e.id === id);
+    setConfirmState({
+      isOpen: true,
+      title: "Annuler l'événement",
+      message: `Voulez-vous vraiment annuler l'événement "${event?.name || ''}" ?`,
+      confirmLabel: "Annuler l'événement",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmState(prev => ({ ...prev, isLoading: true }));
+          await EventsService.cancelEvent(id);
+          toast.success("Événement annulé !");
+          queryClient.invalidateQueries({ queryKey: ['artist-events'] });
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          toast.error(err, "Annulation d'événement");
+        } finally {
+          setConfirmState(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
+  };
+
+  const handleRemoveArticleFromShop = async (article: Article) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Retirer de la boutique",
+      message: `Voulez-vous vraiment retirer "${article.title}" de la vente ? L'œuvre restera dans votre portfolio.`,
+      confirmLabel: "Retirer de la vente",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmState(prev => ({ ...prev, isLoading: true }));
+          // Changing status to PUBLISHED removes it from the shop
+          await ArtworksService.updateStatus(article.artworkId, 'PUBLISHED');
+          toast.success("Article retiré de la boutique !");
+          queryClient.invalidateQueries({ queryKey: ['artist-articles'] });
+          queryClient.invalidateQueries({ queryKey: ['artist-works'] });
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          toast.error(err, "Retrait d'article");
+        } finally {
+          setConfirmState(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
   };
 
   const WORKS: Work[] = (worksData || []).map((w, index) => ({
@@ -215,6 +280,7 @@ export default function ArtistDashboardPage() {
     desc: p.description || '',
     tags: [],
     imageUrl: worksData?.find(w => w.id === p.artworkId)?.imageUrls?.[0],
+    artworkId: p.artworkId!,
   }))
 
   const filtered = filter === 'vente' ? ARTICLES.filter(a => !a.sold)
@@ -383,7 +449,11 @@ export default function ArtistDashboardPage() {
                   <div key={i} className="flex flex-col gap-2"><Skeleton className="aspect-square rounded-xl" /><Skeleton className="h-8 w-full rounded-md" /></div>
                 ))
               ) : ARTICLES.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((art, i) => (
-                <BagCard key={art.id} article={art} />
+                <BagCard 
+                  key={art.id} 
+                  article={art} 
+                  onRemove={() => handleRemoveArticleFromShop(art)}
+                />
               ))}
             </div>
 
@@ -412,7 +482,7 @@ export default function ArtistDashboardPage() {
                   subtitle={evt.location!}
                   date={evt.startDateTime ? new Date(evt.startDateTime).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Date à préciser'}
                   tickets={`🎟 ${evt.reservedCount || 0} / ${evt.maxCapacity || '∞'} billets`}
-                  extra=""
+                  extra={evt.ticketPrice && evt.ticketPrice > 0 ? `${evt.ticketPrice.toLocaleString()} XAF` : "Gratuit"}
                   status={evt.startDateTime && new Date(evt.startDateTime) > new Date() ? 'upcoming' : 'past'}
                   posterUrl={evt.posterUrl}
                   onEdit={() => handleEditEvent(evt)}
@@ -473,6 +543,17 @@ export default function ArtistDashboardPage() {
           artwork={itemToEdit}
         />
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmState.onConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel={confirmState.confirmLabel}
+        isLoading={confirmState.isLoading}
+        variant={confirmState.variant}
+      />
     </div>
   )
 }

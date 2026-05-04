@@ -96,10 +96,10 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
 
       const requestBody: ArtworkCreateRequest = {
         title,
-        description,
+        description: description.trim() || undefined,
         technique,
         style,
-        dimensions,
+        dimensions: dimensions.trim() || undefined,
         tags,
         imageUrls: [finalImageUrl],
       };

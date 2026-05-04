@@ -1,16 +1,26 @@
 import Image from 'next/image'
+import { Trash2 } from 'lucide-react'
 import type { Article } from './types'
 
-export default function BagCard({ article, onClick }: { article: Article; onClick?: () => void }) {
+interface BagCardProps {
+  article: Article;
+  onClick?: () => void;
+  onRemove?: () => void;
+}
+
+export default function BagCard({ article, onClick, onRemove }: BagCardProps) {
   return (
-    <div className={`flex flex-col group ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+    <div className="flex flex-col group relative">
       {/* handle */}
       <svg className="block mx-auto w-[52%] transition-transform duration-500 group-hover:-translate-y-1" viewBox="0 0 80 28" fill="none"
            style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.08))' }}>
         <path d="M10 26 Q10 4 40 4 Q70 4 70 26" stroke={article.handleColor} strokeWidth="5" strokeLinecap="round"/>
       </svg>
       {/* body */}
-      <div className={`relative rounded-xl -mt-0.5 overflow-hidden shadow-sm group-hover:shadow-xl transition-all duration-500 ${article.sold ? 'opacity-70' : ''}`}>
+      <div 
+        className={`relative rounded-xl -mt-0.5 overflow-hidden shadow-sm group-hover:shadow-xl transition-all duration-500 ${article.sold ? 'opacity-70' : ''} ${onClick ? 'cursor-pointer' : ''}`}
+        onClick={onClick}
+      >
         <div className="w-full aspect-square flex items-center justify-center font-display text-sm text-white/80 relative bg-ink">
           {article.imageUrl ? (
             <Image 
@@ -45,6 +55,20 @@ export default function BagCard({ article, onClick }: { article: Article; onClic
           </div>
         )}
       </div>
+
+      {/* Remove Action */}
+      {onRemove && !article.sold && (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-white shadow-lg border border-foreground/5 flex items-center justify-center text-rose-500 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-20"
+          title="Retirer de la boutique"
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
     </div>
   )
 }

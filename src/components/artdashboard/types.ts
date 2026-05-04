@@ -29,4 +29,5 @@ export type Article = {
   desc: string;
   tags: string[];
   imageUrl?: string;
+  artworkId: string;
 };
