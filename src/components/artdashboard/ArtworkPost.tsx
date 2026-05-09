@@ -115,21 +115,58 @@ export default function ArtworkPost({ work, artist, onClick, onDelete, inlineCom
         )}
       </div>
 
-      {/* ── Image ── */}
-      {mainImage ? (
+      {/* ── Image(s) ── */}
+      {work.imageUrls && work.imageUrls.length > 0 ? (
         <Link
           href={detailLink}
           className={`px-4 pb-3 ${onClick && !inlineComments ? 'cursor-pointer' : ''}`}
           onClick={!inlineComments ? onClick : undefined}
         >
           <div className="relative w-full aspect-[4/3] overflow-hidden rounded-xl border border-foreground/8 bg-foreground/[0.03]">
-            <SafeImage
-              src={mainImage}
-              alt={work.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
+            {work.imageUrls.length === 1 ? (
+              <SafeImage
+                src={work.imageUrls[0]}
+                alt={work.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
+            ) : work.imageUrls.length === 2 ? (
+              <div className="grid grid-cols-2 h-full gap-1">
+                {work.imageUrls.map((url, i) => (
+                  <div key={i} className="relative h-full">
+                    <SafeImage src={url} alt={`${work.title} ${i + 1}`} fill className="object-cover" />
+                  </div>
+                ))}
+              </div>
+            ) : work.imageUrls.length === 3 ? (
+              <div className="grid grid-cols-2 h-full gap-1">
+                <div className="relative h-full">
+                  <SafeImage src={work.imageUrls[0]} alt={`${work.title} 1`} fill className="object-cover" />
+                </div>
+                <div className="grid grid-rows-2 h-full gap-1">
+                  <div className="relative h-full">
+                    <SafeImage src={work.imageUrls[1]} alt={`${work.title} 2`} fill className="object-cover" />
+                  </div>
+                  <div className="relative h-full">
+                    <SafeImage src={work.imageUrls[2]} alt={`${work.title} 3`} fill className="object-cover" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 grid-rows-2 h-full gap-1">
+                {work.imageUrls.slice(0, 4).map((url, i) => (
+                  <div key={i} className="relative h-full">
+                    <SafeImage src={url} alt={`${work.title} ${i + 1}`} fill className="object-cover" />
+                    {i === 3 && work.imageUrls!.length > 4 && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">+{work.imageUrls!.length - 4}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Link>
       ) : (

@@ -23,10 +23,12 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
   dataset: Item[]; initialIndex: number; onClose: () => void; onEdit?: (item: any) => void; onSell?: (item: any) => void; onDelete?: (item: any) => void
 }) {
   const [idx, setIdx]         = useState(initialIndex)
+  const [currentImgIdx, setCurrentImgIdx] = useState(0)
   const [liked, setLiked]     = useState(false)
   const [likes, setLikes]     = useState(0)
   const [input, setInput]     = useState('')
   const bodyRef               = useRef<HTMLDivElement>(null)
+  const touchX                = useRef(0)
   const touchY                = useRef(0)
   const queryClient           = useQueryClient()
   const { user }              = useAuthStore()
@@ -47,14 +49,27 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
   useEffect(() => {
     setLiked(false)
     setLikes(item.likes)
+    setCurrentImgIdx(0) // Reset image index when switching artworks
     if (bodyRef.current) bodyRef.current.scrollTop = 0
   }, [idx, item])
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => {
       if (e.key === 'Escape')     onClose()
-      if (e.key === 'ArrowLeft')  go(-1)
-      if (e.key === 'ArrowRight') go(1)
+      if (e.key === 'ArrowLeft') {
+        if (item.imageUrls && item.imageUrls.length > 1 && currentImgIdx > 0) {
+          setCurrentImgIdx(p => p - 1)
+        } else {
+          go(-1)
+        }
+      }
+      if (e.key === 'ArrowRight') {
+        if (item.imageUrls && item.imageUrls.length > 1 && currentImgIdx < item.imageUrls.length - 1) {
+          setCurrentImgIdx(p => p + 1)
+        } else {
+          go(1)
+        }
+      }
     }
     window.addEventListener('keydown', fn)
     return () => window.removeEventListener('keydown', fn)
@@ -62,7 +77,16 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
 
   const go = (dir: number) => {
     const n = idx + dir
-    if (n >= 0 && n < dataset.length) setIdx(n)
+    if (n >= 0 && n < dataset.length) {
+      setIdx(n)
+      setCurrentImgIdx(0)
+    }
+  }
+
+  const goImg = (dir: number) => {
+    if (!item.imageUrls) return
+    const n = currentImgIdx + dir
+    if (n >= 0 && n < item.imageUrls.length) setCurrentImgIdx(n)
   }
 
   const toggleLike = () => {
@@ -125,29 +149,80 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
 
           {/* LEFT — image container */}
           <div
-            className="w-full md:w-1/2 bg-foreground/5 relative flex items-center justify-center shrink-0 min-h-[300px] group/img"
-            onTouchStart={e => { touchY.current = e.touches[0].clientY }}
-            onTouchEnd={e => { const dy = e.changedTouches[0].clientY - touchY.current; if (Math.abs(dy) > 50) go(dy > 0 ? -1 : 1) }}
+            className="w-full md:w-1/2 bg-foreground/5 relative flex items-center justify-center shrink-0 min-h-[300px] group/img overflow-hidden"
+            onTouchStart={e => { 
+              touchX.current = e.touches[0].clientX
+              touchY.current = e.touches[0].clientY 
+            }}
+            onTouchEnd={e => { 
+              const dx = e.changedTouches[0].clientX - touchX.current;
+              const dy = e.changedTouches[0].clientY - touchY.current;
+              
+              if (Math.abs(dx) > 50) {
+                // Horizontal swipe -> scroll images of the SAME artwork
+                if (item.imageUrls && item.imageUrls.length > 1) {
+                  goImg(dx > 0 ? -1 : 1)
+                }
+              } else if (Math.abs(dy) > 50) {
+                // Vertical swipe -> change artwork
+                go(dy > 0 ? -1 : 1)
+              }
+            }}
           >
-            {/* Background Blur Effect */}
-            {item.imageUrls?.[0] && (
-              <div className="absolute inset-0 opacity-30 blur-2xl scale-110 pointer-events-none">
-                <Image src={item.imageUrls[0]} alt="" fill sizes="100vw" className="object-cover" />
+            {/* Background Blur Effect (Ultra-premium) */}
+            {item.imageUrls?.[currentImgIdx] && (
+              <div className="absolute inset-0 z-0 overflow-hidden">
+                <Image 
+                  src={item.imageUrls[currentImgIdx]} 
+                  alt="" 
+                  fill 
+                  className="object-cover blur-[100px] scale-125 opacity-60 transition-all duration-1000" 
+                />
+                <div className="absolute inset-0 bg-black/10" />
               </div>
             )}
 
             {/* Main Image Container */}
-            {item.imageUrls?.[0] ? (
-              <div className="relative w-full h-full flex items-center justify-center bg-[#FDFCFB] overflow-hidden group/img">
-                {/* Subtle inner shadow for depth */}
-                <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.03)] z-0" />
+            {item.imageUrls?.[currentImgIdx] ? (
+              <div className="relative w-full h-full flex items-center justify-center overflow-hidden z-10 p-8">
                 <Image 
-                  src={item.imageUrls[0]} 
+                  key={item.imageUrls[currentImgIdx]}
+                  src={item.imageUrls[currentImgIdx]} 
                   alt={item.title} 
                   fill 
-                  sizes="100vw"
-                  className="object-contain p-12 drop-shadow-2xl z-10 transition-transform duration-700 group-hover/img:scale-[1.02]" 
+                  sizes="50vw"
+                  className="object-contain p-4 drop-shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in-95 duration-500" 
                 />
+                
+                {/* Internal Navigation Buttons */}
+                {item.imageUrls.length > 1 && (
+                  <>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); goImg(-1); }}
+                      disabled={currentImgIdx === 0}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white opacity-0 group-hover/img:opacity-100 transition-all hover:bg-white/20 disabled:hidden"
+                    >
+                      <polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); goImg(1); }}
+                      disabled={currentImgIdx === item.imageUrls.length - 1}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white opacity-0 group-hover/img:opacity-100 transition-all hover:bg-white/20 disabled:hidden"
+                    >
+                      <polyline points="9 6 15 12 9 18" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5" />
+                    </button>
+                    
+                    {/* Dots Indicators */}
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                      {item.imageUrls.map((_: any, i: number) => (
+                        <div 
+                          key={i} 
+                          className={`h-1 rounded-full transition-all duration-300 ${i === currentImgIdx ? 'w-6 bg-white' : 'w-1.5 bg-white/30'}`} 
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center font-display text-xl text-white/40"

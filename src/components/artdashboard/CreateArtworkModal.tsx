@@ -31,9 +31,8 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
   const [tags, setTags] = useState<string[]>(artworkToEdit?.tags || []);
   const [tagInput, setTagInput] = useState("");
   
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    artworkToEdit?.imageUrls?.[0] || null
+  const [images, setImages] = useState<{ file?: File; preview: string; isNew: boolean }[]>(
+    artworkToEdit?.imageUrls?.map((url: string) => ({ preview: url, isNew: false })) || []
   );
 
   const [loading, setLoading] = useState(false);
@@ -49,21 +48,26 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
   }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      if (images.length + files.length > 5) {
+        toast.error("Limite atteinte", "Maximum 5 images autorisées.");
+        return;
+      }
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImages(prev => [...prev, { file, preview: reader.result as string, isNew: true }]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleAddTag = () => {
@@ -79,7 +83,7 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!imagePreview) {
+    if (images.length === 0) {
       setError("Une image est requise pour l'œuvre.");
       return;
     }
@@ -88,11 +92,14 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
     setError(null);
 
     try {
-      let finalImageUrl = artworkToEdit?.imageUrls?.[0] || "";
-
-      if (imageFile) {
-        finalImageUrl = await uploadToCloudinary(imageFile);
-      }
+      const imageUrls = await Promise.all(
+        images.map(async (img) => {
+          if (img.isNew && img.file) {
+            return await uploadToCloudinary(img.file);
+          }
+          return img.preview;
+        })
+      );
 
       const requestBody: ArtworkCreateRequest = {
         title,
@@ -101,7 +108,7 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
         style,
         dimensions: dimensions.trim() || undefined,
         tags,
-        imageUrls: [finalImageUrl],
+        imageUrls,
       };
 
       if (isEditMode) {
@@ -128,26 +135,65 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
       <div className="bg-background w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-full md:h-[85vh] max-h-[90vh]">
         
         {/* Left Side: Image Upload */}
-        <div className="w-full md:w-1/2 bg-foreground/5 relative flex items-center justify-center min-h-[300px]">
-          {imagePreview ? (
-            <div className="relative w-full h-full group">
-              <Image src={imagePreview} alt="Preview" fill className="object-contain p-4" />
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                <button 
-                  type="button" 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-3 bg-white text-ink rounded-full shadow-lg hover:scale-110 transition-transform"
-                >
-                  <Camera size={20} />
-                </button>
-                <button 
-                  type="button" 
-                  onClick={removeImage}
-                  className="p-3 bg-red-500 text-white rounded-full shadow-lg hover:scale-110 transition-transform"
-                >
-                  <Trash2 size={20} />
-                </button>
+        <div className="w-full md:w-1/2 bg-foreground/5 relative flex flex-col items-center justify-center min-h-[300px] p-6 gap-4">
+          {images.length > 0 ? (
+            <div className="w-full h-full flex flex-col gap-4">
+              {/* Main Preview */}
+              <div className="relative flex-1 bg-white/50 rounded-2xl overflow-hidden group border border-foreground/5">
+                <Image src={images[0].preview} alt="Preview" fill className="object-contain p-4" />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                  <button 
+                    type="button" 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-3 bg-white text-ink rounded-full shadow-lg hover:scale-110 transition-transform"
+                  >
+                    <Camera size={20} />
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => removeImage(0)}
+                    className="p-3 bg-red-500 text-white rounded-full shadow-lg hover:scale-110 transition-transform"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
               </div>
+              
+              {/* Thumbnails */}
+              {images.length > 1 && (
+                <div className="grid grid-cols-4 gap-3 shrink-0">
+                  {images.slice(1).map((img, i) => (
+                    <div key={i} className="relative aspect-square bg-white/50 rounded-xl overflow-hidden group border border-foreground/5">
+                      <Image src={img.preview} alt="Thumbnail" fill className="object-cover" />
+                      <button 
+                        type="button" 
+                        onClick={() => removeImage(i + 1)}
+                        className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  {images.length < 5 && (
+                    <button 
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="aspect-square rounded-xl border-2 border-dashed border-foreground/20 flex items-center justify-center text-foreground/40 hover:text-accent hover:border-accent hover:bg-accent/5 transition-all"
+                    >
+                      <Plus size={20} />
+                    </button>
+                  )}
+                </div>
+              )}
+              {images.length === 1 && (
+                <button 
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-4 rounded-xl border-2 border-dashed border-foreground/20 flex items-center justify-center gap-2 text-foreground/40 hover:text-accent hover:border-accent hover:bg-accent/5 transition-all text-xs font-bold uppercase tracking-widest"
+                >
+                  <Plus size={16} /> Ajouter une image
+                </button>
+              )}
             </div>
           ) : (
             <div 
@@ -158,8 +204,8 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
                 <Plus size={32} />
               </div>
               <div>
-                <p className="font-serif text-lg font-medium">Ajouter une image</p>
-                <p className="text-xs text-foreground/40 mt-1 uppercase tracking-widest">JPG, PNG, WEBP (Max 10MB)</p>
+                <p className="font-serif text-lg font-medium">Ajouter des images</p>
+                <p className="text-xs text-foreground/40 mt-1 uppercase tracking-widest">JPG, PNG, WEBP (Max 5 images)</p>
               </div>
             </div>
           )}
@@ -168,6 +214,7 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
             ref={fileInputRef} 
             onChange={handleImageChange} 
             accept="image/*" 
+            multiple
             className="hidden" 
           />
         </div>
