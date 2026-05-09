@@ -1,166 +1,187 @@
-"use client";
+'use client'
+import { useState } from 'react'
+import { ArtworksService } from '@/lib/services/ArtworksService'
+import type { Work } from '@/lib/types/types'
+import {
+  Overlay, ModalHeader, ModalFooter, Field, inputCls
+} from './CreatePostModal'
 
-import { useState, useEffect } from "react";
-import { X, Loader2, Package, Tag, Hash, DollarSign, Info } from "lucide-react";
-import { ShopOrdersService } from "@/lib/services/ShopOrdersService";
-import { ProductCreateRequest } from "@/lib/models/ProductCreateRequest";
-import { getApiErrorMessage } from "@/lib/api-error-handler";
-import { toast } from "@/lib/toast";
-import { useQueryClient } from "@tanstack/react-query";
-
-interface CreateArticleModalProps {
-  onClose: () => void;
-  artwork: any; // The artwork being "transformed" into an article
+type Props = {
+  works: Work[]          // Artworks avec status PUBLISHED — à sélectionner
+  onClose: () => void
+  onCreated: () => void
 }
 
-export default function CreateArticleModal({ onClose, artwork }: CreateArticleModalProps) {
-  const queryClient = useQueryClient();
-  
-  const [name, setName] = useState(artwork?.title || "");
-  const [description, setDescription] = useState(artwork?.description || "");
-  const [price, setPrice] = useState<number | string>("");
-  const [stockQuantity, setStockQuantity] = useState<number | string>("");
+/* ─── Workflow "article" côté back ────────────────────────
+   Un article = un Artwork passé en status ON_SALE.
+   Le prix et le type de produit ne sont pas dans ArtworkResponse
+   actuellement → stockés dans la description selon convention
+   à aligner avec le back-end (champ dédié à venir).
+───────────────────────────────────────────────────────── */
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const PRODUCT_TYPES = [
+  'Impression', 'Toile originale', 'Affiche A3',
+  'Tote bag', 'Carnet', 'Autre',
+] as const
+type ProductType = typeof PRODUCT_TYPES[number]
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
+export default function CreateArticleModal({ works, onClose, onCreated }: Props) {
+  const [selectedWork, setSelectedWork] = useState<Work | null>(null)
+  const [productType, setProductType]   = useState<ProductType>('Impression')
+  const [price, setPrice]               = useState('')
+  const [stock, setStock]               = useState('1')
+  const [desc, setDesc]                 = useState('')
+  const [loading, setLoading]           = useState(false)
+  const [error, setError]               = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
+  async function submit() {
+    if (!selectedWork)                        { setError('Sélectionnez une œuvre.'); return }
+    if (!price.trim() || isNaN(Number(price))){ setError('Prix invalide.'); return }
+    if (Number(price) < 0)                    { setError('Le prix doit être positif.'); return }
+    setLoading(true); setError('')
     try {
-      const requestBody: ProductCreateRequest = {
-        artworkId: artwork.id,
-        name,
-        description: description.trim() || undefined,
-        price: Number(price),
-        stockQuantity: Number(stockQuantity),
-      };
+      /* Workflow :
+         1. Passer l'artwork en ON_SALE via updateStatus
+         2. TODO: si le back ajoute un endpoint dédié product/price, l'appeler ici
+            ex. ProductsService.createProduct({ artworkId, price, productType, stock, desc })
+         Note : le prix et le type de produit sont pour l'instant encodés
+         dans la description en attendant l'endpoint dédié.
+         Format convenu : "[PRODUCT:Impression|PRICE:85|STOCK:10] description libre"
+      */
+      const priceN = Number(price)
+      const stockN = Number(stock) || 1
 
-      await ShopOrdersService.createProduct(requestBody);
-      toast.success("Article mis en boutique !", `${name} est maintenant disponible à la vente.`);
+      // Mise à jour de la description pour encoder les métadonnées produit
+      // TODO: remplacer par l'endpoint produit dédié quand disponible
+      const updatedDesc = `[PRODUCT:${productType}|PRICE:${priceN}|STOCK:${stockN}] ${desc.trim()}`
+      await ArtworksService.updateArtwork(selectedWork.id, {
+        title:       selectedWork.title,
+        technique:   selectedWork.technique ?? 'OTHER' as any,
+        style:       selectedWork.style ?? 'OTHER' as any,
+        description: updatedDesc,
+        tags:        selectedWork.tags.map(t => t.replace(/^#/, '')),
+      })
 
-      queryClient.invalidateQueries({ queryKey: ["artist-inventory"] });
-      onClose();
-    } catch (err: any) {
-      const message = getApiErrorMessage(err);
-      setError(message);
-      toast.error(err, "Mise en vente de l'œuvre");
+      // Passage en ON_SALE
+      await ArtworksService.updateStatus(selectedWork.id, 'ON_SALE')
+
+      onCreated(); onClose()
+    } catch {
+      setError('Une erreur est survenue, réessayez.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const canSubmit = !!selectedWork && !!price.trim() && !isNaN(Number(price)) && !loading
+
+  // Seuls les tableaux publiés peuvent être mis en vente
+  const eligibleWorks = works.filter(w =>
+    w.status === 'PUBLISHED' || w.status === 'ON_SALE'
+  )
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-background w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-        
-        <div className="px-8 py-6 border-b border-foreground/10 flex items-center justify-between">
-          <h2 className="font-serif text-2xl font-semibold flex items-center gap-3">
-            <Package className="text-accent" />
-            Mettre en boutique
-          </h2>
-          <button onClick={onClose} className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center hover:bg-foreground/10 transition-colors">
-            <X size={20} />
-          </button>
+    <Overlay onClose={onClose}>
+      <div className="flex flex-col w-full max-w-[560px] max-h-[90vh] bg-background rounded-none md:rounded-2xl shadow-2xl overflow-hidden">
+        <ModalHeader title="Mettre en vente" onClose={onClose}/>
+
+        <div className="flex-1 overflow-y-auto min-h-0 px-5 py-4 flex flex-col gap-5">
+
+          {/* Sélection de l'œuvre */}
+          <Field label="Choisir l'œuvre *">
+            {eligibleWorks.length === 0 ? (
+              <p className="text-xs text-foreground/40 py-4 text-center">
+                Aucune œuvre publiée. Créez et publiez d&apos;abord un post.
+              </p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2.5 mt-0.5">
+                {eligibleWorks.map(w => (
+                  <button
+                    key={w.id}
+                    onClick={() => setSelectedWork(w)}
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all
+                                ${selectedWork?.id === w.id
+                                  ? 'border-accent scale-[1.03]'
+                                  : 'border-transparent hover:border-foreground/20'}`}
+                  >
+                    {w.imageUrl
+                      ? <img src={w.imageUrl} alt={w.title} className="absolute inset-0 w-full h-full object-cover"/>
+                      : <div className="absolute inset-0" style={{ background: w.bg }}/>
+                    }
+                    {/* Badge ON_SALE */}
+                    {w.status === 'ON_SALE' && (
+                      <div className="absolute top-1 left-1 bg-accent text-white text-[8px] px-1.5 py-0.5 rounded-full font-medium">
+                        En vente
+                      </div>
+                    )}
+                    {selectedWork?.id === w.id && (
+                      <div className="absolute inset-0 bg-accent/25 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white drop-shadow" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            {selectedWork && (
+              <p className="text-[11px] text-foreground/50 mt-1">
+                Sélectionné : <span className="text-accent font-medium">{selectedWork.title}</span>
+                {selectedWork.dimensions && <span className="text-foreground/30"> · {selectedWork.dimensions}</span>}
+              </p>
+            )}
+          </Field>
+
+          {/* Type de produit */}
+          <Field label="Type de produit *">
+            <div className="flex flex-wrap gap-2">
+              {PRODUCT_TYPES.map(t => (
+                <button key={t} onClick={() => setProductType(t)}
+                        className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
+                          productType === t
+                            ? 'bg-foreground text-background border-foreground'
+                            : 'border-foreground/10 text-foreground/60 hover:border-foreground/30'
+                        }`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          {/* Prix & stock */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Prix (€) *">
+              <div className="relative">
+                <input type="number" min="0" step="0.01" value={price}
+                       onChange={e => setPrice(e.target.value)}
+                       placeholder="85" className={inputCls}/>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px] text-foreground/30">€</span>
+              </div>
+            </Field>
+            <Field label="Stock">
+              <input type="number" min="1" value={stock}
+                     onChange={e => setStock(e.target.value)}
+                     placeholder="1" className={inputCls}/>
+            </Field>
+          </div>
+
+          {/* Description produit */}
+          <Field label="Description du produit">
+            <textarea value={desc} onChange={e => setDesc(e.target.value)}
+                      placeholder="Format, support, numérotation, livraison…"
+                      rows={3} className={`${inputCls} resize-none`} maxLength={400}/>
+          </Field>
+
+          {/* Note info */}
+          <p className="text-[11px] text-foreground/35 -mt-2">
+            L&apos;œuvre passera au statut <span className="font-mono">ON_SALE</span>. Elle restera visible dans vos posts.
+          </p>
+
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-          <div className="flex items-start gap-4 p-4 bg-accent/5 rounded-xl border border-accent/10">
-            <Info className="text-accent shrink-0 mt-0.5" size={18} />
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1">Œuvre source</p>
-              <p className="text-sm font-serif font-medium">{artwork.title}</p>
-            </div>
-          </div>
-
-          {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-xl">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
-              <Tag size={12} /> Nom de l'article en boutique
-            </label>
-            <input 
-              required
-              type="text" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-lg"
-              placeholder="Ex: Reproduction A3 - L'Âme du Sahel"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em]">Description commerciale</label>
-            <textarea 
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className="w-full bg-foreground/5 border border-foreground/10 rounded-xl p-4 outline-none focus:border-accent transition-colors text-sm font-light resize-none"
-              placeholder="Détails du produit (matériaux, dimensions de l'impression...)"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                <DollarSign size={12} /> Prix de vente (XAF)
-              </label>
-              <input 
-                required
-                type="number" 
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-base font-semibold"
-                placeholder="0"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Hash size={12} /> Quantité disponible
-              </label>
-              <input 
-                required
-                type="number" 
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(e.target.value)}
-                className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-base"
-                placeholder="1"
-              />
-            </div>
-          </div>
-
-          <div className="pt-6 flex gap-4">
-            <button 
-              type="button" 
-              onClick={onClose}
-              className="flex-1 py-4 px-6 border border-foreground/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-foreground/5 transition-colors"
-            >
-              Annuler
-            </button>
-            <button 
-              type="submit"
-              disabled={loading}
-              className="flex-[2] py-4 px-6 bg-ink text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-xl hover:bg-accent transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Valider la mise en vente"}
-            </button>
-          </div>
-        </form>
-
+        <ModalFooter error={error} loading={loading} disabled={!canSubmit} onSubmit={submit} label="Mettre en vente"/>
       </div>
-    </div>
-  );
+    </Overlay>
+  )
 }

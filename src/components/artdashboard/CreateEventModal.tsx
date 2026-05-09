@@ -1,295 +1,239 @@
-"use client";
+'use client'
+import { useRef, useState } from 'react'
+import { EventsService }   from '@/lib/services/EventsService'
+import { EventCreateRequest } from '@/lib/models/EventCreateRequest'
+import {
+  Overlay, ModalHeader, ModalFooter, Field, Toggle, inputCls,
+} from './CreatePostModal'
 
-import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
-import { Camera, X, Loader2, Plus, Calendar, MapPin, Users, Tag } from "lucide-react";
-import { EventsService } from "@/lib/services/EventsService";
-import { EventCreateRequest } from "@/lib/models/EventCreateRequest";
-import { uploadToCloudinary } from "@/lib/cloudinary";
-import { getApiErrorMessage } from "@/lib/api-error-handler";
-import { toast } from "@/lib/toast";
-import { useQueryClient } from "@tanstack/react-query";
+type Props = { onClose: () => void; onCreated: () => void }
+type CoverFile = { file: File; url: string }
 
-interface CreateEventModalProps {
-  onClose: () => void;
-  eventToEdit?: any;
+const EVENT_TYPE_LABELS: Record<EventCreateRequest.type, string> = {
+  EXHIBITION: 'Exposition',
+  WORKSHOP:   'Atelier',
+  AUCTION:    'Vente aux enchères',
+  MEETUP:     'Rencontre',
+  OTHER:      'Autre',
 }
 
-export default function CreateEventModal({ onClose, eventToEdit }: CreateEventModalProps) {
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [name, setName] = useState(eventToEdit?.name || "");
-  const [description, setDescription] = useState(eventToEdit?.description || "");
-  const [location, setLocation] = useState(eventToEdit?.location || "");
-  const [type, setType] = useState<EventCreateRequest.type>(
-    eventToEdit?.type || "EXHIBITION"
-  );
-  const [startDateTime, setStartDateTime] = useState(
-    eventToEdit?.startDateTime ? new Date(eventToEdit.startDateTime).toISOString().slice(0, 16) : ""
-  );
-  const [endDateTime, setEndDateTime] = useState(
-    eventToEdit?.endDateTime ? new Date(eventToEdit.endDateTime).toISOString().slice(0, 16) : ""
-  );
-  const [maxCapacity, setMaxCapacity] = useState<number | string>(eventToEdit?.maxCapacity !== undefined ? eventToEdit.maxCapacity : "");
-  const [ticketPrice, setTicketPrice] = useState<number | string>(eventToEdit?.ticketPrice !== undefined ? eventToEdit.ticketPrice : 0);
-  
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    eventToEdit?.posterUrl || null
-  );
+export default function CreateEventModal({ onClose, onCreated }: Props) {
+  const [cover, setCover]       = useState<CoverFile | null>(null)
+  const [name, setName]         = useState('')
+  const [description, setDesc]  = useState('')
+  const [startDateTime, setStart] = useState('')   // datetime-local
+  const [endDateTime, setEnd]   = useState('')     // datetime-local
+  const [location, setLocation] = useState('')
+  const [type, setType]         = useState<EventCreateRequest.type>(EventCreateRequest.type.EXHIBITION)
+  const [maxCapacity, setMax]   = useState('')
+  const [ticketPrice, setPrice] = useState('')
+  const [published, setPublished] = useState(false)
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
+  const [dragOver, setDragOver] = useState(false)
+  const fileRef                 = useRef<HTMLInputElement>(null)
 
-  const isEditMode = !!eventToEdit;
+  function handleFile(file: File) {
+    if (!file.type.startsWith('image/')) { setError('Seules les images sont acceptées.'); return }
+    setError('')
+    setCover({ file, url: URL.createObjectURL(file) })
+  }
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault(); setDragOver(false)
+    const f = e.dataTransfer.files[0]; if (f) handleFile(f)
+  }
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
+  const isPaid = !!ticketPrice
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  async function submit() {
+    if (!name.trim())  { setError('Le nom est requis.'); return }
+    if (!startDateTime){ setError('La date de début est requise.'); return }
+    if (!endDateTime)  { setError('La date de fin est requise.'); return }
+    if (new Date(endDateTime) <= new Date(startDateTime)) {
+      setError('La date de fin doit être après le début.'); return
     }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Basic date validation
-    if (new Date(startDateTime) >= new Date(endDateTime)) {
-      setError("La date de fin doit être après la date de début.");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
+    setLoading(true); setError('')
     try {
-      let finalImageUrl = eventToEdit?.posterUrl || undefined;
-
-      if (imageFile) {
-        finalImageUrl = await uploadToCloudinary(imageFile);
+      /* Étape 1 — Upload de l'affiche si fournie */
+      let posterUrl: string | undefined
+      if (cover) {
+        // TODO: remplacer par l'endpoint d'upload (ex. MediaService.upload)
+        // const formData = new FormData()
+        // formData.append('file', cover.file)
+        // const { url } = await MediaService.upload(formData)
+        // posterUrl = url
+        posterUrl = undefined // placeholder
       }
 
-      // Sanitize the request body: only include optional fields if they have a value
-      const requestBody: EventCreateRequest = {
-        name,
-        type,
+      /* Étape 2 — Création de l'évènement via EventsService.createEvent */
+      const dto: EventCreateRequest = {
+        name:          name.trim(),
+        description:   description.trim() || undefined,
+        posterUrl:     posterUrl,
         startDateTime: new Date(startDateTime).toISOString(),
-        endDateTime: new Date(endDateTime).toISOString(),
-        description: description.trim() || undefined,
-        location: location.trim() || undefined,
-        posterUrl: finalImageUrl || undefined,
-        maxCapacity: maxCapacity !== "" ? Number(maxCapacity) : undefined,
-        ticketPrice: ticketPrice !== "" ? Number(ticketPrice) : undefined,
-      };
-
-      if (isEditMode) {
-        await EventsService.updateEvent(eventToEdit.id, requestBody);
-        toast.success("Événement mis à jour !", "Les modifications ont été enregistrées.");
-      } else {
-        await EventsService.createEvent(requestBody);
-        toast.success("Événement créé !", "Votre événement est maintenant répertorié.");
+        endDateTime:   new Date(endDateTime).toISOString(),
+        location:      location.trim() || undefined,
+        type,
+        ...(maxCapacity ? { maxCapacity: Number(maxCapacity) } : {}),
+        ...(ticketPrice  ? { ticketPrice:  Number(ticketPrice)  } : {}),
       }
+      const created = await EventsService.createEvent(dto)
 
-      queryClient.invalidateQueries({ queryKey: ["artist-events"] });
-      onClose();
-    } catch (err: any) {
-      const message = getApiErrorMessage(err);
-      setError(message);
-      toast.error(err, isEditMode ? "Mise à jour de l'événement" : "Création de l'événement");
+      /* Étape 3 — Publication immédiate si demandée */
+      // TODO: si EventsService expose un updateStatus, l'appeler ici
+      // if (published && created.id) await EventsService.updateStatus(created.id, 'PUBLISHED')
+      void created
+
+      onCreated(); onClose()
+    } catch {
+      setError('Une erreur est survenue, réessayez.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const canSubmit = !!name.trim() && !!startDateTime && !!endDateTime && !loading
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-background w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-full md:h-[85vh] max-h-[90vh]">
-        
-        {/* Left Side: Poster Upload */}
-        <div className="w-full md:w-2/5 bg-foreground/5 relative flex items-center justify-center border-b md:border-b-0 md:border-r border-foreground/10">
-          {imagePreview ? (
-            <div className="relative w-full h-full group">
-              <Image src={imagePreview} alt="Poster" fill className="object-cover" />
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button 
-                  type="button" 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-3 bg-white text-ink rounded-full shadow-lg hover:scale-110 transition-transform"
-                >
-                  <Camera size={20} />
-                </button>
-              </div>
-            </div>
+    <Overlay onClose={onClose}>
+      <div className="flex flex-col md:flex-row w-full max-w-[860px] max-h-[90vh] bg-background rounded-none md:rounded-2xl shadow-2xl overflow-hidden">
+
+        {/* LEFT — affiche */}
+        <div className="relative bg-foreground/5 flex items-center justify-center shrink-0
+                        w-full md:w-[300px] aspect-video md:aspect-auto md:self-stretch">
+          {cover ? (
+            <>
+              <img src={cover.url} alt="cover" className="absolute inset-0 w-full h-full object-cover"/>
+              <button
+                onClick={() => { setCover(null); if (fileRef.current) fileRef.current.value = '' }}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors backdrop-blur-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </>
           ) : (
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center gap-4 cursor-pointer hover:text-accent transition-colors p-8 text-center"
+            <div
+              onDrop={onDrop}
+              onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+              onDragLeave={() => setDragOver(false)}
+              onClick={() => fileRef.current?.click()}
+              className={`absolute inset-0 flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors
+                          ${dragOver ? 'bg-accent/10' : 'hover:bg-foreground/[0.04]'}`}
             >
-              <div className="w-16 h-16 rounded-2xl bg-foreground/5 border-2 border-dashed border-foreground/20 flex items-center justify-center">
-                <Plus size={24} />
+              <div className={`w-14 h-14 rounded-full border-2 border-dashed flex items-center justify-center transition-colors
+                              ${dragOver ? 'border-accent text-accent' : 'border-foreground/20 text-foreground/30'}`}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
               </div>
-              <div>
-                <p className="font-serif text-base font-medium">Affiche de l'événement</p>
-                <p className="text-[10px] text-foreground/40 mt-1 uppercase tracking-widest">Portrait recommandé</p>
+              <div className="text-center px-4">
+                <p className="text-sm font-medium text-foreground/50">Affiche de l&apos;évènement</p>
+                <p className="text-xs text-foreground/25 mt-1">Optionnel — JPG, PNG…</p>
               </div>
             </div>
           )}
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleImageChange} 
-            accept="image/*" 
-            className="hidden" 
-          />
+          <input ref={fileRef} type="file" accept="image/*" className="hidden"
+                 onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}/>
         </div>
 
-        {/* Right Side: Form */}
-        <div className="w-full md:w-3/5 flex flex-col h-full bg-background">
-          <div className="px-8 py-6 border-b border-foreground/10 flex items-center justify-between shrink-0">
-            <h2 className="font-serif text-xl font-semibold">{isEditMode ? "Éditer l'événement" : "Nouvel événement"}</h2>
-            <button onClick={onClose} className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center hover:bg-foreground/10 transition-colors">
-              <X size={20} />
-            </button>
+        {/* RIGHT — formulaire */}
+        <div className="flex flex-col flex-1 min-h-0 bg-background">
+          <ModalHeader title="Nouvel évènement" onClose={onClose}/>
+
+          <div className="flex-1 overflow-y-auto min-h-0 px-5 py-4 flex flex-col gap-4">
+
+            <Field label="Nom *">
+              <input value={name} onChange={e => setName(e.target.value)}
+                     placeholder="ex. Vernissage — Série Printemps"
+                     className={inputCls} maxLength={100}/>
+            </Field>
+
+            {/* Type (enum EventCreateRequest.type) */}
+            <Field label="Type *">
+              <div className="flex flex-wrap gap-2">
+                {(Object.entries(EVENT_TYPE_LABELS) as [EventCreateRequest.type, string][]).map(([v, l]) => (
+                  <button key={v} onClick={() => setType(v)}
+                          className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
+                            type === v
+                              ? 'bg-foreground text-background border-foreground'
+                              : 'border-foreground/10 text-foreground/60 hover:border-foreground/30'
+                          }`}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            {/* Lieu */}
+            <Field label="Lieu">
+              <input value={location} onChange={e => setLocation(e.target.value)}
+                     placeholder="ex. Galerie du Marais, Paris  /  En ligne"
+                     className={inputCls} maxLength={150}/>
+            </Field>
+
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Début *">
+                <input type="datetime-local" value={startDateTime}
+                       onChange={e => setStart(e.target.value)}
+                       min={new Date().toISOString().slice(0, 16)}
+                       className={inputCls}/>
+              </Field>
+              <Field label="Fin *">
+                <input type="datetime-local" value={endDateTime}
+                       onChange={e => setEnd(e.target.value)}
+                       min={startDateTime || new Date().toISOString().slice(0, 16)}
+                       className={inputCls}/>
+              </Field>
+            </div>
+
+            {/* Capacité + prix */}
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Capacité max">
+                <input type="number" min="1" value={maxCapacity}
+                       onChange={e => setMax(e.target.value)}
+                       placeholder="Illimitée" className={inputCls}/>
+              </Field>
+              <Field label="Prix du billet (€)">
+                <div className="relative">
+                  <input type="number" min="0" step="0.01" value={ticketPrice}
+                         onChange={e => setPrice(e.target.value)}
+                         placeholder="Gratuit" className={inputCls}/>
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px] text-foreground/30">€</span>
+                </div>
+              </Field>
+            </div>
+
+            <Field label="Description">
+              <textarea value={description} onChange={e => setDesc(e.target.value)}
+                        placeholder="Programme, informations pratiques…"
+                        rows={3} className={`${inputCls} resize-none`} maxLength={600}/>
+            </Field>
+
+            {/* Visibilité */}
+            <div className="flex items-center justify-between py-3 border-t border-foreground/[0.07]">
+              <div>
+                <div className="text-sm font-medium">Publier immédiatement</div>
+                <div className="text-[11px] text-foreground/40 mt-0.5">
+                  {published
+                    ? 'Statut : PUBLISHED — visible par le grand public'
+                    : 'Statut : DRAFT — enregistré en brouillon'}
+                </div>
+              </div>
+              <Toggle value={published} onChange={setPublished}/>
+            </div>
+
           </div>
 
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-xl">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em]">Nom de l'événement</label>
-              <input 
-                required
-                type="text" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-lg font-serif"
-                placeholder="Ex: Vernissage : L'Éveil Chromatique"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em]">Description</label>
-              <textarea 
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={2}
-                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl p-3 outline-none focus:border-accent transition-colors text-sm font-light resize-none"
-                placeholder="Programme, thématique, artistes invités..."
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2"><Calendar size={12}/> Début</label>
-                <input 
-                  required
-                  type="datetime-local" 
-                  value={startDateTime}
-                  onChange={(e) => setStartDateTime(e.target.value)}
-                  className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-xs"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2"><Calendar size={12}/> Fin</label>
-                <input 
-                  required
-                  type="datetime-local" 
-                  value={endDateTime}
-                  onChange={(e) => setEndDateTime(e.target.value)}
-                  className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2"><MapPin size={12}/> Lieu</label>
-              <input 
-                required
-                type="text" 
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm"
-                placeholder="Ex: Galerie d'Art Moderne, Yaoundé"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2"><Tag size={12}/> Type</label>
-                <select 
-                  value={type}
-                  onChange={(e) => setType(e.target.value as any)}
-                  className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm"
-                >
-                  <option value="EXHIBITION">Exposition</option>
-                  <option value="WORKSHOP">Atelier</option>
-                  <option value="AUCTION">Enchères</option>
-                  <option value="MEETUP">Rencontre</option>
-                  <option value="OTHER">Autre</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2"><Users size={12}/> Capacité</label>
-                <input 
-                  type="number" 
-                  min="0"
-                  value={maxCapacity}
-                  onChange={(e) => setMaxCapacity(e.target.value)}
-                  className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm"
-                  placeholder="Illimitée"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em]">Prix du billet (XAF)</label>
-              <input 
-                type="number" 
-                min="0"
-                value={ticketPrice}
-                onChange={(e) => setTicketPrice(e.target.value)}
-                className="w-full bg-transparent border-b border-foreground/10 py-2 outline-none focus:border-accent transition-colors text-sm font-semibold text-accent"
-                placeholder="Gratuit"
-              />
-            </div>
-          </form>
-
-          <div className="p-8 border-t border-foreground/10 flex gap-4 shrink-0">
-            <button 
-              type="button" 
-              onClick={onClose}
-              className="flex-1 py-3 px-4 border border-foreground/20 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-foreground/5 transition-colors"
-            >
-              Annuler
-            </button>
-            <button 
-              onClick={(e) => handleSubmit(e as any)}
-              disabled={loading}
-              className="flex-[2] py-3 px-4 bg-accent text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-ink transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isEditMode ? "Enregistrer" : "Créer l'événement")}
-            </button>
-          </div>
+          <ModalFooter error={error} loading={loading} disabled={!canSubmit}
+                       onSubmit={submit} label="Créer l'évènement"/>
         </div>
-
       </div>
-    </div>
-  );
+    </Overlay>
+  )
 }

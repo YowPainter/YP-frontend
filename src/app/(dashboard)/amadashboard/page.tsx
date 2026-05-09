@@ -1,511 +1,212 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { useAuthStore } from '@/store/authStore'
-import { EditProfileModal } from '@/components/dashboard/EditProfileModal'
-import { AnimatedBlob } from '@/components/ui/AnimatedBlob'
-import { AbstractShapes } from '@/components/ui/AbstractShapes'
-import { useQuery } from '@tanstack/react-query'
-import { BuyerProfileService } from '@/lib/services/BuyerProfileService'
-import { ShopOrdersService } from '@/lib/services/ShopOrdersService'
-import { getMyTickets } from '@/lib/api/events'
 import Link from 'next/link'
-import { LogOut, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import Navbar from '@/components/layout/Navbar'
+import { LogOut, User } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+
+import { useAuthStore }      from '@/store/authStore'
+import { ShopOrdersService } from '@/lib/services/ShopOrdersService'
+import { OrderResponse }     from '@/lib/models/OrderResponse'
 import { Skeleton, SkeletonCircle } from '@/components/ui/Skeleton'
-import { formatPrice } from '@/lib/utils'
+import { Pagination }        from '@/components/ui/Pagination'
+import { AnimatedBlob }      from '@/components/ui/AnimatedBlob'
+import { AbstractShapes }    from '@/components/ui/AbstractShapes'
+import Navbar                from '@/components/layout/Navbar'
+import DiscoverFrameCard     from '@/components/artdashboard/DiscoverFrameCard'
+import { ArtworkResponse, Work } from '@/components/artdashboard/types'
 
 /* ─────────────────────────────────────────────
    TYPES
 ───────────────────────────────────────────── */
-export type LikedItem = {
-  id: string
-  kind: 'work' | 'article'
-  artist: string
-  artistHandle: string
-  artistInitial: string
-  title: string
-  bg: string
-  mediaType: 'image' | 'video'
-  duration?: string
-  date: string
-  desc: string
-  tags: string[]
-  likes: number
-  comments: number
-  shares: number
-  price?: string
-  articleType?: string
-}
+type Tab = 'likes' | 'achats' | 'billets'
 
-type Purchase = {
-  id: string
-  title: string
-  articleType: string
-  price: string
-  bg: string
-  handleColor: string
-  artist: string
-  status: 'livré' | 'expédié' | 'en cours' | 'en attente'
-  purchasedAt: string
-}
-
-type MyTicket = {
-  id: string
-  title: string
-  artist: string
-  date: string
-  location: string
-  status: 'upcoming' | 'past'
-  ref: string
-}
-type DashComment = { name: string; initials: string; text: string; time: string }
-
-const LIKED: LikedItem[] = []
-
-const PURCHASES: Purchase[] = [
-
-]
-
-const MY_TICKETS: MyTicket[] = [
-]
-
-const SAMPLE_COMMENTS: DashComment[] = [
-
+/* ─────────────────────────────────────────────
+   MOCK DATA — likes
+   TODO: remplacer quand l'endpoint /api/artworks/liked sera disponible
+───────────────────────────────────────────── */
+const MOCK_LIKED_WORKS: (Work & { artistName: string; artistHandle: string; artistInitial: string; artistAvatarUrl?: string; artistSlug: string })[] = [
+  {
+    id: '1', title: 'Série Rouge #3', type: 'image', bg: 'linear-gradient(135deg,#e8c4a0,#c8804a)',
+    published: true, status: ArtworkResponse.status.PUBLISHED, likes: 342, comments: 28, shares: 14,
+    date: '18 mars 2025', desc: 'Troisième volet de ma série Rouge. Huile sur toile, 80×80 cm.',
+    tags: ['#expressionnisme','#huile','#rouge'],
+    artistName: 'Marie Lecomte', artistHandle: '@marielecomte', artistInitial: 'M', artistSlug: 'marie-lecomte',
+  },
+  {
+    id: '2', title: 'Brume #2', type: 'image', bg: 'linear-gradient(135deg,#c8d8e8,#6888a8)',
+    published: true, status: ArtworkResponse.status.PUBLISHED, likes: 201, comments: 14, shares: 9,
+    date: '15 mars 2025', desc: 'Paysages urbains noyés dans la brume matinale. Acrylique, 100×70 cm.',
+    tags: ['#urbain','#brume'],
+    artistName: 'Théo Marchand', artistHandle: '@theomarchand', artistInitial: 'T', artistSlug: 'theo-marchand',
+  },
+  {
+    id: '3', title: "Éclat d'or", type: 'video', bg: 'linear-gradient(135deg,#f0e0a0,#d4a030)',
+    published: true, status: ArtworkResponse.status.PUBLISHED, likes: 519, comments: 43, shares: 28,
+    date: '12 mars 2025', desc: "Timelapse dorée à la feuille. Exploration de la lumière et de la matière.",
+    tags: ['#gold','#timelapse'], duration: '1:58',
+    artistName: 'Lena Voss', artistHandle: '@lenavoss', artistInitial: 'L', artistSlug: 'lena-voss',
+  },
+  {
+    id: '4', title: 'Nocturne', type: 'image', bg: 'linear-gradient(135deg,#dcc8e0,#9870a8)',
+    published: true, status: ArtworkResponse.status.PUBLISHED, likes: 143, comments: 22, shares: 11,
+    date: '8 mars 2025', desc: 'La nuit comme espace mental. Technique mixte, 70×100 cm.',
+    tags: ['#nuit','#violet'],
+    artistName: 'Marie Lecomte', artistHandle: '@marielecomte', artistInitial: 'M', artistSlug: 'marie-lecomte',
+  },
+  {
+    id: '5', title: 'Silence #5', type: 'image', bg: 'linear-gradient(135deg,#e8d0c8,#c09080)',
+    published: true, status: ArtworkResponse.status.PUBLISHED, likes: 178, comments: 19, shares: 11,
+    date: '10 mars 2025', desc: 'Cinquième tableau de la série Silence. Huile et encre, 60×60 cm.',
+    tags: ['#silence','#mixte'],
+    artistName: 'Lena Voss', artistHandle: '@lenavoss', artistInitial: 'L', artistSlug: 'lena-voss',
+  },
+  {
+    id: '6', title: 'Reflet #2', type: 'image', bg: 'linear-gradient(135deg,#b8d8e0,#4878a0)',
+    published: true, status: ArtworkResponse.status.PUBLISHED, likes: 112, comments: 17, shares: 8,
+    date: '20 déc. 2024', desc: "Glacis successifs à l'acrylique. 40×40 cm.",
+    tags: ['#eau','#reflet'],
+    artistName: 'Théo Marchand', artistHandle: '@theomarchand', artistInitial: 'T', artistSlug: 'theo-marchand',
+  },
 ]
 
 /* ─────────────────────────────────────────────
-   STATUS BADGE
- ───────────────────────────────────────────── */
-function StatusBadge({ status }: { status: Purchase['status'] }) {
-  const map = {
-    'livré': 'bg-emerald-50 text-emerald-700',
-    'expédié': 'bg-sky-50 text-sky-700',
-    'en cours': 'bg-amber-50 text-amber-700',
-    'en attente': 'bg-rose-50 text-rose-700',
-  }
+   MOCK DATA — billets
+   TODO: remplacer quand un endpoint /api/events/my-tickets sera disponible
+   (EventsService.getReservations retourne les inscrits côté artiste,
+    pas les réservations de l'amateur)
+───────────────────────────────────────────── */
+const MOCK_TICKETS = [
+  {
+    id: 't1', eventName: 'Atelier ouvert', artistName: 'Marie Lecomte',
+    startDateTime: '2025-04-28T14:00:00', location: 'Lyon, Atelier du Parc',
+    ticketPrice: 0, status: 'PUBLISHED' as const, ref: 'ML-AO-2025-012',
+    posterUrl: null as string | null,
+  },
+  {
+    id: 't2', eventName: 'Expo collective — Galerie Lumière', artistName: 'Marie Lecomte',
+    startDateTime: '2025-05-10T18:00:00', location: 'Paris 11e, Galerie Lumière',
+    ticketPrice: 1500, status: 'PUBLISHED' as const, ref: 'ML-EC-2025-047',
+    posterUrl: null as string | null,
+  },
+  {
+    id: 't3', eventName: 'Vernissage — Série Rouge', artistName: 'Marie Lecomte',
+    startDateTime: '2025-03-12T19:00:00', location: 'Paris, Galerie du Marais',
+    ticketPrice: 0, status: 'COMPLETED' as const, ref: 'ML-VS-2025-008',
+    posterUrl: null as string | null,
+  },
+  {
+    id: 't4', eventName: 'Workshop aquarelle', artistName: 'Lena Voss',
+    startDateTime: '2025-02-05T10:00:00', location: 'En ligne',
+    ticketPrice: 3000, status: 'COMPLETED' as const, ref: 'LV-WA-2025-031',
+    posterUrl: null as string | null,
+  },
+]
+
+/* ─────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────── */
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+function fmtAmount(n: number) {
+  return n.toLocaleString('fr-FR') + ' XAF'
+}
+function isUpcoming(iso: string) {
+  return new Date(iso) > new Date()
+}
+
+/* ─────────────────────────────────────────────
+   STATUS BADGES
+───────────────────────────────────────────── */
+const ORDER_STATUS_MAP: Record<OrderResponse.status, { label: string; cls: string }> = {
+  PENDING_PAYMENT: { label: 'En attente',  cls: 'bg-amber-50 text-amber-700' },
+  PAID:            { label: 'Payé',        cls: 'bg-sky-50 text-sky-700' },
+  PROCESSING:      { label: 'En cours',    cls: 'bg-blue-50 text-blue-700' },
+  SHIPPED:         { label: 'Expédié',     cls: 'bg-indigo-50 text-indigo-700' },
+  DELIVERED:       { label: 'Livré',       cls: 'bg-emerald-50 text-emerald-700' },
+  CANCELLED:       { label: 'Annulé',      cls: 'bg-rose-50 text-rose-700' },
+  REFUNDED:        { label: 'Remboursé',   cls: 'bg-gray-50 text-gray-600' },
+}
+function OrderStatusBadge({ status }: { status: OrderResponse.status }) {
+  const m = ORDER_STATUS_MAP[status] ?? { label: status, cls: 'bg-gray-50 text-gray-600' }
   return (
-    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${map[status]}`}>
-      {status}
+    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${m.cls}`}>
+      {m.label}
     </span>
   )
 }
 
-function EmptyState({ title, message, actionLabel, actionHref }: { title: string; message: string; actionLabel: string; actionHref: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-foreground/5 flex items-center justify-center mb-4">
-        <svg className="w-8 h-8 text-foreground/20" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-          <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" /><path d="M8 12h8" />
-        </svg>
-      </div>
-      <h3 className="font-serif text-lg font-semibold mb-1">{title}</h3>
-      <p className="text-sm text-muted mb-6 max-w-xs">{message}</p>
-      <Link href={actionHref} className="text-xs uppercase tracking-widest font-bold bg-ink text-cream px-6 py-2.5 rounded-full hover:bg-accent transition-colors">
-        {actionLabel}
-      </Link>
-    </div>
-  )
-}
-
 /* ─────────────────────────────────────────────
-   LIKED GRID — cadres pour works, sacs pour articles
+   COMPOSANT BILLET AMATEUR
 ───────────────────────────────────────────── */
-function LikedGrid({ items, onOpen }: { items: LikedItem[]; onOpen: (i: number) => void }) {
-  if (items.length === 0)
-    return <EmptyState
-      title="Aucun favori"
-      message="Vous n'avez pas encore d'œuvres favorites. Explorez la galerie pour découvrir des pépites."
-      actionLabel="Explorer la galerie"
-      actionHref="/galerie"
-    />
-
+function MyTicketCard({ ticket }: { ticket: typeof MOCK_TICKETS[0] }) {
+  const upcoming = isUpcoming(ticket.startDateTime)
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-5">
-      {items.map((item, i) => (
-        item.kind === 'work'
-          ? <WorkCard key={item.id} item={item} onClick={() => onOpen(i)} />
-          : <ArticleCard key={item.id} item={item} onClick={() => onOpen(i)} />
-      ))}
-    </div>
-  )
-}
-
-function WorkCard({ item, onClick }: { item: LikedItem; onClick: () => void }) {
-  return (
-    <div className="cursor-pointer" onClick={onClick}>
-      <div className="wood-outer relative overflow-hidden rounded-sm p-2.5 transition-shadow">
-        <div className="wood-inner rounded-px p-0.5">
-          <div className="relative aspect-square overflow-hidden">
-            <div className="absolute inset-0 flex items-center justify-center font-display text-xs text-white/80 text-center p-2"
-              style={{ background: item.bg }} />
-            {/* gradient stats */}
-            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2.5 px-2 pb-1.5 pt-5"
-              style={{ background: 'linear-gradient(to top,rgba(20,16,12,.75),transparent)' }}>
-              {/* artist avatar */}
-              <div className="w-5 h-5 rounded-full bg-light flex items-center justify-center font-display text-[10px] font-semibold text-accent mr-auto">
-                {item.artistInitial}
-              </div>
-              <span className="flex items-center gap-1 text-[11px] text-white/90">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-                {item.likes}
-              </span>
+    <div style={{ opacity: ticket.status === 'COMPLETED' ? 0.68 : 1 }}>
+      <div className="rounded-xl overflow-visible relative shadow-sm bg-ink">
+        {/* Visuel */}
+        <div className="relative w-full rounded-t-xl overflow-hidden" style={{ aspectRatio: '16/7' }}>
+          {ticket.posterUrl ? (
+            <>
+              <Image src={ticket.posterUrl} alt={ticket.eventName} fill className="object-cover"
+                     sizes="(max-width: 640px) 100vw, 50vw"/>
+              <div className="absolute inset-0 bg-black/20"/>
+            </>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center font-display text-xs text-white/20"
+                 style={{ background: 'linear-gradient(135deg,#2e2a27,#1E1C1A)' }}>
+              {ticket.location}
             </div>
-            {item.mediaType === 'video' && (
-              <div className="absolute top-1.5 right-1.5 flex items-center gap-1 bg-black/60 text-white/80 text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                {item.duration}
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      </div>
-    </div>
-  )
-}
-
-function ArticleCard({ item, onClick }: { item: LikedItem; onClick: () => void }) {
-  return (
-    <div className="flex flex-col cursor-pointer" onClick={onClick}>
-      <svg className="block mx-auto w-[52%]" viewBox="0 0 80 28" fill="none"
-        style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.08))' }}>
-        <path d="M10 26 Q10 4 40 4 Q70 4 70 26" stroke="#7a6050" strokeWidth="5" strokeLinecap="round" />
-      </svg>
-      <div className="relative rounded-xl -mt-0.5 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-        <div className="w-full aspect-square flex items-center justify-center font-display text-sm text-white/80"
-          style={{ background: item.bg }}>
-          {item.title}
-        </div>
-        <div className="bg-ink px-2.5 py-2 flex items-center justify-between">
-          <span className="text-[11px] text-white/50">{item.articleType}</span>
-          <span className="text-xs text-light font-medium">{item.price}</span>
-        </div>
-        {/* artist name */}
-        <div className="absolute top-2 left-2 bg-black/55 text-white/70 text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
-          {item.artistInitial}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   PURCHASES TAB
-───────────────────────────────────────────── */
-function PurchasesTab({ purchases }: { purchases: Purchase[] }) {
-  if (purchases.length === 0)
-    return <EmptyState
-      title="Aucun achat"
-      message="Vous n'avez pas encore effectué d'achats. Vos futures acquisitions apparaîtront ici."
-      actionLabel="Faire un tour en boutique"
-      actionHref="/shop"
-    />
-
-  return (
-    <div className="flex flex-col gap-3">
-      {purchases.map(p => (
-        <div key={p.id} className="flex items-center gap-4 p-4 rounded-xl border border-black/[0.07] bg-cream hover:border-black/[0.15] transition-colors">
-          {/* mini sac */}
-          <div className="shrink-0 w-16">
-            <svg className="block mx-auto w-[60%]" viewBox="0 0 80 28" fill="none">
-              <path d="M10 26 Q10 4 40 4 Q70 4 70 26" stroke={p.handleColor} strokeWidth="6" strokeLinecap="round" />
-            </svg>
-            <div className="relative rounded-lg -mt-0.5 overflow-hidden shadow-sm">
-              <div className="w-full aspect-square" style={{ background: p.bg }} />
-              <div className="bg-ink h-3" />
+        {/* Corps */}
+        <div className="px-3.5 pb-3 pt-2.5 relative">
+          <div className="absolute -top-2 -left-2 w-4 h-4 rounded-full bg-cream"/>
+          <div className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-cream"/>
+          <div className="border-t border-dashed border-white/[0.12] mb-2"/>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[13px] text-cream font-medium leading-snug truncate">{ticket.eventName}</div>
+              <div className="text-[11px] text-light/65 mt-0.5">{fmtDate(ticket.startDateTime)}</div>
+              <div className="text-[10px] text-white/30 mt-0.5 truncate">📍 {ticket.location}</div>
             </div>
+            <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium shrink-0 mt-0.5 ${
+              upcoming ? 'bg-accent/20 text-light' : 'bg-white/[0.07] text-white/35'
+            }`}>
+              {upcoming ? 'À venir' : 'Passé'}
+            </span>
           </div>
-          {/* infos */}
-          <div className="flex-1 min-w-0">
-            <div className="font-display text-base font-semibold truncate">{p.title}</div>
-            <div className="text-[12px] text-muted mt-0.5">{p.articleType} · {p.artist}</div>
-            <div className="text-[11px] text-muted mt-1">Commandé le {p.purchasedAt}</div>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-[11px] text-accent font-medium">
+              {ticket.ticketPrice > 0 ? fmtAmount(ticket.ticketPrice) : 'Gratuit'}
+            </span>
+            {/* QR fictif — petite grille */}
+            <QRMini value={ticket.ref}/>
           </div>
-          {/* prix + statut */}
-          <div className="shrink-0 flex flex-col items-end gap-1.5">
-            <span className="font-display text-base font-semibold text-accent">{p.price}</span>
-            <StatusBadge status={p.status} />
-          </div>
+          <div className="text-[10px] font-mono tracking-wider text-white/20 mt-1">{ticket.ref}</div>
         </div>
-      ))}
+      </div>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────
-   TICKETS TAB
-───────────────────────────────────────────── */
-function QRCode({ value }: { value: string }) {
-  // QR fictif en SVG — grille de carrés pseudo-aléatoire basée sur la ref
-  const size = 7
+function QRMini({ value }: { value: string }) {
+  const size = 6
   const cells = Array.from({ length: size * size }, (_, i) => {
     const c = value.charCodeAt(i % value.length)
     return (c + i * 13) % 3 !== 0
   })
   return (
-    <div className="grid gap-[1px] bg-white p-1.5 rounded" style={{ gridTemplateColumns: `repeat(${size},1fr)`, width: 52, height: 52 }}>
+    <div className="grid gap-[1px] bg-white p-1 rounded"
+         style={{ gridTemplateColumns: `repeat(${size},1fr)`, width: 36, height: 36 }}>
       {cells.map((on, i) => (
-        <div key={i} className={`rounded-[1px] ${on ? 'bg-ink' : 'bg-white'}`} />
+        <div key={i} className={`rounded-[1px] ${on ? 'bg-ink' : 'bg-white'}`}/>
       ))}
-    </div>
-  )
-}
-
-function TicketsTab({ tickets }: { tickets: MyTicket[] }) {
-  if (tickets.length === 0)
-    return <EmptyState
-      title="Aucun billet"
-      message="Vous n'avez pas encore de billets pour des expositions. Réservez votre prochaine visite dès maintenant."
-      actionLabel="Voir les expositions"
-      actionHref="/events"
-    />
-
-  const upcoming = tickets.filter(t => t.status === 'upcoming')
-  const past = tickets.filter(t => t.status === 'past')
-
-  const TicketRow = ({ t }: { t: MyTicket }) => (
-    <div className={`rounded-xl overflow-hidden border border-black/[0.07] ${t.status === 'past' ? 'opacity-60' : ''}`}>
-      {/* header sombre */}
-      <div className="bg-ink px-4 py-3 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm text-cream font-medium leading-snug">{t.title}</div>
-          <div className="text-[11px] text-light/60 mt-0.5">{t.artist}</div>
-        </div>
-        <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium shrink-0 mt-0.5 ${t.status === 'upcoming' ? 'bg-accent/25 text-light' : 'bg-white/[0.08] text-white/35'
-          }`}>
-          {t.status === 'upcoming' ? 'À venir' : 'Passé'}
-        </span>
-      </div>
-      {/* zone ticket */}
-      <div className="relative bg-cream px-4 py-3">
-        {/* encoches */}
-        <div className="absolute -top-2 -left-2 w-4 h-4 rounded-full bg-white border border-black/[0.07]" />
-        <div className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-white border border-black/[0.07]" />
-        <div className="border-t border-dashed border-black/[0.12] mb-3" />
-        <div className="flex items-end justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-1.5 text-xs text-muted mb-1">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              {t.date}
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted mb-2">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              {t.location}
-            </div>
-            <div className="text-[10px] text-muted/70 font-mono tracking-wider">{t.ref}</div>
-          </div>
-          {/* QR code fictif */}
-          <QRCode value={t.ref} />
-        </div>
-      </div>
-    </div>
-  )
-
-  return (
-    <div className="flex flex-col gap-6">
-      {upcoming.length > 0 && (
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.08em] text-muted mb-3">À venir</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {upcoming.map(t => <TicketRow key={t.id} t={t} />)}
-          </div>
-        </div>
-      )}
-      {past.length > 0 && (
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.08em] text-muted mb-3">Passés</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {past.map(t => <TicketRow key={t.id} t={t} />)}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────────
-   MODAL LECTURE (likes)
-───────────────────────────────────────────── */
-function LikeModal({ dataset, initialIndex, onClose }: {
-  dataset: LikedItem[]; initialIndex: number; onClose: () => void
-}) {
-  const [idx, setIdx] = useState(initialIndex)
-  const [liked, setLiked] = useState(true)      // déjà liké par définition
-  const [likes, setLikes] = useState(0)
-  const [comments, setComs] = useState<DashComment[]>([])
-  const [input, setInput] = useState('')
-  const bodyRef = useRef<HTMLDivElement>(null)
-  const touchY = useRef(0)
-  const item = dataset[idx]
-
-  useEffect(() => {
-    setLiked(true)
-    setLikes(item.likes)
-    setComs(SAMPLE_COMMENTS.slice(0, Math.min(item.comments, 4)))
-    if (bodyRef.current) bodyRef.current.scrollTop = 0
-  }, [idx, item])
-
-  useEffect(() => {
-    const fn = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowLeft') go(-1)
-      if (e.key === 'ArrowRight') go(1)
-    }
-    window.addEventListener('keydown', fn)
-    return () => window.removeEventListener('keydown', fn)
-  })
-
-  const go = (d: number) => { const n = idx + d; if (n >= 0 && n < dataset.length) setIdx(n) }
-
-  const toggleLike = () => setLiked(p => { setLikes(l => l + (p ? -1 : 1)); return !p })
-
-  const send = () => {
-    if (!input.trim()) return
-    setComs(c => [{ name: 'Julien B.', initials: 'JB', text: input.trim(), time: "à l\u2019instant" }, ...c] as DashComment[])
-    setInput('')
-  }
-
-  const ArrowBtn = ({ dir }: { dir: -1 | 1 }) => (
-    <button onClick={() => go(dir)} disabled={dir === -1 ? idx === 0 : idx === dataset.length - 1}
-      className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-white border border-black/10 shadow-sm hover:bg-cream transition-colors disabled:opacity-0 shrink-0">
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-        {dir === -1 ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 6 15 12 9 18" />}
-      </svg>
-    </button>
-  )
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center"
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="flex items-center gap-3 w-full max-w-[940px] px-2 md:px-0">
-        <ArrowBtn dir={-1} />
-
-        <div className="flex-1 bg-cream flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-xl shadow-2xl h-screen md:h-auto md:max-h-[88vh]">
-
-          {/* LEFT — image */}
-          <div className="relative bg-ink flex items-center justify-center shrink-0 w-full md:w-[440px] aspect-square md:aspect-auto md:self-stretch"
-            onTouchStart={e => { touchY.current = e.touches[0].clientY }}
-            onTouchEnd={e => { const dy = e.changedTouches[0].clientY - touchY.current; if (Math.abs(dy) > 50) go(dy > 0 ? -1 : 1) }}>
-            <div className="absolute inset-0 flex items-center justify-center font-display text-xl text-white/40"
-              style={{ background: item.bg }}>{item.title}</div>
-            {item.mediaType === 'video' && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-14 h-14 rounded-full bg-white/15 border-2 border-white/30 flex items-center justify-center backdrop-blur-sm">
-                  <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                </div>
-              </div>
-            )}
-            <div className="absolute top-3 left-3 bg-black/55 text-white/70 text-[10px] px-2 py-0.5 rounded uppercase tracking-widest backdrop-blur-sm">
-              {item.kind === 'article' ? item.articleType : (item.mediaType === 'video' ? '▶ Vidéo' : 'Image')}
-            </div>
-            <div className="absolute bottom-3 inset-x-0 text-center text-[11px] text-white/50 pointer-events-none md:hidden">
-              ← glisser pour naviguer →
-            </div>
-          </div>
-
-          {/* RIGHT */}
-          <div className="flex flex-col flex-1 min-h-0 bg-cream md:h-[440px]">
-
-            {/* auteur */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.09] shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-light flex items-center justify-center font-display text-base font-semibold text-accent shrink-0">
-                  {item.artistInitial}
-                </div>
-                <div>
-                  <div className="text-sm font-medium">{item.artist}</div>
-                  <div className="text-[11px] text-muted">{item.artistHandle} · {item.date} · {idx + 1}/{dataset.length}</div>
-                </div>
-              </div>
-              <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full text-muted hover:bg-black/[0.07] hover:text-ink transition-colors shrink-0">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            {/* scroll — titre + desc + tags + commentaires */}
-            <div ref={bodyRef} className="flex-1 overflow-y-auto min-h-0 px-4">
-              <div className="pt-3.5 pb-2">
-                <h2 className="font-display text-xl font-semibold leading-snug mb-2">{item.title}</h2>
-                {item.kind === 'article' && item.price && (
-                  <div className="inline-block font-display text-base font-semibold text-accent mb-2">{item.price}</div>
-                )}
-                <p className="text-[13px] leading-relaxed text-[#4a4340] mb-2.5">{item.desc}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {item.tags.map((t, i) => (
-                    <span key={t} className={`text-[11px] px-2.5 py-0.5 rounded-full ${i === 0 ? 'bg-accent/10 text-accent' : 'bg-black/[0.06] text-muted'}`}>
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="border-t border-black/[0.07] my-2" />
-              <div className="flex flex-col gap-3.5 pb-3">
-                {comments.map((c, i) => (
-                  <div key={i} className="flex gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-light shrink-0 flex items-center justify-center text-[11px] font-semibold text-accent font-display">
-                      {c.initials}
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium">{c.name}</div>
-                      <div className="text-xs leading-relaxed text-[#4a4340]">{c.text}</div>
-                      <div className="text-[10px] text-muted mt-0.5">{c.time}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* likes / com / partages */}
-            <div className="flex items-center gap-4 px-4 py-2.5 border-t border-black/[0.09] shrink-0">
-              <button onClick={toggleLike}
-                className={`flex items-center gap-1.5 text-[13px] font-medium transition-colors ${liked ? 'text-accent' : 'text-muted hover:text-ink'}`}>
-                <svg className="w-5 h-5" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-                {likes}
-              </button>
-              <button className="flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                {item.comments}
-              </button>
-              <button className="flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink transition-colors ml-auto">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                </svg>
-                {item.shares}
-              </button>
-            </div>
-
-            {/* input */}
-            <div className="flex items-center gap-2 px-4 py-2.5 border-t border-black/[0.09] bg-cream shrink-0">
-              <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()}
-                placeholder="Ajouter un commentaire…"
-                className="flex-1 border border-black/[0.09] rounded-full px-4 py-2 text-[13px] bg-cream outline-none focus:border-accent transition-colors" />
-              <button onClick={send}
-                className="w-8 h-8 rounded-full bg-ink text-cream flex items-center justify-center shrink-0 hover:bg-accent transition-colors">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-        <ArrowBtn dir={1} />
-      </div>
     </div>
   )
 }
@@ -513,228 +214,301 @@ function LikeModal({ dataset, initialIndex, onClose }: {
 /* ─────────────────────────────────────────────
    PAGE PRINCIPALE
 ───────────────────────────────────────────── */
-type Tab = 'likes' | 'achats' | 'billets'
-type ModalState = { index: number } | null
-
-const GRADIENTS = [
-  'linear-gradient(135deg,#e8c4a0,#c8804a)',
-  'linear-gradient(135deg,#a8c4d0,#5888a8)',
-  'linear-gradient(135deg,#d4c4b8,#9a7060)',
-  'linear-gradient(135deg,#c8d4a0,#7a9850)',
-  'linear-gradient(135deg,#dcc8e0,#9870a8)',
-]
+const ITEMS_PER_PAGE = 6
 
 export default function AmateurDashboardPage() {
-  const router = useRouter()
-  const [tab, setTab] = useState<Tab>('likes')
-  const [modal, setModal] = useState<ModalState>(null)
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
-  const { user, logout } = useAuthStore()
+  const router              = useRouter()
+  const { user, logout }    = useAuthStore()
+  const displayName         = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Amateur'
 
-  // 1. Profil
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ['buyer-profile'],
-    queryFn: () => BuyerProfileService.getMe(),
-    enabled: !!user,
-  })
-  const status = isProfileLoading ? 'loading' : 'success'
+  const [tab, setTab]           = useState<Tab>('likes')
+  const [currentPage, setCurrentPage] = useState(1)
 
-  // 2. Achats
-  const { data: purchasesData, isLoading: isPurchasesLoading } = useQuery({
-    queryKey: ['buyer-purchases'],
-    queryFn: () => ShopOrdersService.getMyPurchases(),
-    enabled: !!user,
+  useEffect(() => { setCurrentPage(1) }, [tab])
+
+  /* ── Commandes (ShopOrdersService.getMyPurchases) ── */
+  const { data: ordersData, isLoading: isOrdersLoading } = useQuery({
+    queryKey: ['my-purchases'],
+    queryFn:  () => ShopOrdersService.getMyPurchases(),
+    enabled:  !!user && tab === 'achats',
   })
 
-  // 3. Billets
-  const { data: ticketsData, isLoading: isTicketsLoading } = useQuery({
-    queryKey: ['buyer-tickets'],
-    queryFn: () => getMyTickets(),
-    enabled: !!user,
-  })
+  /* ── Totaux pour les stats ── */
+  const totalLikes   = MOCK_LIKED_WORKS.length
+  const totalOrders  = ordersData?.length ?? 0
+  const totalTickets = MOCK_TICKETS.length
 
-  const PURCHASES: Purchase[] = (purchasesData || []).map((ord, idx) => ({
-    id: ord.id!,
-    title: ord.items?.[0]?.productName || 'Commande Art',
-    articleType: 'Article',
-    price: formatPrice(ord.totalAmount || 0),
-    bg: GRADIENTS[idx % GRADIENTS.length],
-    handleColor: '#6a6058',
-    artist: 'Artiste Yow',
-    status: ord.status === 'DELIVERED' ? 'livré' : (ord.status === 'SHIPPED' ? 'expédié' : (ord.status === 'PENDING_PAYMENT' ? 'en attente' : 'en cours')),
-    purchasedAt: new Date(ord.createdAt!).toLocaleDateString('fr-FR'),
-  }))
-
-  const MY_TICKETS: MyTicket[] = (ticketsData || []).map(t => ({
-    id: t.id!,
-    title: t.eventTitle!,
-    artist: 'Yow Painter',
-    date: new Date(t.purchasedAt!).toLocaleDateString('fr-FR'),
-    location: 'Lieu de l\'événement',
-    status: 'upcoming',
-    ref: t.id!,
-  }))
-
-  const displayName = `${profile?.firstName || user?.firstName || ''} ${profile?.lastName || user?.lastName || ''}`.trim() || 'Amateur'
+  /* ── Pagination ── */
+  const likedPage  = MOCK_LIKED_WORKS.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const ordersPage = (ordersData || []).slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const ticketsPage = MOCK_TICKETS.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   const TABS: { id: Tab; label: string; count: number; icon: React.ReactNode }[] = [
     {
-      id: 'likes', label: 'Likes', count: LIKED.length,
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>,
+      id: 'likes', label: 'Likes', count: totalLikes,
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
     },
     {
-      id: 'achats', label: 'Achats', count: PURCHASES.length,
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>,
+      id: 'achats', label: 'Achats', count: totalOrders,
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
     },
     {
-      id: 'billets', label: 'Billets', count: MY_TICKETS.length,
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M2 9a2 2 0 0 1 0-4V3h20v2a2 2 0 0 1 0 4v2a2 2 0 0 1 0 4v2H2v-2a2 2 0 0 1 0-4V9z" /></svg>,
+      id: 'billets', label: 'Billets', count: totalTickets,
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M2 9a2 2 0 0 1 0-4V3h20v2a2 2 0 0 1 0 4v2a2 2 0 0 1 0 4v2H2v-2a2 2 0 0 1 0-4V9z"/></svg>,
     },
   ]
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased font-sans canvas-texture canvas-grain relative selection:bg-accent/30">
-      {/* ── Ambient Backgrounds artistiques ── */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden mix-blend-multiply dark:mix-blend-screen opacity-70">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(194,109,92,0.15),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top_right,rgba(212,136,120,0.2),transparent_60%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(30,28,26,0.08),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,244,240,0.05),transparent_50%)]"></div>
 
-        {/* Formes Abstraites (Art) */}
-        <AnimatedBlob className="top-[-5%] right-[-10%] w-[50vw] h-[50vw] blur-3xl opacity-30" color="slate" />
-        <AnimatedBlob className="bottom-[20%] left-[-20%] w-[60vw] h-[60vw] blur-3xl opacity-20" color="accent" />
-        <AnimatedBlob className="top-[40%] right-[10%] w-[30vw] h-[30vw] blur-2xl opacity-10" color="slate" />
-        <AnimatedBlob className="top-[60%] left-[5%] w-[25vw] h-[25vw] blur-2xl opacity-15" color="accent" />
-        <AbstractShapes />
+      {/* Ambient backgrounds — identiques au dashboard artiste */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden mix-blend-multiply dark:mix-blend-screen opacity-70">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(194,109,92,0.15),transparent_60%)]"/>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(30,28,26,0.08),transparent_50%)]"/>
+        <AnimatedBlob className="top-[-10%] left-[-15%] w-[60vw] h-[60vw] blur-3xl opacity-20" color="accent"/>
+        <AnimatedBlob className="bottom-[10%] right-[-5%] w-[45vw] h-[45vw] blur-3xl opacity-30" color="slate"/>
+        <AbstractShapes/>
       </div>
 
-      {/* Topbar Harmonisée */}
-      <Navbar />
+      <Navbar/>
 
-      {/* Profil Harmonisé */}
+      {/* ── Profil — même structure que dashboard artiste ── */}
       <div className="bg-background/60 backdrop-blur-md border-b border-foreground/10 relative z-10 pt-[88px]">
+        {/* Bannière image */}
         <div className="h-[280px] w-full relative border-b border-foreground/10 shadow-inner">
-          <Image src="/images/african-art-v2.png" alt="Cover art" fill className="object-cover opacity-90 dark:opacity-60" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-90"></div>
+          <Image src="/images/african-art-v2.png" alt="Cover" fill className="object-cover opacity-90 dark:opacity-60"/>
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-90"/>
         </div>
+
         <div className="max-w-[1200px] mx-auto px-4 md:px-12 pb-8 relative">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 -mt-[70px] relative z-10">
 
-            {/* Left Side: Avatar + Info */}
+            {/* Avatar + infos */}
             <div className="flex flex-col md:flex-row items-start md:items-end gap-6 md:gap-8">
-              <div className="w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-full bg-background border-[6px] border-background flex items-center justify-center font-serif text-4xl font-semibold text-accent shadow-xl overflow-hidden shrink-0">
-                {status === 'loading' ? (
-                  <SkeletonCircle className="w-full h-full" />
-                ) : user?.profilePictureUrl ? (
-                  <Image src={user.profilePictureUrl} alt="Avatar" width={150} height={150} className="object-cover w-full h-full" />
-                ) : (
-                  <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40"><User size={48} /></span>
-                )}
+              <div className="w-[130px] h-[130px] md:w-[150px] md:h-[150px] rounded-full bg-background
+                              border-[6px] border-background flex items-center justify-center
+                              font-serif text-4xl font-semibold text-accent shadow-xl overflow-hidden shrink-0">
+                {!user ? <SkeletonCircle className="w-full h-full"/> :
+                 user.profilePictureUrl
+                   ? <Image src={user.profilePictureUrl} alt="Avatar" width={150} height={150} className="object-cover w-full h-full"/>
+                   : <span className="flex items-center justify-center w-full h-full bg-foreground/5 text-foreground/40">
+                       <User size={48}/>
+                     </span>
+                }
               </div>
-
               <div className="pb-2 flex flex-col gap-2">
-                <div className="flex items-center gap-4">
-                  <h1 className="font-serif text-4xl md:text-5xl font-semibold leading-none tracking-tight">{displayName}</h1>
+                <h1 className="font-serif text-4xl md:text-5xl font-semibold leading-none tracking-tight">
+                  {displayName}
+                </h1>
+                <div className="text-sm text-foreground/50 font-mono tracking-tight">
+                  @{user?.email?.split('@')[0] || 'amateur'} · Amateur
                 </div>
-                <div className="text-sm text-foreground/50 font-mono tracking-tight">@{user?.email?.split('@')[0] || 'amateur'}</div>
-                <p className="text-sm md:text-base leading-relaxed text-foreground/70 max-w-2xl font-light mt-2 border-l-2 border-foreground/20 pl-4">
-                  {user?.bio || "Amateur d'art et de peinture contemporaine. Collectionneur débutant."}
+                <p className="text-sm md:text-base leading-relaxed text-foreground/70 max-w-2xl font-light mt-2 border-l-2 border-accent/30 pl-4">
+                  {user?.bio || "Amateur d'art et de peinture contemporaine."}
                 </p>
               </div>
             </div>
 
-            {/* Right Side: Action + Stats */}
+            {/* Stats + bouton */}
             <div className="flex flex-col items-start md:items-end gap-6 pb-2">
-              <button
-                onClick={() => setIsEditProfileOpen(true)}
-                className="flex items-center gap-2 px-6 py-2.5 border border-foreground/20 rounded-full text-xs uppercase tracking-widest font-bold hover:border-foreground hover:text-background hover:bg-foreground transition-all shadow-sm"
-              >
+              <button className="flex items-center gap-2 px-6 py-2.5 border border-foreground/20 rounded-full text-xs uppercase tracking-widest font-bold hover:border-accent hover:text-white hover:bg-accent transition-all shadow-sm">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
                 Éditer le profil
               </button>
 
+              {/* Bloc stats — même style que artiste */}
               <div className="flex gap-8 md:gap-12 bg-foreground/5 px-8 py-5 rounded-3xl border border-foreground/10 backdrop-blur-md shadow-sm">
-                {isProfileLoading ? (
-                  <>
-                    <div className="w-16"><Skeleton className="h-6 w-full mb-2" /><Skeleton className="h-3 w-3/4" /></div>
-                    <div className="w-16"><Skeleton className="h-6 w-full mb-2" /><Skeleton className="h-3 w-3/4" /></div>
-                    <div className="w-16"><Skeleton className="h-6 w-full mb-2" /><Skeleton className="h-3 w-3/4" /></div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-col items-center">
-                      <div className="font-serif text-3xl md:text-4xl font-semibold leading-none text-accent">{LIKED.length}</div>
-                      <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Likes</div>
-                    </div>
-                    <div className="w-[1px] bg-foreground/10 self-stretch"></div>
-                    <div className="flex flex-col items-center">
-                      <div className="font-serif text-3xl md:text-4xl font-semibold leading-none">{PURCHASES.length}</div>
-                      <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Achats</div>
-                    </div>
-                    <div className="w-[1px] bg-foreground/10 self-stretch"></div>
-                    <div className="flex flex-col items-center">
-                      <div className="font-serif text-3xl md:text-4xl font-semibold leading-none">{MY_TICKETS.length}</div>
-                      <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Billets</div>
-                    </div>
-                  </>
-                )}
+                <div className="flex flex-col items-center">
+                  <div className="font-serif text-3xl md:text-4xl font-semibold leading-none text-accent">{totalLikes}</div>
+                  <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Likes</div>
+                </div>
+                <div className="w-px bg-foreground/10 self-stretch"/>
+                <div className="flex flex-col items-center">
+                  <div className="font-serif text-3xl md:text-4xl font-semibold leading-none">{totalOrders}</div>
+                  <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Achats</div>
+                </div>
+                <div className="w-px bg-foreground/10 self-stretch"/>
+                <div className="flex flex-col items-center">
+                  <div className="font-serif text-3xl md:text-4xl font-semibold leading-none">{totalTickets}</div>
+                  <div className="text-[10px] text-foreground/50 mt-2 uppercase tracking-[0.2em] font-bold">Billets</div>
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
 
-      {/* Tabnav Harmonisé */}
+      {/* ── Tabnav — même sticky top que artiste ── */}
       <nav className="sticky top-[80px] md:top-[88px] z-40 glass-elegant shadow-sm border-b border-foreground/10">
         <div className="max-w-[1200px] mx-auto px-4 md:px-12 flex overflow-x-auto no-scrollbar gap-4">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`relative flex items-center gap-2 px-6 py-4 text-xs uppercase tracking-[0.1em] transition-all whitespace-nowrap ${tab === t.id ? 'text-foreground font-bold' : 'text-foreground/50 hover:text-foreground'}`}>
+                    className={`relative flex items-center gap-2 px-6 py-4 text-xs uppercase tracking-[0.1em] transition-all whitespace-nowrap ${
+                      tab === t.id ? 'text-foreground font-bold' : 'text-foreground/50 hover:text-foreground'
+                    }`}>
               {t.icon}
               {t.label}
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${tab === t.id ? 'bg-foreground text-background' : 'bg-foreground/5 text-foreground/60'}`}>
-                {(t.id === 'likes' && false) || (t.id === 'achats' && isPurchasesLoading) || (t.id === 'billets' && isTicketsLoading) ? '…' : t.count}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                tab === t.id ? 'bg-ink text-cream' : 'bg-foreground/[0.07] text-foreground/50'
+              }`}>
+                {t.count}
               </span>
-              {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent rounded-t" />}
+              {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent rounded-t"/>}
             </button>
           ))}
         </div>
       </nav>
 
-      {/* Contenu */}
-      <div className="pb-16 pt-8 relative z-10 max-w-[1200px] mx-auto px-4 md:px-12">
+      {/* ── Contenu ── */}
+      <div className="pb-16 pt-8 relative z-10 max-w-[1200px] mx-auto px-4 md:px-12 space-y-10">
 
+        {/* ─── Likes ─── */}
         {tab === 'likes' && (
-          <LikedGrid items={LIKED} onOpen={i => setModal({ index: i })} />
+          <div className="space-y-10">
+            {/* Même grille que les œuvres artiste */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
+              {likedPage.map(w => (
+                <DiscoverFrameCard
+                  key={w.id}
+                  work={w}
+                  artist={{
+                    name:      w.artistName,
+                    handle:    w.artistHandle,
+                    avatarUrl: w.artistAvatarUrl,
+                    slug:      w.artistSlug,
+                  }}
+                  onClick={() => {/* TODO: ouvrir PostModal */}}
+                  onArtistClick={() => router.push(`/boutique/${w.artistSlug}`)}
+                />
+              ))}
+            </div>
+            {MOCK_LIKED_WORKS.length > ITEMS_PER_PAGE && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(MOCK_LIKED_WORKS.length / ITEMS_PER_PAGE)}
+                onPageChange={setCurrentPage}
+                className="pt-4"
+              />
+            )}
+            {/* TODO: remplacer MOCK_LIKED_WORKS par useQuery quand
+                l'endpoint GET /api/artworks/liked sera disponible */}
+          </div>
         )}
+
+        {/* ─── Achats (OrderResponse) ─── */}
         {tab === 'achats' && (
-          isPurchasesLoading ? (
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
-            </div>
-          ) : <PurchasesTab purchases={PURCHASES} />
+          <div className="space-y-10">
+            {isOrdersLoading ? (
+              <div className="flex flex-col gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full rounded-xl opacity-40"/>
+                ))}
+              </div>
+            ) : !ordersData?.length ? (
+              <p className="text-center py-16 text-foreground/40 text-sm">Aucun achat pour le moment.</p>
+            ) : (
+              <>
+                <div className="flex flex-col gap-3">
+                  {ordersPage.map(order => (
+                    <div key={order.id}
+                         className="rounded-xl border border-foreground/[0.07] bg-background hover:border-foreground/[0.15] transition-colors overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/[0.06] bg-foreground/[0.02]">
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-[11px] text-foreground/40">#{order.id?.slice(0, 8)}</span>
+                          {order.status && <OrderStatusBadge status={order.status}/>}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {order.createdAt && (
+                            <span className="text-[11px] text-foreground/40">
+                              {new Date(order.createdAt).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' })}
+                            </span>
+                          )}
+                          <span className="font-serif text-base font-semibold text-accent">
+                            {order.totalAmount != null ? fmtAmount(order.totalAmount) : '—'}
+                          </span>
+                        </div>
+                      </div>
+                      {order.items?.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between px-4 py-3 border-b border-foreground/[0.04] last:border-0">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-light/40 flex items-center justify-center shrink-0">
+                              <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                                <line x1="3" y1="6" x2="21" y2="6"/>
+                                <path d="M16 10a4 4 0 0 1-8 0"/>
+                              </svg>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium truncate">{item.productName}</div>
+                              <div className="text-[11px] text-foreground/40">Qté : {item.quantity ?? 1}</div>
+                            </div>
+                          </div>
+                          <span className="text-sm font-medium text-foreground/70 shrink-0 ml-3">
+                            {item.unitPrice != null ? fmtAmount(item.unitPrice * (item.quantity ?? 1)) : '—'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                {(ordersData?.length ?? 0) > ITEMS_PER_PAGE && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={Math.ceil((ordersData?.length ?? 0) / ITEMS_PER_PAGE)}
+                    onPageChange={setCurrentPage}
+                    className="pt-4"
+                  />
+                )}
+              </>
+            )}
+          </div>
         )}
+
+        {/* ─── Billets ─── */}
         {tab === 'billets' && (
-          isTicketsLoading ? (
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
-            </div>
-          ) : <TicketsTab tickets={MY_TICKETS} />
+          <div className="space-y-10">
+            {ticketsPage.filter(t => isUpcoming(t.startDateTime)).length > 0 && (
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.08em] text-foreground/50 mb-4">À venir</div>
+                {/* Même nombre de colonnes que TicketCard artiste */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {ticketsPage.filter(t => isUpcoming(t.startDateTime)).map(t => (
+                    <MyTicketCard key={t.id} ticket={t}/>
+                  ))}
+                </div>
+              </div>
+            )}
+            {ticketsPage.filter(t => !isUpcoming(t.startDateTime)).length > 0 && (
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.08em] text-foreground/50 mb-4">Passés</div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {ticketsPage.filter(t => !isUpcoming(t.startDateTime)).map(t => (
+                    <MyTicketCard key={t.id} ticket={t}/>
+                  ))}
+                </div>
+              </div>
+            )}
+            {MOCK_TICKETS.length === 0 && (
+              <p className="text-center py-16 text-foreground/40 text-sm">Aucun billet pour le moment.</p>
+            )}
+            {MOCK_TICKETS.length > ITEMS_PER_PAGE && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(MOCK_TICKETS.length / ITEMS_PER_PAGE)}
+                onPageChange={setCurrentPage}
+                className="pt-4"
+              />
+            )}
+            {/* TODO: remplacer MOCK_TICKETS par useQuery quand
+                l'endpoint GET /api/events/my-tickets sera disponible */}
+          </div>
         )}
 
       </div>
-
-      {/* Modal Lecture */}
-      {modal && (
-        <LikeModal dataset={LIKED} initialIndex={modal.index} onClose={() => setModal(null)} />
-      )}
-
-      {/* Modal Edition Profil */}
-      {isEditProfileOpen && (
-        <EditProfileModal onClose={() => setIsEditProfileOpen(false)} />
-      )}
     </div>
   )
 }
