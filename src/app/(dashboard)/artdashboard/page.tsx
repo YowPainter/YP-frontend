@@ -22,6 +22,7 @@ import CreateArtworkModal from '@/components/artdashboard/CreateArtworkModal'
 import CreateEventModal from '@/components/artdashboard/CreateEventModal'
 import CreateArticleModal from '@/components/artdashboard/CreateArticleModal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import WalletTab from '@/components/artdashboard/WalletTab'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArtistsService } from '@/lib/services/ArtistsService'
@@ -56,7 +57,7 @@ const GRADIENTS = [
 ]
 
 /* ── Petits composants inline ── */
-type Tab = 'oeuvres' | 'articles' | 'evenements'
+type Tab = 'oeuvres' | 'articles' | 'evenements' | 'portefeuille'
 type ModalState = { dataset: (Work | Article)[]; index: number } | null
 
 function PlusIcon() {
@@ -301,6 +302,7 @@ export default function ArtistDashboardPage() {
     { id: 'oeuvres', label: 'Œuvres', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><rect x="6" y="6" width="12" height="12" rx="1" /></svg> },
     { id: 'articles', label: 'Articles', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg> },
     { id: 'evenements', label: 'Évènements', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M2 9a2 2 0 0 1 0-4V3h20v2a2 2 0 0 1 0 4v2a2 2 0 0 1 0 4v2H2v-2a2 2 0 0 1 0-4V9z" /></svg> },
+    { id: 'portefeuille', label: 'Portefeuille', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" /><path d="M4 6v12c0 1.1.9 2 2 2h14v-4" /><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" /></svg> },
   ]
 
   return (
@@ -519,6 +521,7 @@ export default function ArtistDashboardPage() {
             )}
           </div>
         )}
+        {tab === 'portefeuille' && <WalletTab />}
       </div>
 
       {/* ── Modal ── */}

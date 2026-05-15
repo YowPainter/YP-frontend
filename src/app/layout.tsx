@@ -6,6 +6,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
+import ChatWidget from "@/components/chat/ChatWidget";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -45,6 +46,7 @@ export default function RootLayout({
               <NavigationProgress />
             </Suspense>
             {children}
+            <ChatWidget />
             <Toaster
               position="bottom-right"
               toastOptions={{

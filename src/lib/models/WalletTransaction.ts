@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Wallet } from './Wallet';
+export type { Wallet };
 export type WalletTransaction = {
     id?: string;
     wallet?: Wallet;
