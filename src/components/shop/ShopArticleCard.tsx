@@ -6,6 +6,8 @@ import { ProductResponse } from '@/lib/models/ProductResponse'
 import { ArtworkResponse } from '@/lib/models/ArtworkResponse'
 import { formatPrice } from '@/lib/utils'
 import { ShoppingCart } from 'lucide-react'
+import { useCartStore } from '@/store/cartStore'
+import { toast } from '@/lib/toast'
 
 interface ShopArticleCardProps {
   product: ProductResponse
@@ -17,9 +19,11 @@ interface ShopArticleCardProps {
   }
   artwork?: ArtworkResponse
   hideArtistHeader?: boolean
+  onClickImage?: () => void
 }
 
-export default function ShopArticleCard({ product, artist, artwork, hideArtistHeader }: ShopArticleCardProps) {
+export default function ShopArticleCard({ product, artist, artwork, hideArtistHeader, onClickImage }: ShopArticleCardProps) {
+  const { addItem } = useCartStore()
   const imageUrl = artwork?.imageUrls?.[0] || '/images/placeholder.png'
   const artistSlug = artist?.slug || artist?.username || product.artistId || 'artist'
 
@@ -46,7 +50,10 @@ export default function ShopArticleCard({ product, artist, artwork, hideArtistHe
       )}
 
       {/* ── Body: Image ── */}
-      <div className={`px-5 pb-5 ${hideArtistHeader ? 'pt-5' : ''}`}>
+      <div 
+        className={`px-5 pb-5 ${hideArtistHeader ? 'pt-5' : ''} ${onClickImage ? 'cursor-pointer' : ''}`}
+        onClick={onClickImage}
+      >
         <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-foreground/[0.02] border border-foreground/5 group-hover:border-accent/20 transition-colors">
             <SafeImage
               src={imageUrl}
@@ -66,6 +73,18 @@ export default function ShopArticleCard({ product, artist, artwork, hideArtistHe
               {product.name}
             </h3>
             <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                addItem({
+                  id: product.id!,
+                  title: product.name!,
+                  price: product.price || 0,
+                  imageUrl: imageUrl,
+                  artistId: product.artistId!,
+                  artistName: artist?.name || 'Artiste Yow'
+                });
+                toast.success(`${product.name} ajouté au panier`);
+              }}
               className="p-2 rounded-full bg-foreground/5 text-foreground hover:bg-accent hover:text-white transition-all shadow-sm"
               title="Ajouter au panier"
             >

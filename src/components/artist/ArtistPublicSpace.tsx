@@ -163,6 +163,7 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
                         username: artist.email?.split('@')[0],
                         slug: artist.slug
                       }}
+                      onClick={() => setModal({ dataset: WORKS, index: (currentPage - 1) * ITEMS_PER_PAGE + i })}
                     />
                   ))}
                 </div>
@@ -218,6 +219,30 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
                           slug: artist.slug
                         }}
                         hideArtistHeader // On cache car on est sur son profil
+                        onClickImage={() => {
+                          if (associatedArtwork) {
+                            const index = WORKS.findIndex(w => w.id === associatedArtwork.id);
+                            if (index !== -1) {
+                              setModal({ dataset: WORKS, index });
+                            } else {
+                              // Fallback if not found in WORKS for some reason
+                              const tempWork: Work = {
+                                id: associatedArtwork.id!,
+                                title: associatedArtwork.title!,
+                                type: associatedArtwork.imageUrls && associatedArtwork.imageUrls.length > 0 ? 'image' : 'video',
+                                bg: '#000',
+                                likes: associatedArtwork.likeCount || 0,
+                                comments: 0,
+                                shares: 0,
+                                date: '',
+                                desc: associatedArtwork.description || '',
+                                tags: associatedArtwork.tags || [],
+                                imageUrls: associatedArtwork.imageUrls || [],
+                              };
+                              setModal({ dataset: [tempWork], index: 0 });
+                            }
+                          }
+                        }}
                       />
                     )
                   })}
@@ -325,6 +350,14 @@ export function ArtistPublicSpace({ artist, slug }: ArtistPublicSpaceProps) {
         )}
       </div>
 
+      {modal && (
+          <PostModal 
+              dataset={modal.dataset} 
+              initialIndex={modal.index} 
+              onClose={() => setModal(null)} 
+              mode="carousel"
+          />
+      )}
 
     </div>
   )

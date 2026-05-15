@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Camera, X, Loader2, Plus, Trash2 } from "lucide-react";
 import { ArtworksService } from "@/lib/services/ArtworksService";
@@ -18,6 +19,7 @@ interface CreateArtworkModalProps {
 export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArtworkModalProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mounted, setMounted] = useState(false);
   
   const [title, setTitle] = useState(artworkToEdit?.title || "");
   const [description, setDescription] = useState(artworkToEdit?.description || "");
@@ -41,6 +43,7 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
   const isEditMode = !!artworkToEdit;
 
   useEffect(() => {
+    setMounted(true);
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "auto";
@@ -115,7 +118,10 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
         await ArtworksService.updateArtwork(artworkToEdit.id, requestBody);
         toast.success("Œuvre mise à jour !", "Les modifications ont été enregistrées.");
       } else {
-        await ArtworksService.createArtwork(requestBody);
+        const newArtwork = await ArtworksService.createArtwork(requestBody);
+        if (newArtwork.id) {
+          await ArtworksService.updateStatus(newArtwork.id, 'PUBLISHED');
+        }
         toast.success("Œuvre créée !", "Votre nouvelle œuvre est maintenant en ligne.");
       }
 
@@ -130,9 +136,14 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
-      <div className="bg-background w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-full md:h-[85vh] max-h-[90vh]">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-xl" 
+        onClick={onClose}
+      /><div className="bg-background w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-full md:h-[85vh] max-h-[90vh]">
         
         {/* Left Side: Image Upload */}
         <div className="w-full md:w-1/2 bg-foreground/5 relative flex flex-col items-center justify-center min-h-[300px] p-6 gap-4">
@@ -358,6 +369,7 @@ export default function CreateArtworkModal({ onClose, artworkToEdit }: CreateArt
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

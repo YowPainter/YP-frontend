@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Camera, X, Loader2, Plus, Calendar, MapPin, Users, Tag } from "lucide-react";
 import { EventsService } from "@/lib/services/EventsService";
@@ -18,6 +19,7 @@ interface CreateEventModalProps {
 export default function CreateEventModal({ onClose, eventToEdit }: CreateEventModalProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mounted, setMounted] = useState(false);
   
   const [name, setName] = useState(eventToEdit?.name || "");
   const [description, setDescription] = useState(eventToEdit?.description || "");
@@ -45,6 +47,7 @@ export default function CreateEventModal({ onClose, eventToEdit }: CreateEventMo
   const isEditMode = !!eventToEdit;
 
   useEffect(() => {
+    setMounted(true);
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "auto";
@@ -91,8 +94,8 @@ export default function CreateEventModal({ onClose, eventToEdit }: CreateEventMo
         description: description.trim() || undefined,
         location: location.trim() || undefined,
         posterUrl: finalImageUrl || undefined,
-        maxCapacity: maxCapacity !== "" ? Number(maxCapacity) : undefined,
-        ticketPrice: ticketPrice !== "" ? Number(ticketPrice) : undefined,
+        maxCapacity: maxCapacity !== "" ? Number(maxCapacity) : 0,
+        ticketPrice: ticketPrice !== "" ? Number(ticketPrice) : 0,
       };
 
       if (isEditMode) {
@@ -114,9 +117,15 @@ export default function CreateEventModal({ onClose, eventToEdit }: CreateEventMo
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-background w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-full md:h-[85vh] max-h-[90vh]">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-xl" 
+        onClick={onClose}
+      />
+      <div className="bg-background w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-full md:h-[85vh] max-h-[90vh] relative z-10">
         
         {/* Left Side: Poster Upload */}
         <div className="w-full md:w-2/5 bg-foreground/5 relative flex items-center justify-center border-b md:border-b-0 md:border-r border-foreground/10">
@@ -290,6 +299,7 @@ export default function CreateEventModal({ onClose, eventToEdit }: CreateEventMo
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

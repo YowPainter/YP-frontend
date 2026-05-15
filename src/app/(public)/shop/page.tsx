@@ -13,9 +13,12 @@ import { Pagination } from "@/components/ui/Pagination";
 import { useState } from "react";
 import type { ArtistResponse } from "@/lib/models/ArtistResponse";
 import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
+import PostModal from "@/components/artdashboard/PostModal";
+import type { Work } from "@/components/artdashboard/types";
 
 export default function ShopIndexPage() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [modal, setModal] = useState<{ dataset: Work[]; index: number } | null>(null);
   const ITEMS_PER_PAGE = 8;
 
   // 1. Fetch Global Products
@@ -139,6 +142,24 @@ export default function ShopIndexPage() {
                   username: artist.email?.split('@')[0],
                   slug: artist.slug
                 } : undefined}
+                onClickImage={() => {
+                  if (artwork) {
+                    const tempWork: Work = {
+                      id: artwork.id!,
+                      title: artwork.title!,
+                      type: artwork.imageUrls && artwork.imageUrls.length > 0 ? 'image' : 'video',
+                      bg: '#000',
+                      likes: artwork.likeCount || 0,
+                      comments: 0,
+                      shares: 0,
+                      date: '',
+                      desc: artwork.description || '',
+                      tags: artwork.tags || [],
+                      imageUrls: artwork.imageUrls || [],
+                    };
+                    setModal({ dataset: [tempWork], index: 0 });
+                  }
+                }}
               />
             );
           })}
@@ -161,6 +182,15 @@ export default function ShopIndexPage() {
         <div className="py-24 text-center border border-dashed border-foreground/10 rounded-[3rem]">
           <p className="text-foreground/40 italic">Aucun article n'est disponible pour le moment.</p>
         </div>
+      )}
+
+      {modal && (
+        <PostModal 
+          dataset={modal.dataset} 
+          initialIndex={modal.index} 
+          onClose={() => setModal(null)} 
+          mode="carousel"
+        />
       )}
     </div>
   );

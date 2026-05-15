@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ArtworkResponse } from "@/lib/models/ArtworkResponse";
 import ArtworkPost from "@/components/artdashboard/ArtworkPost";
+import PostModal from "@/components/artdashboard/PostModal";
 import GallerySkeleton from "./GallerySkeleton";
 import type { Work } from "@/components/artdashboard/types";
 import { ArtistsService } from "@/lib/services/ArtistsService";
@@ -58,6 +60,10 @@ function ArtworkPostWithArtist({ artwork, index, artistData }: { artwork: Artwor
                 username: artistData?.email?.split('@')[0] || undefined,
                 slug: artistData?.slug || undefined,
             }}
+            onClick={() => {
+                const customEvent = new CustomEvent('open-artwork-modal', { detail: { index } });
+                window.dispatchEvent(customEvent);
+            }}
         />
     )
 }
@@ -85,6 +91,36 @@ export default function ArtworkGrid({ artworks, isLoading }: ArtworkGridProps) {
         staleTime: 5 * 60 * 1000, // 5 min cache
     });
 
+    const [modal, setModal] = useState<{ dataset: Work[]; index: number } | null>(null);
+
+    useEffect(() => {
+        const handleOpenModal = (e: any) => {
+            if (e.detail && typeof e.detail.index === 'number') {
+                const dataset = artworks.map((artwork, i) => {
+                    const artistData = artwork.artistId ? artistsMap?.get(artwork.artistId) : undefined;
+                    return {
+                        id: artwork.id!,
+                        title: artwork.title!,
+                        type: artwork.imageUrls && artwork.imageUrls.length > 0 ? 'image' : 'video' as any,
+                        bg: GRADIENTS[i % GRADIENTS.length],
+                        likes: artwork.likeCount || 0,
+                        comments: 0,
+                        shares: 0,
+                        date: artwork.publishedAt
+                            ? new Date(artwork.publishedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+                            : '',
+                        desc: artwork.description || '',
+                        tags: artwork.tags || [],
+                        imageUrls: artwork.imageUrls || [],
+                    };
+                });
+                setModal({ dataset, index: e.detail.index });
+            }
+        };
+        window.addEventListener('open-artwork-modal', handleOpenModal);
+        return () => window.removeEventListener('open-artwork-modal', handleOpenModal);
+    }, [artworks, artistsMap]);
+
     if (isLoading || (uniqueArtistIds.length > 0 && isArtistsLoading)) {
         return <GallerySkeleton />;
     }
@@ -104,15 +140,26 @@ export default function ArtworkGrid({ artworks, isLoading }: ArtworkGridProps) {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 reveal">
-            {artworks.map((artwork, index) => (
-                <ArtworkPostWithArtist 
-                    key={artwork.id} 
-                    artwork={artwork} 
-                    index={index} 
-                    artistData={artwork.artistId ? artistsMap?.get(artwork.artistId) : undefined} 
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 reveal">
+                {artworks.map((artwork, index) => (
+                    <ArtworkPostWithArtist 
+                        key={artwork.id} 
+                        artwork={artwork} 
+                        index={index} 
+                        artistData={artwork.artistId ? artistsMap?.get(artwork.artistId) : undefined} 
+                    />
+                ))}
+            </div>
+
+            {modal && (
+                <PostModal 
+                    dataset={modal.dataset} 
+                    initialIndex={modal.index} 
+                    onClose={() => setModal(null)} 
+                    mode="carousel"
                 />
-            ))}
-        </div>
+            )}
+        </>
     );
 }

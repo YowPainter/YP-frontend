@@ -37,7 +37,7 @@ export default function GalerieClient({ initialFilters }: GalerieClientProps) {
     useEffect(() => {
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
-            if (value !== undefined && value !== "" && value !== false) {
+            if (value !== undefined && value !== null && value !== "" && value !== false) {
                 params.set(key, value.toString());
             }
         });

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { Work, Article } from './types'
 import { ArtworksService } from '@/lib/services/ArtworksService'
 import { toast } from '@/lib/toast'
@@ -19,9 +20,10 @@ const SAMPLE: Comment[] = [
   { name: 'Pierre L.',  initials: 'PL', text: 'Tu as encore surpassé toi-même avec cette œuvre.',                               time: 'il y a 2j' },
 ]
 
-export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSell, onDelete }: {
-  dataset: Item[]; initialIndex: number; onClose: () => void; onEdit?: (item: any) => void; onSell?: (item: any) => void; onDelete?: (item: any) => void
+export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSell, onDelete, mode = 'full' }: {
+  dataset: Item[]; initialIndex: number; onClose: () => void; onEdit?: (item: any) => void; onSell?: (item: any) => void; onDelete?: (item: any) => void; mode?: 'full' | 'carousel'
 }) {
+  const [mounted, setMounted] = useState(false)
   const [idx, setIdx]         = useState(initialIndex)
   const [currentImgIdx, setCurrentImgIdx] = useState(0)
   const [liked, setLiked]     = useState(false)
@@ -47,6 +49,7 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
   const displayName = user?.artistName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Artiste'
 
   useEffect(() => {
+    setMounted(true)
     setLiked(false)
     setLikes(item.likes)
     setCurrentImgIdx(0) // Reset image index when switching artworks
@@ -136,20 +139,22 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
     </button>
   )
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="flex items-center gap-4 w-full max-w-6xl justify-center">
         <ArrowBtn dir={-1} />
 
         {/* ── modal card ── */}
-        <div className="bg-background w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-full md:h-[85vh] max-h-[90vh]">
+        <div className={`bg-background w-full ${mode === 'carousel' ? 'max-w-4xl' : 'max-w-5xl'} rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row h-full ${mode === 'carousel' ? 'md:h-[75vh]' : 'md:h-[85vh]'} max-h-[90vh]`}>
 
           {/* LEFT — image container */}
           <div
-            className="w-full md:w-1/2 bg-foreground/5 relative flex items-center justify-center shrink-0 min-h-[300px] group/img overflow-hidden"
+            className={`w-full ${mode === 'carousel' ? 'md:w-full' : 'md:w-1/2'} bg-foreground/5 relative flex items-center justify-center shrink-0 min-h-[300px] group/img overflow-hidden`}
             onTouchStart={e => { 
               touchX.current = e.touches[0].clientX
               touchY.current = e.touches[0].clientY 
@@ -169,6 +174,13 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
               }
             }}
           >
+            {/* Close button for carousel mode */}
+            {mode === 'carousel' && (
+              <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/70 transition-colors z-50">
+                <X size={20} />
+              </button>
+            )}
+
             {/* Background Blur Effect (Ultra-premium) */}
             {item.imageUrls?.[currentImgIdx] && (
               <div className="absolute inset-0 z-0 overflow-hidden">
@@ -202,14 +214,14 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
                       disabled={currentImgIdx === 0}
                       className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white opacity-0 group-hover/img:opacity-100 transition-all hover:bg-white/20 disabled:hidden"
                     >
-                      <polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5" />
+                      <svg viewBox="0 0 24 24" className="w-5 h-5"><polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" strokeWidth={2.5} /></svg>
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); goImg(1); }}
                       disabled={currentImgIdx === item.imageUrls.length - 1}
                       className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white opacity-0 group-hover/img:opacity-100 transition-all hover:bg-white/20 disabled:hidden"
                     >
-                      <polyline points="9 6 15 12 9 18" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5" />
+                      <svg viewBox="0 0 24 24" className="w-5 h-5"><polyline points="9 6 15 12 9 18" fill="none" stroke="currentColor" strokeWidth={2.5} /></svg>
                     </button>
                     
                     {/* Dots Indicators */}
@@ -247,6 +259,7 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
           </div>
 
           {/* RIGHT — info panel */}
+          {mode !== 'carousel' && (
           <div className="w-full md:w-1/2 flex flex-col h-full overflow-hidden bg-background">
 
             {/* header auteur */}
@@ -405,10 +418,12 @@ export default function PostModal({ dataset, initialIndex, onClose, onEdit, onSe
             </div>
 
           </div>
+          )}
         </div>
 
         <ArrowBtn dir={1} />
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

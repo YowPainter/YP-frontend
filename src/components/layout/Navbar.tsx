@@ -6,7 +6,8 @@ import Image from "next/image";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useAuthStore, getDashboardRoute } from "@/store/authStore";
 import { useRouter, usePathname } from "next/navigation";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, ShoppingBag } from "lucide-react";
+import { useCartStore } from "@/store/cartStore";
 
 function ThemeToggle() {
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -63,6 +64,8 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { getItemCount } = useCartStore();
+  const itemCount = getItemCount();
 
   useEffect(() => {
     setMounted(true);
@@ -126,6 +129,19 @@ export default function Navbar() {
         {/* Actions (Droite) */}
         <div className="flex-1 flex justify-end items-center gap-4 md:gap-6">
           <ThemeToggle />
+          
+          <Link 
+            href="/cart" 
+            className="relative p-2 text-foreground/60 hover:text-accent transition-all hover:scale-110"
+            title="Mon panier"
+          >
+            <ShoppingBag size={20} />
+            {mounted && itemCount > 0 && (
+              <span className="absolute top-0 right-0 w-4 h-4 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                {itemCount}
+              </span>
+            )}
+          </Link>
 
           {!mounted ? (
             <div className="w-10 h-10" />

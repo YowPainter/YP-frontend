@@ -16,11 +16,14 @@ interface ArtworkPostProps {
   /** Si fourni → ouvre le modal (mode dashboard) */
   onClick?: () => void
   onDelete?: (id: string) => void
+  onEdit?: (id: string) => void
+  onSell?: (id: string) => void
+  onChangeStatus?: (id: string, status: string) => void
   /** Si true → mode public : pas de modal, commentaires inline */
   inlineComments?: boolean
 }
 
-export default function ArtworkPost({ work, artist, onClick, onDelete, inlineComments = false }: ArtworkPostProps) {
+export default function ArtworkPost({ work, artist, onClick, onDelete, onEdit, onSell, onChangeStatus, inlineComments = false }: ArtworkPostProps) {
   const detailLink = `/${artist.slug || artist.username || 'gallery'}/gallery/${work.id}`
   const mainImage = work.imageUrls?.[0]
   const [liked, setLiked] = useState(false)
@@ -82,9 +85,17 @@ export default function ArtworkPost({ work, artist, onClick, onDelete, inlineCom
       {/* ── Body: Texte ── */}
       <div
         className={`px-5 pb-4 ${onClick ? 'cursor-pointer' : ''}`}
-        onClick={!inlineComments ? onClick : undefined}
+        onClick={onClick}
       >
-        <Link href={detailLink}>
+        <Link 
+          href={detailLink}
+          onClick={(e) => {
+            if (onClick) {
+              e.preventDefault();
+              onClick();
+            }
+          }}
+        >
           <h2 className="font-serif text-lg font-semibold leading-snug mb-2 group-hover:text-accent transition-colors duration-300">
             {work.title}
           </h2>
@@ -119,8 +130,13 @@ export default function ArtworkPost({ work, artist, onClick, onDelete, inlineCom
       {work.imageUrls && work.imageUrls.length > 0 ? (
         <Link
           href={detailLink}
-          className={`px-4 pb-3 ${onClick && !inlineComments ? 'cursor-pointer' : ''}`}
-          onClick={!inlineComments ? onClick : undefined}
+          className={`px-4 pb-3 ${onClick ? 'cursor-pointer' : ''}`}
+          onClick={(e) => {
+            if (onClick) {
+              e.preventDefault();
+              onClick();
+            }
+          }}
         >
           <div className="relative w-full aspect-[4/3] overflow-hidden rounded-xl border border-foreground/8 bg-foreground/[0.03]">
             {work.imageUrls.length === 1 ? (
@@ -205,20 +221,73 @@ export default function ArtworkPost({ work, artist, onClick, onDelete, inlineCom
           {work.comments > 0 && <span>{work.comments}</span>}
         </button>
 
-        {onDelete && (
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(work.id);
-            }}
-            className="ml-auto p-2 text-foreground/20 hover:text-rose-500 transition-colors"
-            title="Supprimer"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
-            </svg>
-          </button>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {onChangeStatus && (
+            <div className="relative mr-2 group/status">
+              <select
+                value={work.status || 'DRAFT'}
+                onChange={(e) => { e.stopPropagation(); onChangeStatus(work.id, e.target.value); }}
+                onClick={(e) => e.stopPropagation()}
+                className="appearance-none bg-transparent text-[10px] font-bold uppercase tracking-widest outline-none cursor-pointer border border-foreground/10 rounded-full px-3 py-1.5 focus:border-accent transition-colors hover:bg-foreground/5"
+                style={{
+                  color: work.status === 'PUBLISHED' ? '#10b981' : work.status === 'ON_SALE' ? '#6366f1' : 'currentColor'
+                }}
+              >
+                <option value="DRAFT">Brouillon</option>
+                <option value="PUBLISHED">Publié</option>
+                <option value="ON_SALE">En Vente</option>
+                <option value="ARCHIVED">Archivé</option>
+              </select>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-foreground/40 group-hover/status:text-accent transition-colors">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {onEdit && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEdit(work.id); }}
+              className="p-2 text-foreground/40 hover:text-foreground transition-colors"
+              title="Modifier"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </button>
+          )}
+
+          {onSell && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onSell(work.id); }}
+              className="p-2 text-foreground/40 hover:text-accent transition-colors"
+              title="Mettre en vente"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+            </button>
+          )}
+
+          {onDelete && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(work.id);
+              }}
+              className="p-2 text-foreground/40 hover:text-rose-500 transition-colors"
+              title="Supprimer"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Zone de commentaire inline (mode public uniquement) ── */}

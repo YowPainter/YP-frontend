@@ -250,6 +250,16 @@ export default function ArtistDashboardPage() {
     });
   };
 
+  const handleChangeStatus = async (id: string, newStatus: string) => {
+    try {
+      await ArtworksService.updateStatus(id, newStatus as any);
+      toast.success("Statut mis à jour !");
+      queryClient.invalidateQueries({ queryKey: ['artist-works'] });
+    } catch (err) {
+      toast.error(err, "Mise à jour du statut");
+    }
+  };
+
   const WORKS: Work[] = (worksData || []).map((w, index) => ({
     id: w.id!,
     title: w.title!,
@@ -424,6 +434,9 @@ export default function ArtistDashboardPage() {
                     username: user?.email?.split('@')[0],
                     slug: user?.slug
                   }}
+                  onEdit={() => handleEditArtwork(work)}
+                  onSell={() => handleSellArtwork(work)}
+                  onChangeStatus={handleChangeStatus}
                   onDelete={() => handleDeleteArtwork(work)}
                   onClick={() => setModal({ dataset: WORKS, index: (currentPage - 1) * ITEMS_PER_PAGE + i })} 
                 />
@@ -517,6 +530,7 @@ export default function ArtistDashboardPage() {
           onEdit={handleEditArtwork}
           onSell={handleSellArtwork}
           onDelete={handleDeleteArtwork}
+          mode="carousel"
         />
       )}
       {/* ── Modal d'Édition Profil ── */}
